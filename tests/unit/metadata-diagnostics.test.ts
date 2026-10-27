@@ -1,6 +1,36 @@
 import { expect, it } from 'vitest'
 import { handleBookMetadataSearch } from '../../worker/book-metadata-search'
 import { metadataDiagnosticMessages } from '../../src/features/books/metadata-diagnostics'
+it.each([
+ { name: 'both upstream queries empty', replies: [{ totalItems: 0 }, { totalItems: 0 }], steps: [{ query: 'title', received: 0, parsed: 0, kept: 0, explicitZero: true }, { query: 'general', received: 0, parsed: 0, kept: 0, explicitZero: true }] },
+ { name: 'fallback candidates rejected', replies: [{ totalItems: 0 }, { items: [{ id: 'unrelated', volumeInfo: { title: '另一個作品' } }, { id: '../bad', volumeInfo: { title: '京都怪奇談' } }], private: 'secret-upstream' }], steps: [{ query: 'title', received: 0, parsed: 0, kept: 0, explicitZero: true }, { query: 'general', received: 2, parsed: 1, kept: 0, explicitZero: false }] },
+ { name: 'initial parser rejected items', replies: [{ totalItems: 1, items: [{ id: '../bad', volumeInfo: { title: '京都怪奇談' } }] }], steps: [{ query: 'title', received: 1, parsed: 0, kept: 0, explicitZero: false }] },
+ { name: 'no explicit zero so no fallback', replies: [{}], steps: [{ query: 'title', received: 0, parsed: 0, kept: 0, explicitZero: false }] },
+])('distinguishes Google empty stages: $name without exposing source data', async ({ replies, steps }) => {
+ let googleCalls = 0, calls = 0
+ const response = await handleBookMetadataSearch(new Request('https://app.test/api/v1/books/metadata?source=openlibrary&title=京都怪奇談'), 'private-key', async input => {
+  calls++
+  return String(input).includes('googleapis') ? Response.json(replies[googleCalls++]) : Response.json({ docs: [] })
+ })
+ const body = await response.json()
+ expect(body.diagnostics[1]).toEqual({ source: 'Google Books', status: 'empty', count: 0, steps })
+ expect(body.data).toEqual([])
+ expect(body.partial).toBe(false)
+ expect(googleCalls).toBe(replies.length)
+ expect(calls).toBe(replies.length + 1)
+ expect(JSON.stringify(body)).not.toMatch(/private-key|secret-upstream|googleapis/)
+})
+it('renders bounded stage counts and rejects arbitrary stage labels or impossible counts', () => {
+ const title = { query: 'title', received: 0, parsed: 0, kept: 0, explicitZero: true }
+ const general = { query: 'general', received: 2, parsed: 1, kept: 0, explicitZero: false }
+ const row = { source: 'Google Books', status: 'empty', count: 0 }
+ expect(metadataDiagnosticMessages([{ ...row, steps: [title, general] }])[0]).toContain('一般補查：收到 2 筆，辨識 1 筆，書名符合 0 筆')
+ expect(metadataDiagnosticMessages([{ ...row, steps: [{ ...title, explicitZero: false }] }])[0]).toContain('來源未明確回報零筆，未補查')
+ for (const steps of [[{ ...title, query: 'secret-upstream' }], [{ ...title, received: 99 }], [{ ...title, parsed: 1 }], [title, general, general], [{ ...title, explicitZero: false }, general]]) {
+  expect(metadataDiagnosticMessages([{ ...row, steps }])).toEqual(['Google Books：查詢成功，沒有候選'])
+ }
+ expect(metadataDiagnosticMessages([{ source: 'Open Library', status: 'empty', steps: [title] }])).toEqual(['Open Library：查詢成功，沒有候選'])
+})
 const request = () => new Request('https://app.test/api/v1/books/metadata?source=openlibrary&title=測試')
 it.each([403, 429])('identifies Google HTTP %i while keeping a successful empty provider separate', async status => {
  const response = await handleBookMetadataSearch(request(), 'private-key', async url => String(url).includes('googleapis') ? new Response('', { status }) : Response.json({ docs: [] }))

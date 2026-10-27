@@ -1,4 +1,4 @@
-import type { LookupFailureKind, MetadataDiagnostic, MetadataProvider } from '../src/features/books/metadata-diagnostics'
+import type { GoogleSearchStep, LookupFailureKind, MetadataDiagnostic, MetadataProvider } from '../src/features/books/metadata-diagnostics'
 import { searchKadokawa, kadokawaCoverPath } from './kadokawa-book-metadata'
 import { parsePubuBook, pubuBookId, pubuCoverPath } from './pubu-book-metadata'
 import { PublisherLookupError, searchTaiwanPublisher } from './taiwan-book-metadata'
@@ -66,7 +66,7 @@ export function parseGoogleVolumes(body: Record<string, unknown>): BookMetadataC
   return [{ id: 'gb:' + id, source: 'Google Books' as const, title, authors, publisher: text(info.publisher, 200), isbn, publishedOn: text(info.publishedDate, 80), sourceUrl: 'https://books.google.com/books?id=' + id, coverUrl: object(info.imageLinks).thumbnail ? '/api/v1/books/metadata/cover?google=' + id : null }]
  })
 }
-export async function searchGoogleBooks(title: string, author: string, googleKey: string, fetcher: typeof fetch = fetch): Promise<BookMetadataCandidate[]> {
+export async function searchGoogleBooks(title: string, author: string, googleKey: string, fetcher: typeof fetch = fetch, steps?: GoogleSearchStep[]): Promise<BookMetadataCandidate[]> {
  // Both attempts share the original 12-second budget; no retry on source errors.
  const signal = AbortSignal.timeout(12000)
  const lookup = (query: string) => {
@@ -75,13 +75,19 @@ export async function searchGoogleBooks(title: string, author: string, googleKey
   return json(url, fetcher, signal)
  }
  const body = await lookup('intitle:' + title + (author ? ' inauthor:' + author : ''))
- if (body.totalItems !== 0 || (body.items !== undefined && (!Array.isArray(body.items) || body.items.length > 0))) return parseGoogleVolumes(body)
+ const initial = parseGoogleVolumes(body)
+ const explicitZero = body.totalItems === 0 && (body.items === undefined || Array.isArray(body.items) && body.items.length === 0)
+ steps?.push({ query: 'title', received: Array.isArray(body.items) ? Math.min(body.items.length, 8) : 0, parsed: initial.length, kept: initial.length, explicitZero })
+ if (!explicitZero) return initial
  // Observed Chinese titles can have zero intitle results but valid ordinary q
  // results. Only retry an explicit source-empty response, never parser failures.
- const fallback = parseGoogleVolumes(await lookup([title, author].filter(Boolean).join(' ')))
+ const fallbackBody = await lookup([title, author].filter(Boolean).join(' '))
+ const fallback = parseGoogleVolumes(fallbackBody)
  const titleKey = (value: string) => value.normalize('NFKC').replace(/[^\p{L}\p{N}]/gu, '').toLowerCase()
  const queryKey = titleKey(title)
- return fallback.filter(candidate => Boolean(queryKey) && titleKey(candidate.title).includes(queryKey))
+ const kept = fallback.filter(candidate => Boolean(queryKey) && titleKey(candidate.title).includes(queryKey))
+ steps?.push({ query: 'general', received: Array.isArray(fallbackBody.items) ? Math.min(fallbackBody.items.length, 8) : 0, parsed: fallback.length, kept: kept.length, explicitZero: fallbackBody.totalItems === 0 && (fallbackBody.items === undefined || Array.isArray(fallbackBody.items) && fallbackBody.items.length === 0) })
+ return kept
 }
 /** Authenticated caller. Search/preview only; no book or cover-storage writes. */
 export async function handleBookMetadataSearch(request: Request, googleKey?: string, fetcher: typeof fetch = fetch): Promise<Response> {
@@ -128,11 +134,15 @@ export async function handleBookMetadataSearch(request: Request, googleKey?: str
   const kadokawa = () => searchKadokawa(title, author, target => readHtml(target, 2000000))
   const providers: MetadataProvider[] = source === 'taiwan' ? ['讀書共和國', '台灣角川'] : [source === 'kadokawa' ? '台灣角川' : 'Open Library']
   const tasks: Promise<BookMetadataCandidate[]>[] = source === 'taiwan' ? [searchTaiwanPublisher(title, author, readHtml), kadokawa()] : [source === 'kadokawa' ? kadokawa() : openLibrary(title, author, fetcher)]
-  if (googleKey) { providers.push('Google Books'); tasks.push(searchGoogleBooks(title, author, googleKey, fetcher)) }
+  const googleSteps: GoogleSearchStep[] = []
+  if (googleKey) { providers.push('Google Books'); tasks.push(searchGoogleBooks(title, author, googleKey, fetcher, googleSteps)) }
   const results = await Promise.allSettled(tasks), candidates = results.flatMap(result => result.status === 'fulfilled' ? result.value : [])
-  const diagnostics: MetadataDiagnostic[] = results.map((result, index) => result.status === 'fulfilled'
-   ? { source: providers[index], status: result.value.length ? 'ok' : 'empty', count: result.value.length }
-   : diagnosticFailure(providers[index], result.reason))
+  const diagnostics: MetadataDiagnostic[] = results.map((result, index) => {
+   const diagnostic: MetadataDiagnostic = result.status === 'fulfilled'
+    ? { source: providers[index], status: result.value.length ? 'ok' : 'empty', count: result.value.length }
+    : diagnosticFailure(providers[index], result.reason)
+   return providers[index] === 'Google Books' && googleSteps.length ? { ...diagnostic, steps: googleSteps } : diagnostic
+  })
   if (!googleKey) diagnostics.push({ source: 'Google Books', status: 'disabled', count: 0 })
   if (results.every(result => result.status === 'rejected')) {
    const failure = results[0]
