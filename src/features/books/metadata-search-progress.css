@@ -1,0 +1,20 @@
+.metadata-search-progress {
+ position: fixed;
+ inset: 50dvh auto auto 50vw;
+ transform: translate(-50%, -50%);
+ margin: 0;
+ box-sizing: border-box;
+ width: min(22rem, calc(100vw - 2rem));
+ padding: 2rem 1.25rem;
+ border: 1px solid var(--line);
+ border-radius: 22px;
+ background: var(--surface);
+ color: var(--ink);
+ text-align: center;
+ box-shadow: 0 8px 32px color-mix(in srgb, var(--ink) 10%, transparent);
+}
+.metadata-search-progress::backdrop { background: color-mix(in srgb, var(--ink) 26%, transparent); backdrop-filter: blur(2px); }
+.metadata-search-progress h2 { margin: 1rem 0 1.4rem; font-size: 1rem; line-height: 1.7; }
+.metadata-search-book { display: inline-flex; color: var(--accent); animation: metadata-book-breathe 1.6s ease-in-out infinite; }
+@keyframes metadata-book-breathe { 50% { transform: translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) { .metadata-search-book { animation: none; } }

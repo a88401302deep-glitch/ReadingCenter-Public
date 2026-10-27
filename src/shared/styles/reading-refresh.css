@@ -1,0 +1,108 @@
+/* Reading journal refinement: content on paper, compact controls. */
+.page-title-line { position: relative; display: flex; align-items: center; gap: .1rem; }
+.page-title-line h1 { margin: 0; }
+.page-title-line .popover { position: static; align-self: center; }
+.sync-indicator { display: grid; place-items: center; width: 36px; height: 44px; padding: 0; border: 0; background: transparent; cursor: pointer; }
+.sync-dot { display: block; width: 8px; height: 8px; border-radius: 50%; background: var(--milk-tea); }
+.is-synced .sync-dot { background: var(--accent-deep); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent); }
+.is-syncing .sync-dot { background: var(--accent); animation: sync-breathe 1.5s ease-in-out infinite; }
+.page-title-line .popover-panel { width: min(340px, calc(100vw - 2rem)); left: 0; right: auto; font-size: .9375rem; font-weight: 400; }
+.page-title-line .sync-status { margin: -1px; }
+@keyframes sync-breathe { 50% { opacity: .4; } }
+.reading-overview-card { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: clamp(1.1rem, 3vw, 1.8rem); margin-bottom: 2rem; }
+.annual-reading-heading { display: flex; align-items: start; justify-content: space-between; gap: .75rem; }
+.annual-reading-heading h2 { display: grid; gap: .5rem; margin: 0; font-family: inherit; font-weight: 400; }
+.annual-reading-heading h2 > span { font-size: 1.0625rem; color: var(--ink-soft); }
+.annual-reading-heading h2 > strong { font-size: clamp(2.5rem, 7vw, 3.5rem); font-weight: 550; font-variant-numeric: tabular-nums; letter-spacing: -.03em; line-height: 1.2; }
+.annual-reading-heading h2 small { font-size: clamp(1rem, 3vw, 1.5rem); font-weight: 400; color: var(--ink-soft); letter-spacing: 0; }
+.annual-reading-heading .button { min-height: 44px; padding: .3rem .5rem; color: var(--ink-soft); font-size: .8125rem; }
+.annual-reading-heading .popover-panel { width: min(290px, calc(100vw - 3rem)); }
+.annual-goal-form { display: grid; gap: .75rem; }
+.annual-goal-form label { display: grid; gap: .4rem; }
+.annual-goal-form input { min-width: 0; width: 100%; }
+.annual-reading-progress { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .8rem; align-items: center; margin: 1.15rem 0 1.4rem; color: var(--ink-soft); font-size: .875rem; font-variant-numeric: tabular-nums; }
+.annual-reading-progress progress, .book-progress progress { width: 100%; height: 8px; display: block; appearance: none; border: 0; border-radius: 10px; overflow: hidden; background: var(--progress-track); color: var(--accent); }
+.annual-reading-progress progress::-webkit-progress-bar, .book-progress progress::-webkit-progress-bar { background: var(--progress-track); border-radius: 10px; }
+.annual-reading-progress progress::-webkit-progress-value, .book-progress progress::-webkit-progress-value { background: var(--accent); border-radius: 10px; }
+.annual-reading-progress progress::-moz-progress-bar, .book-progress progress::-moz-progress-bar { background: var(--accent); border-radius: 10px; }
+.reading-card-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--line); padding-top: 1.1rem; }
+.reading-card-metrics > div { min-width: 0; display: grid; gap: .35rem; text-align: center; padding: 0 .5rem; }
+.reading-card-metrics > div + div { border-left: 1px solid var(--line); }
+.reading-card-metrics > div > span { font-size: .875rem; color: var(--ink-soft); }
+.reading-card-metrics strong { font-size: clamp(1rem, 2vw, 1.4rem); font-weight: 550; font-variant-numeric: tabular-nums; }
+.reading-card-metrics small { font-size: .875rem; font-weight: 400; }
+.reading-overview .recent-book-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: auto; grid-auto-flow: row; gap: 1.5rem; overflow: visible; padding: .5rem .25rem; }
+.reading-overview .recent-book-cards li, .reading-overview .recent-book-cards li:first-child,
+.cover-library .book-list--covers .book-row { border: 0; border-radius: 0; background: transparent; box-shadow: none; padding: 0; }
+.reading-overview .recent-book-cards button { padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; gap: .8rem; width: 100%; }
+.reading-overview .recent-book-cover { padding: 0; border: 0; background: transparent; border-radius: 0; width: 100%; max-width: 180px; margin-inline: auto; }
+.reading-overview .recent-book-cover .book-cover, .cover-library .book-cover-open .book-cover { border: 0; border-radius: 3px 7px 7px 3px; box-shadow: 2px 5px 11px rgb(74 66 62 / .13); }
+.reading-overview .recent-book-info { max-width: 180px; margin-inline: auto; text-align: left; }
+.reading-overview .recent-book-info strong { min-height: 2.9em; }
+.book-progress { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .5rem; align-items: center; min-width: 0; margin-top: .35rem; font-size: .8125rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.book-progress progress { height: 5px; }
+.book-progress-empty { height: 4px; border-radius: 5px; background: var(--progress-track); }
+.book-progress > span:last-child { text-align: right; white-space: nowrap; }
+.cover-library .book-list--covers { gap: 1.6rem 1.25rem; padding: .5rem .25rem; }
+.cover-library .book-cover-open { padding: 0; border: 0; border-radius: 0; background: transparent; }
+.cover-library .book-row-body h3 { margin-top: .2rem; }
+.cover-library .book-completeness, .cover-library .book-completeness.is-missing { padding: .08rem .35rem; border: 0; border-radius: 4px; background: var(--source-bg); color: var(--ink-soft); font-size: .6875rem; line-height: 1.6; }
+.cover-library .book-completeness:not(.is-missing) { background: transparent; color: var(--ink-soft); padding-left: 0; }
+.book-cover--fallback { position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8%; padding: 12%; background: linear-gradient(115deg, var(--paper-deep), var(--surface) 45%, var(--blossom)); color: var(--ink); overflow: hidden; text-align: center; }
+.book-cover--fallback::before { content: ''; position: absolute; inset: 7%; border: 1px solid var(--line); border-radius: 1px; pointer-events: none; }
+.book-cover--fallback .text-cover-rule { width: 24%; height: 1px; flex: 0 0 1px; background: var(--milk-tea); }
+.book-cover--fallback .text-cover-title { font-family: "Noto Serif TC", serif; font-size: clamp(.75rem, 1.5vw, 1.25rem); line-height: 1.75; letter-spacing: .08em; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.book-cover--fallback > small { font-family: Georgia, serif; font-size: .45rem; letter-spacing: .13em; color: var(--ink-soft); }
+.cover-library .library-tools { display: grid; grid-template-columns: minmax(0, 1fr) 44px; gap: .6rem; align-items: center; position: relative; }
+.cover-library .library-tools > .search-field { min-width: 0; width: 100%; margin: 0; }
+.cover-library .library-tools > .popover { position: static; }
+.cover-library .library-filter-trigger { position: relative; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 1px solid var(--line); border-radius: 12px; background: transparent; }
+.library-filter-trigger > span { display: inline-flex; align-items: center; }
+.library-filter-trigger i { position: absolute; top: 6px; right: 6px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+.cover-library .library-tools > .popover > .popover-panel { position: absolute; inset: calc(100% + 8px) 0 auto auto; width: min(460px, calc(100vw - 2rem)); max-height: min(70dvh, 580px); overflow: auto; padding: 1rem; border-radius: 16px; z-index: 30; }
+.filter-panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: .8rem; }
+.filter-panel-heading > span { font-size: .875rem; color: var(--ink-soft); }
+.cover-library .library-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+.cover-library .library-filters label { display: grid; gap: .3rem; font-size: .875rem; }
+.cover-library .library-filters label:last-of-type { grid-column: auto; }
+.cover-library .library-tools > .button { grid-column: 1 / -1; justify-self: start; }
+.summary-book-copy { display: grid; min-width: 0; gap: .2rem; width: 100%; }
+.completed-summary li button { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: .75rem; align-items: center; }
+.summary-book-thumbnail { width: 30px; height: 40px; }
+.summary-book-thumbnail .book-cover { width: 30px; height: 40px; border: 0; border-radius: 2px; box-shadow: 1px 2px 3px rgb(74 66 62 / .09); }
+.summary-book-thumbnail .book-cover--fallback { padding: 4px; }
+.summary-book-thumbnail .text-cover-title { font-size: 5px; line-height: 1.4; }
+.summary-book-thumbnail .text-cover-rule, .summary-book-thumbnail small { display: none; }
+.completed-summary .summary-book-copy { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+.completed-summary .summary-book-copy strong { grid-column: 1 / -1; }
+.summary-completed-tag { color: var(--ink); background: var(--blossom); padding: 0 .3rem; border-radius: 4px; font-size: .6875rem; white-space: nowrap; }
+.reading-overview .overview-statistics { background: transparent; border: 0; padding: 0; }
+.reading-history-card { padding: clamp(1rem, 3vw, 1.5rem); margin-block: 1.5rem; background: var(--surface-raised); border: 1px solid var(--line); border-radius: 20px; }
+.reading-history-heading { display: flex; align-items: center; justify-content: space-between; gap: .8rem; flex-wrap: wrap; }
+.reading-history-heading h3 { margin: 0; font-size: 1.125rem; }
+.reading-history-heading p { margin: .2rem 0; color: var(--ink-soft); font-size: .875rem; }
+.reading-history-card .reading-statistics-navigation { display: flex; gap: .3rem; align-items: center; margin: 0; }
+.reading-history-card .reading-statistics-navigation button { width: 36px; min-height: 44px; padding: 0; border: 0; background: transparent; font-size: 1.5rem; color: var(--ink-soft); }
+.reading-history-card .reading-statistics-navigation input { min-width: 0; max-width: 160px; font-size: 1rem; }
+.reading-history-card .reading-year-heatmap { border: 0; background: transparent; padding-inline: 0; }
+.reading-history-card .reading-calendar { margin-bottom: 0; }
+.overview-distributions > section { padding: 1.1rem; border: 1px solid var(--line); border-radius: 20px; background: var(--surface-raised); min-width: 0; }
+.overview-distribution-list li { display: grid; grid-template-columns: minmax(6rem, .9fr) minmax(0, 1fr) 3.2rem; gap: .7rem; align-items: center; }
+.overview-distribution-list li > span:first-child { grid-column: 1; grid-row: 1; }
+.overview-distribution-list li > strong { grid-column: 3; grid-row: 1; justify-self: end; white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 500; }
+.overview-distribution-list .overview-distribution-track { grid-column: 2; grid-row: 1; height: 12px; border-radius: 20px; background: var(--progress-track); }
+.overview-distribution-list .overview-distribution-track > span { border-radius: 20px; }
+@media (max-width: 640px) {
+ .reading-overview .recent-book-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.4rem 1rem; }
+ .reading-overview .recent-book-cover, .reading-overview .recent-book-info { max-width: 180px; }
+ .reading-overview-card { padding: 1rem; }
+ .reading-card-metrics > div { padding: 0 .3rem; }
+ .reading-card-metrics > div > span { font-size: .8125rem; }
+ .reading-card-metrics strong { font-size: 1rem; }
+ .cover-library .book-list--covers { gap: 1.3rem .85rem; }
+ .overview-distribution-list li { grid-template-columns: minmax(5rem, .9fr) minmax(0, 1fr) 3rem; gap: .5rem; }
+ .reading-history-heading { margin-bottom: 1rem; }
+ .reading-history-card .reading-statistics-navigation { width: 100%; justify-content: space-between; }
+ .reading-history-card .reading-statistics-navigation input { max-width: 180px; }
+}
+@media (prefers-reduced-motion: reduce) { .is-syncing .sync-dot { background: var(--accent); animation: none; } }

@@ -1,0 +1,15 @@
+.photo-review { display: grid; gap: var(--space-3); min-width: 0; }
+.photo-review p { overflow-wrap: anywhere; }
+.photo-review-list { display: grid; gap: var(--space-2); }
+.photo-review-list > div { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.photo-review-list button { overflow-wrap: anywhere; text-align: left; }
+.photo-review-list button[aria-current="true"] { border: 2px solid var(--ink); }
+.photo-review > img { display: block; max-width: 100%; max-height: 380px; object-fit: contain; }
+.photo-review details p { white-space: pre-wrap; }
+.photo-review input[type="checkbox"] { width: auto; flex: none; }
+.photo-review nav[aria-label="同張圖片的書籍候選"] { display: grid; gap: var(--space-2); min-width: 0; }
+.photo-review nav button { max-width: 100%; white-space: normal; overflow-wrap: anywhere; text-align: left; }
+.photo-review input, .photo-review select { min-width: 0; max-width: 100%; box-sizing: border-box; }
+.photo-review input[type="file"] { width: 100%; }
+.photo-review .form-actions, .photo-review .entity-form, .photo-review label { min-width: 0; max-width: 100%; }
+.photo-review .form-actions h2 { overflow-wrap: anywhere; }

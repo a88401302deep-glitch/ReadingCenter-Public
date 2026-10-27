@@ -1,0 +1,35 @@
+name: Bug
+description: 回報可重現且偏離既定規格的問題
+title: "[Bug] "
+body:
+  - type: textarea
+    id: expected
+    attributes:
+      label: 預期行為
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 實際行為
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 重現步驟
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 修復驗收
+      value: |
+        - [ ] 已加入能先失敗、修復後通過的 regression test
+        - [ ] 未破壞既有流程
+    validations:
+      required: true

@@ -1,0 +1,14 @@
+{
+  "note": "Controlled reconstruction of volumeInfo fields from the user's 2026-10-27 keyed diagnostic summaries, not a captured raw API body. No cover or dates were supplied.",
+  "totalItems": 183,
+  "items": [
+    {"id":"JiS9EAAAQBAJ","volumeInfo":{"title":"京都怪奇談","authors":["三木大雲"],"publisher":"讀書共和國╱大牌出版","industryIdentifiers":[{"type":"ISBN_13","identifier":"9786267305126"}]}},
+    {"id":"rZDPEAAAQBAJ","volumeInfo":{"title":"京都怪奇談2","authors":["三木大雲"],"publisher":"讀書共和國╱大牌出版","industryIdentifiers":[{"type":"ISBN_13","identifier":"9786267305812"}]}},
+    {"id":"hPTvEAAAQBAJ","volumeInfo":{"title":"京都怪奇談3","authors":["三木大雲"],"publisher":"讀書共和國╱大牌出版","industryIdentifiers":[{"type":"ISBN_13","identifier":"9786267378342"}]}},
+    {"id":"q6kFEQAAQBAJ","volumeInfo":{"title":"京都怪奇談【幽冥之門篇】","authors":["三木大雲"],"publisher":"讀書共和國╱大牌出版","industryIdentifiers":[{"type":"ISBN_13","identifier":"9786267378915"}]}},
+    {"id":"v7IMEQAAQBAJ","volumeInfo":{"title":"京都怪奇談【宿緣之道篇】","authors":["三木大雲"],"publisher":"讀書共和國╱大牌出版","industryIdentifiers":[{"type":"ISBN_13","identifier":"9786267491119"}]}},
+    {"id":"7Cyr0AEACAAJ","volumeInfo":{"title":"京都怪奇談"}},
+    {"id":"IZv20AEACAAJ","volumeInfo":{"title":"京都怪奇談","authors":["三木大雲"],"industryIdentifiers":[{"type":"ISBN_10","identifier":"6267305791"}]}},
+    {"id":"sDvREQAAQBAJ","volumeInfo":{"title":"佛經預言","authors":["三木大雲"],"publisher":"讀書共和國╱大牌出版","industryIdentifiers":[{"type":"ISBN_13","identifier":"9786267871300"}]}}
+  ]
+}

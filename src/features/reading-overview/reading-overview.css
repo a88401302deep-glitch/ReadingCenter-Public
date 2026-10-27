@@ -1,0 +1,139 @@
+/* Reading overview: books and completion counts lead; secondary data stays compact. */
+.is-reading-overview .page-shell { position: relative; padding-top: 1.5rem; }
+.is-reading-overview .page-heading { margin-bottom: 1rem; }
+.is-reading-overview .page-heading h1 { font-size: clamp(1.65rem, 3vw, 2.2rem); }
+.is-reading-overview .sync-status { margin: -.4rem 0 .8rem; font-size: .9375rem; color: var(--ink-soft); }
+.is-reading-overview .sync-status::before { content: '●'; font-size: .5rem; margin-right: .4rem; }
+.reading-overview { min-width: 0; }
+.overview-counts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.overview-counts > div { display: grid; gap: .15rem; padding: 1rem 1.25rem; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.overview-counts > div:first-child { background: color-mix(in srgb, var(--reading-current-month-color) 16%, var(--surface)); border-color: var(--reading-current-month-color); }
+.overview-counts > div > span { color: var(--ink-soft); font-size: .9375rem; }
+.overview-counts strong { font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 650; line-height: 1.2; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.overview-counts small { font-size: .9375rem; margin-left: .35rem; font-weight: 400; }
+.reading-overview .content-section { margin-top: 1.65rem; }
+.reading-overview .section-heading { min-height: 0; padding-bottom: .65rem; margin-bottom: .9rem; border-bottom-color: var(--line); gap: .75rem; }
+.reading-overview .section-heading h2 { font-size: 1.3rem; letter-spacing: .02em; }
+.reading-overview .section-heading h3 { font-size: 1.1rem; margin: 0; }
+.reading-overview .recent-book-cards { grid-template-columns: none; grid-template-rows: repeat(2, auto); grid-auto-flow: column; grid-auto-columns: calc((100% - 5rem) / 5); gap: 1.25rem; overflow-x: auto; padding-bottom: .65rem; scroll-snap-type: x proximity; }
+.reading-overview .recent-book-cards li { border: 0; border-radius: 0; scroll-snap-align: start; }
+.reading-overview .recent-book-cards button { display: flex; flex-direction: column; gap: .8rem; padding: 0; height: auto; }
+.reading-overview .recent-book-cover { width: 100%; padding: 10px 18px 14px; background: color-mix(in srgb, var(--reading-current-month-color) 10%, var(--surface)); border-radius: 10px; }
+.reading-overview .recent-book-cover .book-cover { box-shadow: 3px 5px 10px rgb(52 49 46 / .17); }
+.reading-overview .recent-book-info { width: 100%; gap: .25rem; font-size: .9375rem; }
+.reading-overview .recent-book-info strong { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 1rem; line-height: 1.45; min-height: 2.9em; }
+.reading-overview .recent-book-info time { font-size: .9375rem; }
+.reading-overview .recent-book-info > span { font-size: .9375rem; }
+.reading-overview .overview-rating { color: var(--accent-deep); }
+.overview-statistics { padding: 1.4rem; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+.overview-statistics .section-heading label { font-size: .9375rem; }
+.overview-year-total { margin: .4rem 0 1.1rem; color: var(--ink-soft); font-size: .9375rem; }
+.overview-year-chart { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 8px; padding: 1rem 0 .5rem; }
+.overview-year-chart > button { min-width: 0; border: 0; padding: 0; background: transparent; font-size: .9375rem; }
+.overview-bar-track { position: relative; display: flex; align-items: flex-end; height: 150px; border-bottom: 1px solid var(--line); margin-bottom: .45rem; }
+.overview-bar { position: relative; display: block; width: 100%; min-height: 2px; max-height: 100%; border-radius: 5px 5px 0 0; }
+.overview-bar > span { position: absolute; bottom: calc(100% + 3px); left: 50%; transform: translateX(-50%); color: var(--ink); font-size: .9375rem; }
+.overview-year-chart > button[aria-pressed="true"] > span:last-child { text-decoration: underline; text-underline-offset: 4px; font-weight: 700; }
+.overview-heatmap-scroll { width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; padding: 3px 2px 9px; }
+.overview-heatmap-grid { min-width: 1140px; }
+.overview-statistics .reading-heatmap-day { height: 18px; aspect-ratio: 1; }
+.overview-heatmap-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem; }
+.overview-heatmap-footer label { font-size: .9375rem; }
+.overview-heatmap-footer .reading-heatmap-legend { margin-block: .6rem; gap: .5rem; font-size: .9375rem; }
+.overview-mobile-hint { display: none; font-size: .9375rem; color: var(--ink-soft); margin: .3rem 0; }
+.overview-statistics .reading-calendar-covers { display: flex; justify-content: center; }
+.overview-statistics .reading-calendar-day { min-height: 110px; }
+.overview-statistics .reading-calendar-indicator { font-size: .9375rem; }
+.overview-distributions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; margin-top: 1.5rem; }
+.overview-distributions h3 { font-size: 1.05rem; margin: .3rem 0 .8rem; }
+.overview-distributions h3 small { font-size: .9375rem; font-weight: 400; color: var(--ink-soft); }
+.overview-distribution-list { list-style: none; padding: 0; margin: 0; display: grid; gap: .8rem; }
+.overview-distribution-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .3rem .5rem; font-size: .9375rem; }
+.overview-distribution-list li > span:first-child { overflow-wrap: anywhere; }
+.overview-distribution-track { grid-column: 1 / -1; height: 8px; border-radius: 9px; background: var(--paper-deep); overflow: hidden; }
+.overview-distribution-track > span { display: block; height: 100%; border-radius: inherit; }
+.overview-empty { color: var(--ink-soft); font-size: .9375rem; }
+.overview-supplement { margin-top: 1.2rem; padding: 1rem 1.15rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.overview-supplement > summary, .overview-method > summary { cursor: pointer; font-size: .95rem; }
+.overview-supplement > summary > span { color: var(--ink-soft); font-size: .9375rem; margin-left: .6rem; }
+.overview-supplement-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.overview-supplement-grid h3 { font-size: 1rem; margin-bottom: .4rem; }
+.overview-supplement-grid p, .overview-supplement details p, .overview-method p { font-size: .9375rem; color: var(--ink-soft); }
+.overview-method { border-top: 1px solid var(--line); padding-top: 1rem; }
+@media (max-width: 700px) {
+  .reading-overview .recent-book-cards { grid-template-columns: none; grid-auto-columns: calc((100% - .85rem) / 2); gap: .85rem; }
+  .reading-overview .recent-book-cover { padding: 8px 12px 10px; }
+  .reading-overview .recent-book-info strong { font-size: 1rem; }
+  .overview-counts { gap: 7px; }
+  .overview-counts > div { padding: .8rem .65rem; }
+  .overview-counts > div > span { font-size: .9375rem; }
+  .overview-counts strong { font-size: 1.85rem; }
+  .overview-counts small { margin-left: .15rem; font-size: .9375rem; }
+  .overview-statistics { padding: 1rem .75rem; }
+  .overview-statistics .section-heading { align-items: flex-start; }
+  .overview-statistics .section-heading h2 { font-size: 1.15rem; }
+  .overview-year-chart { gap: 4px; }
+  .overview-year-chart > button, .overview-bar > span { font-size: .875rem; }
+  .overview-year-chart > button > span:last-child > span { display: block; }
+  .overview-year-chart > button > span:last-child { white-space: nowrap; line-height: 1.25; }
+  .overview-bar-track { height: 125px; }
+  .overview-mobile-hint { display: block; }
+  .overview-statistics .reading-calendar-day { min-height: 82px; padding: 4px 2px; gap: 2px; }
+  .overview-statistics .reading-calendar-covers > span { width: 25px; max-width: 100%; }
+  .overview-statistics .reading-calendar-covers > span:nth-child(n+2) { display: none; }
+  .overview-distributions { grid-template-columns: 1fr; gap: 1.2rem; }
+  .overview-supplement-grid { grid-template-columns: 1fr; gap: 0; }
+}
+@media (max-width: 640px) {
+  .is-reading-overview .page-shell { padding-top: .85rem; }
+  .is-reading-overview .page-heading { margin-bottom: .65rem; padding-right: 44px; }
+  .is-reading-overview .page-heading .eyebrow { font-size: .9375rem; }
+  .is-reading-overview .mobile-create { position: absolute; top: 1.6rem; right: 0; margin: 0; }
+  .is-reading-overview .mobile-create .button { min-height: 38px; width: 38px; padding: 8px; font-size: 0; gap: 0; border-radius: 50%; }
+  .is-reading-overview .mobile-create .button .icon { width: 20px; height: 20px; }
+  .is-reading-overview .sync-status { margin: 0 0 .7rem; font-size: .9375rem; }
+  .reading-overview .content-section { margin-top: 1.3rem; }
+}
+
+
+.overview-recent-controls { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; justify-content: flex-end; }
+.overview-recent-controls button { border: 1px solid var(--line); border-radius: 8px; padding: .4rem .6rem; min-height: 36px; background: var(--surface); font-size: .9375rem; }
+.overview-recent-controls button:disabled { opacity: .45; cursor: default; }
+.overview-distribution-note { margin: -.25rem 0 .8rem; color: var(--ink-soft); font-size: .9375rem; }
+.overview-statistics .reading-calendar.is-empty-month .reading-calendar-day { min-height: 48px; }
+.overview-statistics .reading-calendar.is-empty-month .reading-calendar-indicator,
+.overview-statistics .reading-calendar.is-empty-month .reading-calendar-covers { display: none; }
+.overview-statistics .reading-heatmap-day.has-completions { border-color: color-mix(in srgb, var(--heatmap-color) 80%, var(--ink)); }
+.overview-statistics .reading-heatmap-day:not(.has-completions) { background: var(--surface); }
+.overview-statistics, .overview-recent, .overview-heatmap-scroll { min-width: 0; max-width: 100%; }
+@media (max-width: 700px) {
+  .overview-recent-controls { gap: .3rem; }
+  .overview-recent-controls .count { font-size: .9375rem; }
+  .overview-recent-controls button { min-height: 44px; padding: .4rem .5rem; }
+  .overview-statistics .section-heading { flex-wrap: wrap; }
+  .overview-heatmap-footer input { min-width: 0; max-width: 100%; }
+  .overview-counts strong { font-size: clamp(1.25rem, 6vw, 1.85rem); }
+  .overview-counts > div { min-width: 0; }
+}
+
+.overview-statistics .reading-heatmap-month-labels { font-size: .9375rem; }
+.overview-statistics .reading-heatmap-weekdays { font-size: .875rem; }
+.overview-statistics .reading-calendar-weekday,
+.overview-statistics .reading-calendar-day time { font-size: 1rem; }
+.overview-statistics .reading-statistics-navigation button,
+.overview-statistics .reading-statistics-table { font-size: 1rem; }
+.overview-statistics input { font-size: 1rem; }
+
+
+.overview-secondary-totals { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; margin-top: .75rem; color: var(--ink-soft); font-size: .9375rem; }
+.overview-secondary-totals strong { margin-left: .35rem; color: var(--ink); font-weight: 500; overflow-wrap: anywhere; }
+.reading-overview .home-summary-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 1.65rem; gap: 1rem; }
+.reading-overview .home-summary-panel { min-width: 0; padding: 1rem; border-radius: 12px; }
+.reading-overview .home-summary-panel .section-heading { flex-wrap: wrap; }
+.reading-overview .home-summary-panel button { font-size: 1rem; overflow-wrap: anywhere; }
+.reading-overview .home-summary-panel button > span, .reading-overview .home-summary-panel .count { font-size: .9375rem; }
+.reading-overview .home-summary-excerpt { font-size: 1rem; }
+@media (max-width: 700px) {
+  .reading-overview .home-summary-grid { grid-template-columns: 1fr; }
+  .overview-secondary-totals { gap: .5rem 1rem; }
+}

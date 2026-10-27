@@ -1,0 +1,15 @@
+.backup-export h2 { margin: 0; font-size: 1.05rem; }
+.backup-export p { margin: 0; overflow-wrap: anywhere; }
+.backup-export label { display: flex; align-items: center; gap: var(--space-2); }
+.backup-export input[type="checkbox"] { width: auto; flex: none; }
+.backup-export a { display: inline-flex; padding: var(--space-2) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-sm); color: var(--ink); }
+.backup-table-scroll { overflow-x: auto; }
+.backup-table-scroll table { width: 100%; border-collapse: collapse; }
+.backup-table-scroll th, .backup-table-scroll td { padding: .5rem; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+
+.backup-export label:has(input[type="file"]) { align-items: flex-start; flex-direction: column; }
+.backup-restore { display: grid; gap: var(--space-3); min-width: 0; }
+.backup-restore-row { padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-sm); min-width: 0; }
+.backup-restore-row label { overflow-wrap: anywhere; }
+.backup-restore-row details { margin-top: var(--space-2); }
+.backup-restore-row details p { white-space: pre-wrap; }

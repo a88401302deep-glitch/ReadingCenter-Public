@@ -1,0 +1,39 @@
+name: 可驗收功能
+description: 一次只建立一個可獨立驗收的功能或改善
+title: "[Feature] "
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: 目標
+      description: 完成後使用者能做到什麼？
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: 範圍
+      description: 明確列出包含與不包含項目。
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 驗收條件
+      description: 使用核取方塊列出可觀察、可測試的結果。
+      value: |
+        - [ ]
+    validations:
+      required: true
+  - type: textarea
+    id: tests
+    attributes:
+      label: 測試
+      description: 需要新增或更新哪些 unit、integration、E2E 或 visual tests？
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: 相依與風險
+      description: 前置 Issue、資料遷移、UI 決策或已知風險。
