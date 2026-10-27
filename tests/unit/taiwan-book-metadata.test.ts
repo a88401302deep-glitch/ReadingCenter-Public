@@ -19,7 +19,7 @@ it('reports the verified maintenance redirect while preserving successful zero r
   expect(response.status).toBe(200)
   expect(body).toMatchObject({ partial: true, warnings: ['讀書共和國目前導向官方維護公告，暫時無法搜尋。'] })
   expect(body.diagnostics).toContainEqual({ source: '讀書共和國', status: 'failed', kind: 'maintenance', count: 0 })
-  expect(body.diagnostics).toContainEqual(withGoogle ? { source: 'Google Books', status: 'ok', count: 1 } : { source: 'Google Books', status: 'disabled', count: 0 })
+  expect(body.diagnostics).toContainEqual(withGoogle ? { source: 'Google Books', status: 'ok', count: 1, steps: [{ query: 'title', received: 1, parsed: 1, kept: 1, explicitZero: false }] } : { source: 'Google Books', status: 'disabled', count: 0 })
   expect(body.data).toHaveLength(withGoogle ? 1 : 0)
   expect(fetcher).toHaveBeenCalledTimes(withGoogle ? 3 : 2)
  }

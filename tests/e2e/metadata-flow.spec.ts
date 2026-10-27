@@ -1,5 +1,26 @@
 import { expect, test } from './fixtures'
 
+test('Google empty stage counts explain the result while preserving the unsaved book draft', async ({ page }) => {
+ await page.route('**/api/v1/books/metadata?**', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: [], partial: false, diagnostics: [{ source: 'Google Books', status: 'empty', count: 0, steps: [{ query: 'title', received: 0, parsed: 0, kept: 0, explicitZero: true }, { query: 'general', received: 2, parsed: 1, kept: 0, explicitZero: false }] }] }) }))
+ await page.setViewportSize({ width: 360, height: 780 })
+ await page.goto('/')
+ await page.getByRole('button', { name: '新增書籍', exact: true }).click()
+ await page.getByRole('button', { name: '輸入書名', exact: true }).click()
+ await page.getByLabel('出版書名', { exact: true }).fill('京都怪奇談')
+ await page.getByText('搜尋並補全書籍資料', { exact: true }).click()
+ await page.getByRole('button', { name: '查詢書籍資料', exact: true }).click()
+ for (const width of [360, 1280]) {
+  await page.setViewportSize({ width, height: 780 })
+  await expect(page.getByRole('list', { name: '搜尋來源狀態' })).toContainText('一般補查：收到 2 筆，辨識 1 筆，書名符合 0 筆')
+  await expect(page.getByLabel('出版書名', { exact: true })).toHaveValue('京都怪奇談')
+  await expect(page.getByRole('button', { name: '儲存', exact: true })).toBeEnabled()
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1)
+ }
+ page.once('dialog', dialog => dialog.accept())
+ await page.getByRole('button', { name: '取消', exact: true }).click()
+ await expect(page.locator('.book-form')).toHaveCount(0)
+})
+
 test('publisher maintenance is visible without calling a failed search empty or blocking manual input', async ({ page }) => {
  await page.route('**/api/v1/books/metadata?**', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: [], partial: true, warnings: ['讀書共和國目前導向官方維護公告，暫時無法搜尋。'], diagnostics: [{ source: '讀書共和國', status: 'failed', kind: 'maintenance', count: 0 }, { source: 'Google Books', status: 'ok', count: 7 }] }) }))
  await page.setViewportSize({ width: 360, height: 780 })
