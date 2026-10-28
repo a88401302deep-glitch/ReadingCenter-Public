@@ -582,9 +582,9 @@ body.book-editor-open .modal-backdrop:has(.book-detail) { visibility:hidden; }
 .book-detail .book-detail-personal, .book-detail .reading-content-manager { padding-top:1.25rem; border-top:1px solid var(--line); }
 .book-detail .book-detail-panel-heading h3, .book-detail .reading-content-manager > .section-heading h3 { font-size:1rem; font-weight:500; }
 .book-detail .book-publication-row { padding:.35rem 0; }
-.book-detail .book-detail-panel .button:not(.button--primary):not(.button--danger),
+.book-detail .book-detail-panel .button:not(.button--primary):not(.button--danger):not(.create-action),
 .book-detail .book-detail-cover-actions .button:not(.button--primary),
-.book-detail .cycle-heading-actions .button:not(.button--danger),
+.book-detail .cycle-heading-actions .button:not(.button--danger):not(.create-action),
 .book-detail .content-heading-actions .button,
 .book-detail .content-row-actions .button:not(.button--danger) { background:transparent; }
 .book-detail .book-reading-details h4, .book-detail .cycle-record-details h5 { margin:.5rem 0; font-size:.875rem; font-weight:500; color:var(--ink-soft); }

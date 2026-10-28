@@ -35,7 +35,7 @@ export function BookReadingCycles({ showActions = true, onRecordEditingChange, c
   const unassigned = entries(null)
   const unmatched = records.filter(record => record.cycleId !== null && !cycles.some(cycle => cycle.id === record.cycleId))
   return <div className="book-reading-cycles">
-    {(cycles.length > 0 || showActions) && <div className="section-heading"><h4>每次閱讀</h4>{showActions && <Button size="small" onClick={() => onEdit(null)}>新增一次閱讀</Button>}</div>}
+    {(cycles.length > 0 || showActions) && <div className="section-heading"><h4>每次閱讀</h4>{showActions && <Button className="create-action" size="small" onClick={() => onEdit(null)}>新增一次閱讀</Button>}</div>}
     {cycles.length > 0 && <ol className="cycle-list cycle-list--grouped">{cycles.map(cycle => {
       const ownRecords = entries(cycle.id)
       const progress = cycleProgress(cycle, ownRecords)
