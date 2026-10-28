@@ -128,6 +128,7 @@ export function BookDetail({ book, onDirtyChange, onCoverPendingChange, readingS
       onSubmit={save}
     /></dialog>, document.body)}
     <div ref={viewRef} className="book-detail-view">
+      <div className="book-detail-sidebar">
       <BookDetailCover book={currentBook} author={currentBook.authorIds.map(id => names.get(id)).filter(Boolean).join('、')} busy={busy} onSave={onSave} onPendingChange={onCoverPendingChange} onDirtyChange={value => { setCoverDirty(value); onDirtyChange?.(value || dirty) }} />
       <section className="book-detail-information book-detail-panel" aria-label="書籍資料">
         <div className="book-detail-panel-heading"><h3><Icon name="book" />書籍資訊</h3><Button size="small" disabled={busy || coverDirty} onClick={event => openEditor(event.currentTarget, 'bibliography')}>編輯書籍</Button></div>
@@ -144,6 +145,7 @@ export function BookDetail({ book, onDirtyChange, onCoverPendingChange, readingS
         <div className="book-detail-panel-heading"><p>評分｜{currentBook.rating ? `${currentBook.rating.value}／${currentBook.rating.scale}` : '尚未評分'}</p><Button size="small" disabled={busy || coverDirty} onClick={event => openEditor(event.currentTarget, 'rating')}>編輯評分</Button></div>
         {sourceUrls.length > 0 && <ul className="book-detail-links">{sourceUrls.map(url => <li key={url}><a href={url} target="_blank" rel="noopener noreferrer">{url}</a></li>)}</ul>}
       </section>
+      </div>
     <ReadingCycleManager readingActions={onStatusChange ? <label className="book-detail-status">閱讀狀態<select aria-label="書籍閱讀狀態" disabled={busy} value={readingStatus} onChange={event => void onStatusChange(event.target.value as Exclude<LibraryReadingStatus, 'unknown'>)}><option value="unknown" disabled>未設定</option>{Object.entries(readingStatusLabels).filter(([value]) => value !== 'unknown').map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label> : <p>閱讀狀態｜{readingStatusLabels[readingStatus]}</p>} readingSummary={<BookReadingSummary bookId={book.id} revision={readingRevision} service={overviewService} />} compact revision={syncRevision + readingRevision} bookId={book.id} service={cycleService} recordService={recordService} contentService={contentService} onContentChanged={onContentChanged} onReadingChanged={onReadingChanged} />
     {onDelete && <details className="book-detail-more"><summary>更多操作</summary><Button size="small" variant="danger" onClick={() => onDelete(currentBook)}>刪除書籍</Button></details>}
     </div>
