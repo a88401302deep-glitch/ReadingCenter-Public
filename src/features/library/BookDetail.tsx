@@ -115,7 +115,7 @@ export function BookDetail({ book, onDirtyChange, onCoverPendingChange, readingS
     {editing && createPortal(<dialog ref={editorRef} className="book-detail-editor-dialog" aria-label={editingScope === 'rating' ? '編輯評分' : editingScope === 'personal' ? '編輯我的分類與標籤' : '編輯書籍'}
       onCancel={event => { event.preventDefault(); event.stopPropagation(); cancelEditor() }}
       onKeyDown={event => { if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); cancelEditor() } if (event.key === 'Tab') event.stopPropagation() }}>
-    <BookForm key={editing.revision} scope={editingScope} books={books}
+    <BookForm key={editing.revision} scope={editingScope} inlineMetadataSearch={editingScope === 'all'} books={books}
       restoreView={savedView}
       saveNotice={saved && !dirty ? '已儲存，可繼續編輯。' : undefined}
       book={editing}
@@ -129,7 +129,7 @@ export function BookDetail({ book, onDirtyChange, onCoverPendingChange, readingS
       onSubmit={save}
     /></dialog>, document.body)}
     <div ref={viewRef} className="book-detail-view">
-      <div className="book-detail-tools"><Button size="small" variant="ghost" aria-pressed={managingBook} disabled={busy || coverDirty} onClick={() => setManagingBook(value => !value)}>{managingBook ? '完成書籍管理' : '管理書籍'}</Button></div>
+      <div className="book-detail-tools"><Button className="management-action" size="small" aria-pressed={managingBook} disabled={busy || coverDirty} onClick={event => { if (managingBook) setManagingBook(false); else { setManagingBook(true); openEditor(event.currentTarget, 'all') } }}>{managingBook ? '完成書籍管理' : '管理書籍'}</Button></div>
       <BookDetailCover showActions={managingBook} book={currentBook} author={currentBook.authorIds.map(id => names.get(id)).filter(Boolean).join('、')} busy={busy} onSave={onSave} onPendingChange={onCoverPendingChange} onDirtyChange={value => { setCoverDirty(value); onDirtyChange?.(value || dirty) }} />
       <div className="book-detail-sidebar">
       <section className="book-detail-information book-detail-panel" aria-label="書籍資料">

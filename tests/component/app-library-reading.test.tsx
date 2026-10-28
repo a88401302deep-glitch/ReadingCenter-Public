@@ -40,6 +40,12 @@ describe('library reading entries', () => {
     expect(within(view).getByText('書籍備註直接可讀')).toBeTruthy()
     expect(within(view).getByRole('region', { name: '第 1 次閱讀明細' }).textContent).toContain('20 分鐘')
     expect(view.querySelector('details')).toBeNull()
+      fireEvent.click(within(view).getByRole('button', { name: '管理書籍' }))
+      const directEditor = screen.getByRole('dialog', { name: '編輯書籍' })
+      expect(within(directEditor).getByLabelText('查詢書名')).toBeTruthy()
+      expect(within(directEditor).getByLabelText('出版書名')).toHaveProperty('value', '安靜瀏覽')
+      fireEvent.click(within(directEditor).getByRole('button', { name: '離開書籍編輯' }))
+      fireEvent.click(within(view).getByRole('button', { name: '完成書籍管理' }))
     expect(within(view).queryByRole('combobox')).toBeNull()
     expect(within(view).queryByRole('img', { name: 'ISBN待編輯' })).toBeNull()
     for (const scope of ['書籍', '閱讀', '心得'] as const) {

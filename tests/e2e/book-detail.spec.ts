@@ -26,7 +26,11 @@ for (const width of [320, 360, 768, 1024, 1280, 1440]) test(`single-book section
     expect(Math.abs(coverBounds.x + coverBounds.width / 2 - layoutBounds.x - layoutBounds.width / 2)).toBeLessThan(1)
     expect(titleBounds.y).toBeGreaterThanOrEqual(coverBounds.y + coverBounds.height)
   } else {
-    expect(coverBounds.width).toBe(112)
+    expect(coverBounds.width).toBeGreaterThanOrEqual(200)
+    expect(coverBounds.width).toBeLessThanOrEqual(220)
+    const readingBounds = (await page.locator('.book-detail-reading').boundingBox())!
+    expect(readingBounds.y).toBeLessThanOrEqual(coverBounds.y + 1)
+    expect(readingBounds.x).toBeGreaterThan(coverBounds.x + coverBounds.width)
     expect(titleBounds.x).toBeGreaterThan(coverBounds.x + coverBounds.width)
   }
   await expect(page.locator('.book-detail-view details')).toHaveCount(0)
@@ -46,7 +50,8 @@ for (const width of [320, 360, 768, 1024, 1280, 1440]) test(`single-book section
   if (width >= 1024) {
     expect((await dialog.boundingBox())!.width).toBeGreaterThanOrEqual(width === 1024 ? 970 : 1000)
     expect(right!.x).toBeGreaterThanOrEqual(left!.x + left!.width)
-    expect(Math.abs(right!.y - left!.y)).toBeLessThanOrEqual(1)
+    expect(Math.abs(right!.y - coverBounds.y)).toBeLessThanOrEqual(1)
+    expect(right!.y).toBeLessThan(left!.y)
   } else {
     expect(right!.y).toBeGreaterThanOrEqual(left!.y + left!.height)
   }

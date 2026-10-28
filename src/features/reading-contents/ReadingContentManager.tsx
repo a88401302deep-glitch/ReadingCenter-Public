@@ -71,7 +71,7 @@ export function ReadingContentManager({ browseFirst = false, heading = '閱讀�
   }
 
   return <section className="reading-content-manager" aria-label={heading}>
-    <div className="section-heading"><h3>{heading === '閱讀心得' && <Icon name="editNote" />}{heading}</h3>{browseFirst && <Button size="small" variant="ghost" aria-pressed={managing} disabled={editing !== undefined || deleting !== null} onClick={() => setManaging(value => !value)}>{managing ? '完成心得管理' : '管理心得'}</Button>}{showActions && <div className="content-heading-actions">
+    <div className="section-heading"><h3>{heading === '閱讀心得' && <Icon name="editNote" />}{heading}</h3>{browseFirst && <Button className="management-action" size="small" aria-pressed={managing} disabled={editing !== undefined || deleting !== null} onClick={() => setManaging(value => !value)}>{managing ? '完成心得管理' : '管理心得'}</Button>}{showActions && <div className="content-heading-actions">
       {contents.some((item) => item.type === 'longReview') && <span className="long-review-marker">有長文</span>}
       <Button size="small" onClick={() => openForm(null, 'highlight')}>畫線</Button>
       <Button size="small" onClick={() => openForm(null, 'shortReview')}>短評</Button>

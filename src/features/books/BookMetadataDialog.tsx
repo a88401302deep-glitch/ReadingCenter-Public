@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { Button } from '../../shared/ui/Button'
 import { Icon } from '../../shared/ui/Icon'
 
-export function BookMetadataDialog({ children, disabled = false }: { children: ReactNode; disabled?: boolean }) {
+export function BookMetadataDialog({ children, disabled = false, inline = false }: { children: ReactNode; disabled?: boolean; inline?: boolean }) {
  const [open, setOpen] = useState(false)
  const dialog = useRef<HTMLDialogElement>(null)
  const trigger = useRef<HTMLButtonElement>(null)
@@ -21,6 +21,7 @@ export function BookMetadataDialog({ children, disabled = false }: { children: R
   }
  }, [open])
  const close = () => { if (!disabled) setOpen(false) }
+ if (inline) return <section className="book-metadata-inline" aria-label="搜尋並補全書籍資料"><h3>搜尋並補全書籍資料</h3>{children}</section>
  return <>
   <button ref={trigger} className="button button--secondary button--medium" type="button" disabled={disabled} onClick={() => setOpen(true)}>搜尋並補全書籍資料</button>
   <dialog ref={dialog} className="book-metadata-dialog" aria-labelledby={titleId}
