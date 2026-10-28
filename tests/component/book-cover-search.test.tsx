@@ -1,21 +1,64 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { afterEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { BookCoverSearch } from '../../src/features/books/BookCoverSearch'
 afterEach(() => { cleanup(); vi.unstubAllGlobals() })
+beforeEach(() => {
+ URL.createObjectURL = vi.fn(() => 'blob:cover-preview'); URL.revokeObjectURL = vi.fn()
+ vi.stubGlobal('createImageBitmap', vi.fn(async () => ({ width: 800, height: 1135, close: vi.fn() })))
+})
 it('shows candidates without changing a cover, then stages a file only after selection', async () => {
   const selected = vi.fn()
   const fetcher = vi.fn().mockResolvedValueOnce({ ok: true, json: async () => ({ data: [{ coverId: 12, title: '測試書', authors: ['作者'], previewUrl: 'https://covers.openlibrary.org/b/id/12-M.jpg', sourceUrl: 'https://openlibrary.org/works/OL1W' }] }) }).mockResolvedValueOnce({ ok: true, blob: async () => new Blob(['image'], { type: 'image/jpeg' }) })
   vi.stubGlobal('fetch', fetcher)
   render(<BookCoverSearch title="測試書" author="作者" isbn={null} disabled={false} onSelect={selected} />)
   fireEvent.click(screen.getByText('搜尋封面'))
+  fireEvent.change(screen.getByLabelText('封面候選來源'), { target: { value: 'openlibrary' } })
   fireEvent.click(screen.getByRole('button', { name: '尋找候選封面' }))
-  await screen.findByRole('button', { name: '選用此封面' })
+  await screen.findByRole('button', { name: '預覽此封面' })
   expect(selected).not.toHaveBeenCalled()
-  fireEvent.click(screen.getByRole('button', { name: '選用此封面' }))
+  fireEvent.click(screen.getByRole('button', { name: '預覽此封面' }))
+  await screen.findByText(/原圖：800 × 1135 像素/)
+  expect(selected).not.toHaveBeenCalled()
+  const originalFile = vi.mocked(createImageBitmap).mock.calls[0][0]
+  fireEvent.click(screen.getByRole('button', { name: '採用這張封面' }))
   await waitFor(() => expect(selected).toHaveBeenCalledWith(expect.any(File)))
   expect(fetcher.mock.calls[1][0]).toBe('/api/v1/covers/search/image/12')
+  expect(selected).toHaveBeenCalledWith(originalFile)
+  expect(fetcher).toHaveBeenCalledTimes(2)
   expect(fetcher.mock.calls.every(call => !call[1]?.method || call[1].method === 'GET')).toBe(true)
+})
+it('can abandon an image and search again without staging it or uploading', async () => {
+ const selected = vi.fn(), file = new Blob(['original'], { type: 'image/jpeg' })
+ const candidate = { id: 'gb:v1', source: 'Google Books', title: '京都怪奇談2', authors: ['作者'], publisher: '', isbn: '', publishedOn: '', sourceUrl: 'https://books.google.com/books?id=v1', coverUrl: '/api/v1/books/metadata/cover?google=v1' }
+ const fetcher = vi.fn().mockResolvedValueOnce({ ok: true, json: async () => ({ data: [candidate] }) }).mockResolvedValueOnce({ ok: true, blob: async () => file }).mockResolvedValueOnce({ ok: true, json: async () => ({ data: [] }) })
+ vi.stubGlobal('fetch', fetcher)
+ render(<BookCoverSearch title="京都怪奇談2" author="作者" isbn={null} disabled={false} onSelect={selected} />)
+ fireEvent.click(screen.getByText('搜尋封面'))
+ fireEvent.click(screen.getByRole('button', { name: '尋找候選封面' }))
+ await screen.findByText('來源：Google Books')
+ fireEvent.click(screen.getByRole('button', { name: '預覽此封面' }))
+ await screen.findByRole('button', { name: '採用這張封面' })
+ fireEvent.click(screen.getByRole('button', { name: '放棄這張，選另一張' }))
+ expect(screen.queryByRole('region', { name: '候選封面原圖預覽' })).toBeNull()
+ expect(selected).not.toHaveBeenCalled()
+ fireEvent.click(screen.getByRole('button', { name: '重新找封面' }))
+ await screen.findByText(/查無候選封面/)
+ expect(fetcher.mock.calls[1][0]).toBe(candidate.coverUrl)
+ expect(fetcher.mock.calls.every(call => !call[1]?.method || call[1].method === 'GET')).toBe(true)
+ expect(selected).not.toHaveBeenCalled()
+})
+it('keeps the current cover and reports failures without accepting an unreadable image', async () => {
+ const selected = vi.fn()
+ vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce({ ok: true, json: async () => ({ data: [{ coverId: 12, title: '書', authors: [], sourceUrl: 'https://openlibrary.org/works/OL1W' }] }) }).mockResolvedValueOnce({ ok: false }))
+ render(<BookCoverSearch title="書" author="" isbn={null} disabled={false} onSelect={selected} />)
+ fireEvent.click(screen.getByText('搜尋封面'))
+ fireEvent.change(screen.getByLabelText('封面候選來源'), { target: { value: 'openlibrary' } })
+ fireEvent.click(screen.getByRole('button', { name: '尋找候選封面' }))
+ fireEvent.click(await screen.findByRole('button', { name: '預覽此封面' }))
+ await screen.findByRole('alert')
+ expect(screen.queryByRole('button', { name: '採用這張封面' })).toBeNull()
+ expect(selected).not.toHaveBeenCalled()
 })
 it('keeps the current cover when there are no search results', async () => {
   const selected = vi.fn()

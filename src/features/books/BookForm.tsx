@@ -51,6 +51,9 @@ export function BookForm({ book, busy = false, dictionaries = [], collections = 
   const [rating, setRating] = useState(book?.rating?.value?.toString() ?? '')
   const [cover, setCover] = useState<BookCover | null>(book?.cover ?? null)
   const [coverFile, setCoverFile] = useState<File | null>(null)
+  const [coverBookId] = useState(() => book?.id ?? crypto.randomUUID())
+  const [coverSearchOpen, setCoverSearchOpen] = useState(false)
+  const [coverSize, setCoverSize] = useState<{ src: string; width: number; height: number } | null>(null)
   const [coverPreview, setCoverPreview] = useState('')
   const [coverError, setCoverError] = useState('')
   const [uploadingCover, setUploadingCover] = useState(false)
@@ -84,15 +87,15 @@ export function BookForm({ book, busy = false, dictionaries = [], collections = 
     event.preventDefault()
     if (busy || uploadingCover || previewReadOnly) return
     let savedCover = coverPath.trim() ? (cover?.path === coverPath.trim() ? cover : { path: coverPath.trim(), mimeType: 'image/jpeg' as const }) : null
-    if (coverFile && book) {
+    if (coverFile) {
       setUploadingCover(true); setCoverError('')
       try {
-        savedCover = await uploadBookCover({ id: book.id, title }, coverFile)
+        savedCover = await uploadBookCover({ id: coverBookId, title }, coverFile)
         setCover(savedCover); setCoverPath(savedCover.path); setCoverFile(null); setCoverPreview('')
       } catch (reason) { setCoverError(reason instanceof Error ? reason.message : '封面上傳失敗'); return }
       finally { setUploadingCover(false) }
     }
-    await onSubmit({ wordCountSourceUrl, originalTitle, authorOriginalNames: namesFrom(authorOriginalNamesText), bookForm,
+    await onSubmit({ ...(!book ? { reservedId: coverBookId } : {}), wordCountSourceUrl, originalTitle, authorOriginalNames: namesFrom(authorOriginalNamesText), bookForm,
       translatorNames: translatorNamesText === initialTranslators ? undefined : namesFrom(translatorNamesText), illustratorNames: illustratorNamesText === initialIllustrators ? undefined : namesFrom(illustratorNamesText),
       collectionId: collectionId === '__new' ? null : collectionId === (book?.collectionId ?? '') ? undefined : collectionId || null,
       ...(collectionId === '__new' ? { newSeriesName } : {}),
@@ -120,14 +123,16 @@ export function BookForm({ book, busy = false, dictionaries = [], collections = 
     <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">書籍備註</span><textarea rows={4} value={bookNote} onChange={(e) => setBookNote(e.target.value)} /></label></div>
     <h3 className="book-form-heading">封面與資料查詢</h3>
     <div className="book-cover-editor">
-      {(coverPreview || coverPath) && <img className="book-cover-editor-preview" src={coverPreview || coverPath} alt="封面預覽" />}
+      {(coverPreview || coverPath) && <img key={coverPreview || coverPath} className="book-cover-editor-preview" src={coverPreview || coverPath} alt="封面預覽" onLoad={event => setCoverSize({ src: coverPreview || coverPath, width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight })} />}
+      {coverSize?.src === (coverPreview || coverPath) && <p role="status">目前封面：{coverSize.width} × {coverSize.height} 像素{coverSize.width < 400 ? '（小圖，放大可能模糊）' : ''}{coverFile ? '，尚未儲存' : ''}</p>}
+      <Button disabled={busy || uploadingCover} onClick={() => setCoverSearchOpen(true)}>選擇封面／重新找封面</Button>
       {coverFile && previewReadOnly && <p role="status">封面已選入預覽，尚未上傳。</p>}
-      {book ? <div className="book-field"><span className="field-requirement" aria-hidden="true">完整度必備</span><label><span className="field-caption">選擇封面</span><input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy || uploadingCover} onChange={event => {
+      <div className="book-field"><span className="field-requirement" aria-hidden="true">完整度必備</span><label><span className="field-caption">選擇封面</span><input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy || uploadingCover} onChange={event => {
         const file = event.target.files?.[0]; event.target.value = ''; if (!file) return
         try { validateCoverFile(file); setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); setCoverError('') } catch (reason) { setCoverError(reason instanceof Error ? reason.message : '無效圖片') }
-      }} /></label></div> : <p>儲存書籍後可加入封面。</p>}
-      {book && <BookCoverPaste disabled={busy || uploadingCover} onSelect={file => { setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); setCoverError('') }} />}
-      {book && <BookCoverSearch title={title} author={book.authorIds.map(id => dictionaries.find(item => item.id === id)?.name).filter(Boolean).join(' ')} isbn={book.isbn} disabled={busy || uploadingCover} onSelect={file => { setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); setCoverError('') }} />}
+      }} /></label></div>
+      <BookCoverPaste disabled={busy || uploadingCover} onSelect={file => { setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); setCoverError('') }} />
+      <BookCoverSearch key={coverSearchOpen ? 'open' : 'closed'} title={title} author={authorNamesText.replaceAll('\n', ' ')} isbn={isbn || null} open={coverSearchOpen} onOpenChange={setCoverSearchOpen} disabled={busy || uploadingCover} onSelect={file => { setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); setCoverError('') }} />
       {(coverFile || coverPath) && <Button disabled={busy || uploadingCover} onClick={() => { setCoverFile(null); setCoverPreview(''); setCover(null); setCoverPath(''); setCoverError('') }}>移除封面</Button>}
       <details><summary>封面路徑</summary><div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">封面檔案路徑</span><input placeholder="covers/example.jpg" disabled={busy || uploadingCover} value={coverPath} onChange={(event) => { setCoverPath(event.target.value); setCoverFile(null); setCoverPreview('') }} /></label></div></details>
       {coverError && <FormMessage tone="error">{coverError}</FormMessage>}
@@ -150,7 +155,7 @@ export function BookForm({ book, busy = false, dictionaries = [], collections = 
       if (fields.includes('seriesName') && (replace || !collectionId && !newSeriesName.trim()) && candidate.seriesName) { setCollectionId('__new'); setNewSeriesName(candidate.seriesName); applied = true }
       if (fields.includes('sequenceLabel') && (replace || !sequenceLabel.trim()) && candidate.sequenceLabel) { setSequenceLabel(candidate.sequenceLabel); setSequenceOrder(''); applied = true }
       if (applied) setMetadataSourceUrl(candidate.sourceUrl)
-    }} onCover={book ? file => { setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); setCoverError('') } : undefined} />
+    }} onCover={file => { setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); setCoverError('') }} />
     <h3 className="book-form-heading">出版資訊</h3>
     <div className="book-field"><span className="field-requirement" aria-hidden="true">完整度必備</span><label><span className="field-caption">出版社</span><input maxLength={200} value={publisherName} onChange={event => setPublisherName(event.target.value)} /></label></div>
     <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">ISBN</span><input maxLength={40} value={isbn} onChange={event => setIsbn(event.target.value)} /></label></div>
