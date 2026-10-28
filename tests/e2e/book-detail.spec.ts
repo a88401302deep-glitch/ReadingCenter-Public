@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures'
+import { expect, test, enterManagement } from './fixtures'
 
 for (const width of [320, 360, 768, 1024, 1280, 1440]) test(`single-book sections preserve library context and browser Back at ${width}px`, async ({ page }) => {
   await page.setViewportSize({ width, height: 780 })
@@ -30,6 +30,9 @@ for (const width of [320, 360, 768, 1024, 1280, 1440]) test(`single-book section
     expect(titleBounds.x).toBeGreaterThan(coverBounds.x + coverBounds.width)
   }
   await expect(page.locator('.book-detail-view details')).toHaveCount(0)
+  await expect(page.locator('.book-detail-view').getByRole('button')).toHaveCount(3)
+  await expect(coverLayout.getByRole('button', { name: '上傳', exact: true })).toHaveCount(0)
+  await enterManagement(page, '書籍')
   for (const name of ['尋找', '更換', '上傳']) await expect(coverLayout.getByRole('button', { name, exact: true })).toBeVisible()
   await coverLayout.getByRole('button', { name: '尋找', exact: true }).click()
   await expect(page.getByRole('dialog', { name: '尋找封面', exact: true })).toBeVisible()
@@ -62,7 +65,9 @@ for (const width of [320, 360, 768, 1024, 1280, 1440]) test(`single-book section
     await expect(panel.locator('h3 svg').first()).toBeVisible()
   }
   await expect(dialog.getByText('匯入原始資料', { exact: true })).toHaveCount(0)
+  await enterManagement(page, '書籍')
   await dialog.getByRole('button', { name: '編輯書籍' }).scrollIntoViewIfNeeded()
+  await enterManagement(page, '書籍')
   await expect(dialog.getByRole('button', { name: '編輯書籍' })).toBeInViewport()
   const metadata = dialog.locator('.book-publication-list')
   await expect(metadata.locator('.book-publication-row')).toHaveCount(13)
@@ -89,6 +94,7 @@ test('book note can be edited from the single-book view at 360px', async ({ page
   await page.getByLabel('出版書名', { exact: true }).fill('手機單書測試')
   await page.getByRole('button', { name: '儲存', exact: true }).click()
   await page.getByRole('button', { name: /^開啟《/ }).click()
+  await enterManagement(page, '書籍')
   await page.getByRole('button', { name: '編輯書籍' }).click()
   await page.getByLabel('書籍備註').fill('手機可編輯的書籍備註')
   await page.getByRole('button', { name: '儲存', exact: true }).click()
@@ -120,6 +126,7 @@ for (const textScale of [1, 2]) test(`long imported metadata fits without horizo
   const bounds = await dialog.boundingBox()
   expect(bounds!.x).toBeGreaterThanOrEqual(0)
   expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width + 1)
+  await enterManagement(page, '書籍')
   await page.getByRole('button', { name: '編輯書籍' }).click()
   await expect(page.locator('.book-form')).toBeVisible()
   await expect.poll(() => dialog.evaluate((node) => node.scrollWidth - node.clientWidth)).toBeLessThanOrEqual(1)
@@ -138,6 +145,7 @@ test('book source links can be saved, edited, and explicitly cleared', async ({ 
   await page.getByRole('button', { name: /^開啟《/ }).click()
   await expect(page.getByRole('link', { name: 'https://example.com/book', exact: true })).toHaveAttribute('href', 'https://example.com/book')
   await expect(page.getByRole('link', { name: 'https://example.com/second', exact: true })).toBeVisible()
+  await enterManagement(page, '書籍')
   await page.getByRole('button', { name: '編輯我的分類' }).click()
   await page.getByLabel('書籍網址（每行一個）').fill('')
   await page.getByRole('button', { name: '儲存', exact: true }).click()

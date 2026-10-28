@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures'
+import { expect, test, enterManagement } from './fixtures'
 
 for (const width of [360, 1280]) test(`book editor retains context and fits the dialog at ${width}px`, async ({ page }) => {
   await page.setViewportSize({ width, height: 780 })
@@ -12,6 +12,7 @@ for (const width of [360, 1280]) test(`book editor retains context and fits the 
   await page.locator('.book-cover-open').first().click()
   const dialog = page.getByRole('dialog')
   await expect(dialog.locator('details')).toHaveCount(0)
+  await enterManagement(page, '書籍')
   await dialog.evaluate(node => { node.scrollTop = 120 })
   const originalTop = await dialog.evaluate(node => node.scrollTop)
   expect(originalTop).toBeGreaterThan(0)
@@ -75,6 +76,7 @@ for (const width of [360, 1280]) test(`book editor retains context and fits the 
   await page.reload()
   await page.getByRole('button', { name: '書庫', exact: true }).click()
   await page.locator('.book-cover-open').first().click()
+  await enterManagement(page, '書籍')
   await page.getByRole('button', { name: '編輯書籍', exact: true }).click()
   await expect(page.getByLabel('書籍字數')).toHaveValue('123457')
   await expect(page.locator('.book-form').getByRole('textbox', { name: '書籍備註', exact: true })).toHaveValue('https://example.com/' + 'longnote'.repeat(40))
@@ -115,6 +117,7 @@ test('mobile book fields scroll without losing the save and cancel actions', asy
   await page.reload()
   await page.getByRole('button', { name: '書庫', exact: true }).click()
   await page.locator('.book-cover-open').first().click()
+  await enterManagement(page, '書籍')
   await page.getByRole('button', { name: '編輯書籍', exact: true }).click()
   await expect(page.locator('.book-form').getByRole('textbox', { name: '書籍備註', exact: true })).toHaveValue('長表單末端的備註')
   await page.getByText('原文書名、譯者與繪者', { exact: true }).click()

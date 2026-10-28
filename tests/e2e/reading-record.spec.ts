@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures'
+import { expect, test, enterManagement } from './fixtures'
 
 test('manages a reading record in the compact cycle popover', async ({ page }) => {
   await page.goto('/')
@@ -7,9 +7,11 @@ test('manages a reading record in the compact cycle popover', async ({ page }) =
   await page.getByLabel('出版書名', { exact: true }).fill('閱讀紀錄測試')
   await page.getByRole('button', { name: '儲存', exact: true }).click()
   await page.getByRole('button', { name: /^開啟《/ }).click()
+  await enterManagement(page, '閱讀')
   await page.getByRole('button', { name: '新增一次閱讀' }).click()
   await page.getByRole('button', { name: '儲存', exact: true }).click()
   const cycle = page.locator('.cycle-list li').first()
+  await enterManagement(page, '閱讀')
   await cycle.getByRole('button', { name: '更新閱讀紀錄（0）' }).click()
   await page.getByRole('button', { name: '新增紀錄' }).click()
   await page.getByLabel('開始時間').fill('2026-09-14T20:00')

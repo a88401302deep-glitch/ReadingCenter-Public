@@ -1,9 +1,13 @@
 // @vitest-environment jsdom
+import { enterManagement } from './book-management-test-helpers'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReadingCenterRepositories } from '../../src/data'
 import { App } from '../../src/app/App'
 import { BookService } from '../../src/features/books/book-service'
+import { ReadingCycleService } from '../../src/features/reading-cycles/reading-cycle-service'
+import { ReadingRecordService } from '../../src/features/reading-records/reading-record-service'
+import { ReadingContentService } from '../../src/features/reading-contents/reading-content-service'
 
 const state = vi.hoisted(() => ({ repositories: undefined as ReadingCenterRepositories | undefined }))
 vi.mock('../../src/data', async (importOriginal) => {
@@ -19,6 +23,42 @@ beforeEach(async () => {
 })
 
 describe('library reading entries', () => {
+  it('shows only three management entries while records and reviews remain visible without changing data', async () => {
+    const repositories = state.repositories!
+    const book = await new BookService(repositories).create({ title: '安靜瀏覽', mediaTypeId: 'ebook', bookNote: '書籍備註直接可讀' })
+    const cycle = await new ReadingCycleService(repositories).create(book.id, { status: 'reading', reportedDurationMinutes: 100 })
+    await new ReadingRecordService(repositories).create(book.id, { cycleId: cycle.id, startedAt: '2026-10-02T10:30:00Z', durationMinutes: 20, progress: { unit: 'percent', value: 40 } })
+    await new ReadingContentService(repositories).create(book.id, { type: 'shortReview', text: '內容可以直接閱讀' })
+    const snapshot = () => Promise.all([repositories.books.getAll(), repositories.readingCycles.getAll(), repositories.readingRecords.getAll(), repositories.readingContents.getAll()])
+    const before = await snapshot()
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: '書庫' }))
+    fireEvent.click(await screen.findByRole('button', { name: '開啟《安靜瀏覽》' }))
+    await screen.findByText('內容可以直接閱讀')
+    const view = document.querySelector('.book-detail-view') as HTMLElement
+    expect(within(view).getAllByRole('button').map(button => button.textContent)).toEqual(['管理書籍', '管理閱讀', '管理心得'])
+    expect(within(view).getByText('書籍備註直接可讀')).toBeTruthy()
+    expect(within(view).getByRole('region', { name: '第 1 次閱讀明細' }).textContent).toContain('20 分鐘')
+    expect(view.querySelector('details')).toBeNull()
+    expect(within(view).queryByRole('combobox')).toBeNull()
+    expect(within(view).queryByRole('img', { name: 'ISBN待編輯' })).toBeNull()
+    for (const scope of ['書籍', '閱讀', '心得'] as const) {
+      enterManagement(scope)
+      expect(within(view).getByRole('button', { name: `完成${scope}管理` })).toBeTruthy()
+      fireEvent.click(within(view).getByRole('button', { name: `完成${scope}管理` }))
+      expect(within(view).getAllByRole('button')).toHaveLength(3)
+      expect(within(view).getByText('內容可以直接閱讀')).toBeTruthy()
+    }
+    enterManagement('心得')
+    fireEvent.click(within(view).getByRole('button', { name: '短評' }))
+    fireEvent.change(screen.getByLabelText('短評內容'), { target: { value: '未儲存的心得草稿' } })
+    expect(within(view).getByRole('button', { name: '完成心得管理' })).toHaveProperty('disabled', true)
+    expect(screen.getByLabelText('短評內容')).toHaveProperty('value', '未儲存的心得草稿')
+    fireEvent.click(within(document.querySelector('.content-form') as HTMLElement).getByRole('button', { name: '取消' }))
+    fireEvent.click(within(view).getByRole('button', { name: '完成心得管理' }))
+    expect(within(view).getAllByRole('button')).toHaveLength(3)
+    expect(await snapshot()).toEqual(before)
+  })
   it('keeps publication data separate from reading facts without writing while browsing', async () => {
     const book = await new BookService(state.repositories!, () => 'sections-book').create({ title: '分區檢查', mediaTypeId: 'ebook', sourceUrls: ['https://example.com/source'], bookNote: '這是書籍備註' })
     const before = await state.repositories!.books.getById(book.id)
@@ -34,9 +74,10 @@ describe('library reading entries', () => {
     expect(within(personal).getByRole('heading', { name: '標籤' })).toBeTruthy()
     expect(within(information).queryByRole('button', { name: '短評' })).toBeNull()
     expect(within(reading).getByRole('region', { name: '單書閱讀統計' })).toBeTruthy()
+    enterManagement('心得')
     expect(within(writing).getByRole('button', { name: '短評' })).toBeTruthy()
     expect(information.querySelector('.book-detail-publication')).toBeNull()
-    expect(within(information).getByRole('img', { name: 'ISBN待編輯' })).toBeTruthy()
+    expect(within(information).getByText('ISBN').parentElement?.textContent).toContain('未提供')
     expect(within(personal).getByRole('link', { name: 'https://example.com/source' })).toBeTruthy()
     expect(within(information).getByText('這是書籍備註')).toBeTruthy()
     await waitFor(() => expect(within(reading).queryByRole('status')).toBeNull())
@@ -51,6 +92,7 @@ describe('library reading entries', () => {
     render(<App />)
     fireEvent.click(screen.getByRole('button', { name: '書庫' }))
     fireEvent.click(await screen.findByRole('button', { name: /^開啟《/ }))
+    enterManagement('閱讀')
     fireEvent.click(screen.getByRole('button', { name: '更新未分次紀錄（0）' }))
     fireEvent.click(screen.getByRole('button', { name: '新增紀錄' }))
     const recordForm = document.querySelector('.record-form') as HTMLElement
@@ -61,7 +103,9 @@ describe('library reading entries', () => {
     fireEvent.click(within(recordForm).getByRole('button', { name: '儲存' }))
     await waitFor(() => expect(document.querySelector('.record-form')).toBeNull())
     expect(await state.repositories!.readingRecords.getAll()).toEqual([expect.objectContaining({ bookId: book.id, startedAt: new Date('2026-10-04T10:30').toISOString(), durationMinutes: 25, progress: { unit: 'percent', value: 40 }, cycleId: null })])
+    enterManagement('閱讀')
     fireEvent.click(screen.getByRole('button', { name: '更新未分次紀錄（1）' }))
+    enterManagement('心得')
     fireEvent.click(screen.getByRole('button', { name: '短評' }))
     const reviewForm = document.querySelector('.content-form') as HTMLElement
     fireEvent.change(within(reviewForm).getByLabelText('短評內容'), { target: { value: '沒有確切日期的心得' } })
@@ -76,6 +120,7 @@ describe('library reading entries', () => {
     render(<App />)
     fireEvent.click(screen.getByRole('button', { name: '書庫' }))
     fireEvent.click(await screen.findByRole('button', { name: /^開啟《/ }))
+    enterManagement('閱讀')
     fireEvent.click(screen.getByRole('button', { name: '更新未分次紀錄（0）' }))
     fireEvent.click(screen.getByRole('button', { name: '新增紀錄' }))
     const form = document.querySelector('.record-form') as HTMLElement

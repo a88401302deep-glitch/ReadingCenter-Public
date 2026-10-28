@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { enterManagement } from './book-management-test-helpers'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReadingCenterRepositories } from '../../src/data'
@@ -29,6 +30,7 @@ describe('App reading entry regression', () => {
     fireEvent.click(await screen.findByRole('button', { name: /^開啟《/ }))
     const detail = await screen.findByRole('dialog')
     expect(detail.querySelector('details')).toBeNull()
+    enterManagement('閱讀')
     fireEvent.click(within(detail).getByRole('button', { name: '更新未分次紀錄（0）' }))
     fireEvent.click(screen.getByRole('button', { name: '新增紀錄' }))
     fireEvent.change(screen.getByLabelText('開始時間'), { target: { value: new Date().toISOString().slice(0, 16) } })
@@ -36,7 +38,9 @@ describe('App reading entry regression', () => {
     fireEvent.click(screen.getByRole('button', { name: '儲存' }))
     await waitFor(() => expect(within(detail).getByLabelText('單書閱讀統計').textContent).toContain('18 分鐘'))
     expect((await repositories.readingRecords.getAll())[0]).toMatchObject({ bookId: book.id, durationMinutes: 18 })
+    enterManagement('閱讀')
     fireEvent.click(within(detail).getByRole('button', { name: '更新未分次紀錄（1）' }))
+    enterManagement('心得')
     fireEvent.click(within(detail).getByRole('button', { name: '長篇心得' }))
     fireEvent.change(screen.getByLabelText('長篇心得內容'), { target: { value: '長篇心得可以儲存' } })
     fireEvent.click(screen.getByRole('button', { name: '儲存' }))
@@ -66,12 +70,15 @@ describe('App reading entry regression', () => {
     const detail = await screen.findByRole('dialog')
     expect(detail.querySelector('details')).toBeNull()
     expect(within(detail).getByLabelText('單書閱讀統計').textContent).toContain('30 分鐘')
-    expect(within(detail).getByRole('button', { name: '更新未分次紀錄（1）' })).toBeTruthy()
+    enterManagement('閱讀')
+    expect(await within(detail).findByRole('button', { name: '更新未分次紀錄（1）' })).toBeTruthy()
+    enterManagement('閱讀')
     fireEvent.click(within(detail).getByRole('button', { name: '新增一次閱讀' }))
     fireEvent.change(within(detail).getByLabelText('閱讀天數'), { target: { value: '7' } })
     fireEvent.click(within(detail).getByRole('button', { name: '儲存' }))
     await within(detail).findByText('7 天')
     expect((await repositories.readingCycles.getAll())[0].reportedReadingDays).toBe(7)
+    enterManagement('心得')
     fireEvent.click(within(detail).getByRole('button', { name: '短評' }))
     fireEvent.change(within(detail).getByLabelText('短評內容'), { target: { value: '可操作的短評' } })
     fireEvent.click(within(detail).getByRole('button', { name: '儲存' }))
@@ -94,6 +101,7 @@ describe('App reading entry regression', () => {
     render(<App />)
     fireEvent.click(screen.getByRole('button', { name: '書庫' }))
     fireEvent.click(await screen.findByRole('button', { name: /^開啟《/ }))
+    enterManagement('書籍')
     fireEvent.click(screen.getByRole('button', { name: '編輯評分' }))
     fireEvent.change(screen.getByLabelText('評分', { exact: true }), { target: { value: '4' } })
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)

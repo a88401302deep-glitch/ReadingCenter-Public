@@ -3,16 +3,21 @@ import type { ReadingProgress, ReadingRecord } from '../../domain'
 import { Button, FormMessage, Popover } from '../../shared/ui'
 import { ReadingRecordService } from './reading-record-service'
 
-interface Props { onMarkCompleted?: () => void; triggerLabel?: string; revision?: number; bookId: string; cycleId: string | null; cycleSequence?: number; onChanged?: () => void; service: ReadingRecordService }
+interface Props { onEditingChange?: (cycleId: string | null, active: boolean) => void; onMarkCompleted?: () => void; triggerLabel?: string; revision?: number; bookId: string; cycleId: string | null; cycleSequence?: number; onChanged?: () => void; service: ReadingRecordService }
 type ProgressUnit = ReadingProgress['unit']
 
 const toInput = (value: string | null) => value?.slice(0, 16) ?? ''
 const toIso = (value: string) => new Date(value).toISOString()
 
-export function ReadingRecordPopover({ onMarkCompleted, triggerLabel = '手動補登', revision = 0, bookId, cycleId, cycleSequence, onChanged, service }: Props) {
+export function ReadingRecordPopover({ onEditingChange, onMarkCompleted, triggerLabel = '手動補登', revision = 0, bookId, cycleId, cycleSequence, onChanged, service }: Props) {
   const [records, setRecords] = useState<ReadingRecord[]>([])
   const [editing, setEditing] = useState<ReadingRecord | null | undefined>(undefined)
   const [deleting, setDeleting] = useState<ReadingRecord | null>(null)
+  const editingActive = editing !== undefined || deleting !== null
+  useEffect(() => {
+    onEditingChange?.(cycleId, editingActive)
+    return () => onEditingChange?.(cycleId, false)
+  }, [cycleId, editingActive, onEditingChange])
   const [startedAt, setStartedAt] = useState('')
   const [endedAt, setEndedAt] = useState('')
   const [duration, setDuration] = useState('')

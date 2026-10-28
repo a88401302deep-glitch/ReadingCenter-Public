@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures'
+import { expect, test, enterManagement } from './fixtures'
 
 for (const width of [360, 1280]) {
  test(`reading notes edit and delete in centered dialogs without losing position at ${width}px`, async ({ page }) => {
@@ -9,9 +9,11 @@ for (const width of [360, 1280]) {
   await page.getByLabel('出版書名', { exact: true }).fill('閱讀筆記同步測試')
   await page.getByRole('button', { name: '儲存', exact: true }).click()
   await page.getByRole('button', { name: /^開啟《/ }).click()
+  await enterManagement(page, '心得')
   await page.getByRole('button', { name: '短評', exact: true }).click()
   await page.getByLabel('短評內容').fill('剛新增的短評')
   await page.getByRole('button', { name: '儲存', exact: true }).click()
+  await enterManagement(page, '心得')
   await page.getByRole('button', { name: '長篇心得', exact: true }).click()
   await page.getByLabel('標題', { exact: true }).fill('長篇心得高度檢查')
   await page.getByLabel('長篇心得內容').fill(Array.from({ length: 15 }, (_, i) => `第${i + 1}行心得`).join('\n'))

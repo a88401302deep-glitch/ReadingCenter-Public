@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures'
+import { expect, test, enterManagement } from './fixtures'
 for (const width of [360, 1280]) test(`home progress updates without duration or completion at ${width}px`, async ({ page }) => {
   await page.setViewportSize({ width, height: 780 })
   await page.goto('/')
@@ -7,6 +7,7 @@ for (const width of [360, 1280]) test(`home progress updates without duration or
   await page.getByLabel('出版書名', { exact: true }).fill('進度快捷驗收')
   await page.getByRole('button', { name: '儲存', exact: true }).click()
   await page.locator('.book-cover-open').first().click()
+  await enterManagement(page, '閱讀')
   await page.getByRole('button', { name: '更新未分次紀錄（0）' }).click()
   await page.getByRole('button', { name: '新增紀錄', exact: true }).click()
   const record = page.locator('.record-form')
@@ -15,6 +16,7 @@ for (const width of [360, 1280]) test(`home progress updates without duration or
   await record.getByLabel('目前進度').fill('20')
   await record.getByRole('button', { name: '儲存', exact: true }).click()
   await expect(record).toHaveCount(0)
+  await enterManagement(page, '閱讀')
   await page.getByRole('button', { name: '更新未分次紀錄（1）' }).click()
   await page.getByRole('button', { name: '關閉', exact: true }).click()
   await page.getByRole('button', { name: '閱讀', exact: true }).click()
@@ -77,8 +79,10 @@ for (const width of [360, 1280]) test(`home progress updates without duration or
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1)
   await page.getByRole('button', { name: '書庫', exact: true }).click()
   await page.locator('.book-cover-open').first().click()
+  await enterManagement(page, '閱讀')
   await expect(page.getByLabel('書籍閱讀狀態')).toHaveValue('reading')
   const summary = page.getByRole('region', { name: '單書閱讀統計' })
   await expect(summary).toContainText('20 分鐘'); await expect(summary).toContainText('否')
+  await enterManagement(page, '閱讀')
   await expect(page.getByRole('button', { name: '更新未分次紀錄（4）' })).toBeVisible()
 })

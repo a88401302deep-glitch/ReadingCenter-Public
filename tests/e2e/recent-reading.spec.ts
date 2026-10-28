@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures'
+import { expect, test, enterManagement } from './fixtures'
 
 test('a dated reading cycle appears without creating daily activities', async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 780 })
@@ -8,6 +8,7 @@ test('a dated reading cycle appears without creating daily activities', async ({
   await page.getByLabel('出版書名', { exact: true }).fill('只有閱讀週期的書')
   await page.getByRole('button', { name: '儲存', exact: true }).click()
   await page.getByRole('button', { name: /^開啟《/ }).click()
+  await enterManagement(page, '閱讀')
   await page.getByRole('button', { name: '新增一次閱讀', exact: true }).click()
   await page.locator('.cycle-form').getByRole('combobox').selectOption('completed')
   await page.getByLabel('結束時間', { exact: true }).fill('2026-10-04T10:30')
@@ -43,6 +44,7 @@ for (const width of [360, 1280]) test(`recent cover opens a centered lightbox ov
   await expect(page.locator('.book-form')).toHaveCount(0)
   await page.locator('.book-cover-open').first().click()
   await expect(page.getByRole('region', { name: '書籍封面' }).getByRole('img')).toHaveAttribute('src', '/test-preview-cover.svg')
+  await enterManagement(page, '閱讀')
   await page.getByRole('button', { name: '更新未分次紀錄（0）' }).click()
   await page.getByRole('button', { name: '新增紀錄', exact: true }).click()
   const form = page.locator('.record-form')
@@ -50,6 +52,7 @@ for (const width of [360, 1280]) test(`recent cover opens a centered lightbox ov
   await form.getByLabel('閱讀時間（分鐘）').fill('20')
   await form.getByRole('button', { name: '儲存', exact: true }).click()
   await expect(form).toHaveCount(0)
+  await enterManagement(page, '閱讀')
   await page.getByRole('button', { name: '更新未分次紀錄（1）' }).click()
   await page.getByRole('button', { name: '關閉', exact: true }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
