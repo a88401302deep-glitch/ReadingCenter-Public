@@ -92,6 +92,94 @@ it.each([301, 302, 303, 307, 308])('rejects HTTP %i redirects without following 
  expect(google).toHaveBeenCalledTimes(2)
 })
 
+// Minimal dimension headers; the proxy reads dimensions without decoding pixels.
+const jpegHeader = (width: number, height: number, marker = 0xc0) => new Uint8Array([255, 216, 255, marker, 0, 7, 8, height >> 8, height & 255, width >> 8, width & 255, 255, 217])
+it('requests a larger Google cover for the same volume and preserves its image bytes', async () => {
+ const original = jpegHeader(128, 182), bytes = jpegHeader(800, 1135, 0xc2)
+ const signals: (AbortSignal | null | undefined)[] = []
+ const fetcher = vi.fn(async (input: URL | string | Request, init?: RequestInit) => {
+  const target = new URL(String(input))
+  expect(target.origin).toBe('https://books.google.com')
+  expect(target.pathname).toBe('/books/content')
+  const large = target.searchParams.get('zoom') === '0'
+  expect(Object.fromEntries(target.searchParams)).toEqual({ id: 'volume1', printsec: 'frontcover', img: '1', zoom: large ? '0' : '1', ...(large ? { w: '800' } : {}), source: 'gbs_api' })
+  expect(init?.redirect).toBe('manual')
+  expect(init?.signal).toBeInstanceOf(AbortSignal)
+  expect(init?.headers).toBeUndefined()
+  signals.push(init?.signal)
+  return new Response(large ? bytes : original, { headers: { 'Content-Type': 'image/jpeg' } })
+ })
+ const response = await handleBookMetadataSearch(new Request('https://app.test/api/v1/books/metadata/cover?google=volume1&zoom=1&w=9999&url=https://private.test', { headers: { Cookie: 'private-session' } }), 'private-key', fetcher)
+ expect(response.status).toBe(200)
+ expect(response.headers.get('Content-Type')).toBe('image/jpeg')
+ expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff')
+ expect(new Uint8Array(await response.arrayBuffer())).toEqual(bytes)
+ expect(fetcher).toHaveBeenCalledTimes(2)
+ expect(signals[0]).toBe(signals[1])
+})
+it.each([
+ ['cropped banner', jpegHeader(800, 350)],
+ ['same thumbnail', jpegHeader(128, 182)],
+ ['smaller image', jpegHeader(64, 91)],
+ ['unrecognized image', new Uint8Array([1, 2, 3])],
+])('keeps the complete original when the larger Google image is a %s', async (_name, bytes) => {
+ const original = jpegHeader(128, 182)
+ const fetcher = vi.fn().mockResolvedValueOnce(new Response(original, { headers: { 'Content-Type': 'image/jpeg' } })).mockResolvedValueOnce(new Response(bytes, { headers: { 'Content-Type': 'image/jpeg' } }))
+ const response = await handleBookMetadataSearch(new Request('https://app.test/api/v1/books/metadata/cover?google=volume1'), undefined, fetcher)
+ expect(response.status).toBe(200)
+ expect(new Uint8Array(await response.arrayBuffer())).toEqual(original)
+ expect(fetcher).toHaveBeenCalledTimes(2)
+})
+it.each(['http', 'redirect', 'mime', 'oversize', 'network'])('keeps the original if the larger Google cover fails with %s', async failure => {
+ const original = jpegHeader(128, 182)
+ const fetcher = vi.fn().mockResolvedValueOnce(new Response(original, { headers: { 'Content-Type': 'image/jpeg' } })).mockImplementationOnce(async () => {
+  if (failure === 'network') throw new TypeError('upstream unavailable')
+  return new Response('unusable', { status: failure === 'http' ? 404 : failure === 'redirect' ? 302 : 200, headers: { 'Content-Type': failure === 'mime' ? 'text/html' : 'image/jpeg', ...(failure === 'oversize' ? { 'Content-Length': String(10 * 1024 * 1024 + 1) } : {}), Location: 'https://private.test' } })
+ })
+ const response = await handleBookMetadataSearch(new Request('https://app.test/api/v1/books/metadata/cover?google=volume1'), undefined, fetcher)
+ expect(response.status).toBe(200)
+ expect(new Uint8Array(await response.arrayBuffer())).toEqual(original)
+ expect(fetcher).toHaveBeenCalledTimes(2)
+})
+it('does not replace a cover whose dimensions cannot safely be identified', async () => {
+ const original = new Uint8Array([255, 216, 255, 224, 255, 255])
+ const fetcher = vi.fn(async () => new Response(original, { headers: { 'Content-Type': 'image/jpeg' } }))
+ const response = await handleBookMetadataSearch(new Request('https://app.test/api/v1/books/metadata/cover?google=volume1'), undefined, fetcher)
+ expect(new Uint8Array(await response.arrayBuffer())).toEqual(original)
+ expect(fetcher).toHaveBeenCalledTimes(1)
+})
+it('accepts a complete larger PNG cover without converting the image', async () => {
+ const pngHeader = (width: number, height: number) => {
+  const bytes = new Uint8Array(24), view = new DataView(bytes.buffer)
+  bytes.set([137, 80, 78, 71, 13, 10, 26, 10])
+  view.setUint32(12, 0x49484452); view.setUint32(16, width); view.setUint32(20, height)
+  return bytes
+ }
+ const original = pngHeader(128, 182), larger = pngHeader(800, 1135)
+ const fetcher = vi.fn().mockResolvedValueOnce(new Response(original, { headers: { 'Content-Type': 'image/png' } })).mockResolvedValueOnce(new Response(larger, { headers: { 'Content-Type': 'image/png' } }))
+ const response = await handleBookMetadataSearch(new Request('https://app.test/api/v1/books/metadata/cover?google=volume1'), undefined, fetcher)
+ expect(response.headers.get('Content-Type')).toBe('image/png')
+ expect(new Uint8Array(await response.arrayBuffer())).toEqual(larger)
+ expect(fetcher).toHaveBeenCalledTimes(2)
+})
+it.each(['../private', 'https://private.test', 'x'.repeat(81)])('rejects invalid Google cover id %s without an upstream request', async id => {
+ const fetcher = vi.fn()
+ const response = await handleBookMetadataSearch(new Request('https://app.test/api/v1/books/metadata/cover?google=' + encodeURIComponent(id)), undefined, fetcher)
+ expect(response.status).toBe(400)
+ expect(fetcher).not.toHaveBeenCalled()
+})
+it.each([
+ { mime: 'text/html', bytes: 0 },
+ { mime: 'image/svg+xml', bytes: 0 },
+ { mime: 'image/jpeg', bytes: 10 * 1024 * 1024 + 1 },
+])('keeps Google cover MIME and size protections: %j', async ({ mime, bytes }) => {
+ const headers = new Headers({ 'Content-Type': mime })
+ if (bytes) headers.set('Content-Length', String(bytes))
+ const fetcher = vi.fn(async () => new Response('not a usable cover', { headers }))
+ const response = await handleBookMetadataSearch(new Request('https://app.test/api/v1/books/metadata/cover?google=volume1'), undefined, fetcher)
+ expect(response.status).toBe(502)
+ expect(fetcher).toHaveBeenCalledTimes(1)
+})
 it('returns Chinese metadata and image bytes with Workers-compatible requests', async () => {
  const fetcher = vi.fn(async (input: URL | string | Request, init?: RequestInit) => {
   expect(init?.redirect).toBe('manual')
