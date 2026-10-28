@@ -24,6 +24,53 @@ async function limited(response: Response, maximum: number): Promise<ArrayBuffer
  try { while (true) { const { done, value } = await reader.read(); if (done) break; size += value.length; if (size > maximum) { await reader.cancel(); throw new Error('回應過大') }; parts.push(value) } } finally { reader.releaseLock() }
  const bytes = new Uint8Array(size); let offset = 0; for (const part of parts) { bytes.set(part, offset); offset += part.length }; return bytes.buffer
 }
+/** Only recognize dimensions we can check without decoding in the Worker. */
+function coverDimensions(buffer: ArrayBuffer): { width: number; height: number } | null {
+ const b = new Uint8Array(buffer), view = new DataView(buffer)
+ if (b.length >= 24 && view.getUint32(0) === 0x89504e47 && view.getUint32(4) === 0x0d0a1a0a && view.getUint32(12) === 0x49484452) {
+  const width = view.getUint32(16), height = view.getUint32(20)
+  return width && height ? { width, height } : null
+ }
+ if (b.length < 4 || b[0] !== 0xff || b[1] !== 0xd8) return null
+ let offset = 2
+ while (offset + 3 < b.length) {
+  if (b[offset++] !== 0xff) return null
+  while (b[offset] === 0xff) offset++
+  const marker = b[offset++]
+  if (marker === 0xda || marker === 0xd9 || offset + 2 > b.length) return null
+  if (marker === 0x01 || marker >= 0xd0 && marker <= 0xd7) continue
+  const length = view.getUint16(offset)
+  if (length < 2 || offset + length > b.length) return null
+  if ([0xc0, 0xc1, 0xc2].includes(marker) && length >= 7) {
+   const height = view.getUint16(offset + 3), width = view.getUint16(offset + 5)
+   return width && height ? { width, height } : null
+  }
+  offset += length
+ }
+ return null
+}
+async function googleCover(id: string, fetcher: typeof fetch): Promise<Response> {
+ const signal = AbortSignal.timeout(12000)
+ const read = async (large: boolean) => {
+  const target = 'https://books.google.com/books/content?' + new URLSearchParams({ id, printsec: 'frontcover', img: '1', zoom: large ? '0' : '1', ...(large ? { w: '800' } : {}), source: 'gbs_api' })
+  const response = await fetcher(target, { signal, redirect: 'manual' })
+  const mime = response.headers.get('Content-Type')?.split(';')[0]
+  if (!response.ok || !mime || !['image/jpeg', 'image/png', 'image/webp'].includes(mime)) throw new Error('無法取得封面')
+  return { bytes: await limited(response, 10 * 1024 * 1024), mime }
+ }
+ let image = await read(false)
+ const original = coverDimensions(image.bytes)
+ if (original && original.width < 800) {
+  try {
+   const larger = await read(true), size = coverDimensions(larger.bytes)
+   // Some volumes return a cropped banner for larger sizes. Keep the complete
+   // original unless both axes improve and its aspect ratio agrees within 3%.
+   if (size && size.width > original.width && size.height > original.height
+    && Math.abs(size.width * original.height / (size.height * original.width) - 1) <= .03) image = larger
+  } catch { /* An unavailable larger image must not remove a usable cover. */ }
+ }
+ return new Response(image.bytes, { headers: { ...headers, 'Content-Type': image.mime, 'X-Content-Type-Options': 'nosniff' } })
+}
 async function json(url: URL | string, fetcher: typeof fetch, signal = AbortSignal.timeout(12000)): Promise<Record<string, unknown>> {
  let response: Response
  try { response = await fetcher(url, { signal, redirect: 'manual', headers: { Accept: 'application/json', 'User-Agent': 'ReadingCenter/1.0 (personal book lookup)' } }) } catch (reason) { throw new MetadataUpstreamError(requestFailure(reason)) }
@@ -101,7 +148,7 @@ export async function handleBookMetadataSearch(request: Request, googleKey?: str
    if (kadokawa && kadokawaCoverPath.test(kadokawa)) upstream = 'https://img.shoplineapp.com' + kadokawa
    else if (pubu && pubuCoverPath.test(pubu)) upstream = 'https://res2.pubu.tw' + pubu
    else if (publisher && /^pic_\d+_\d+_[a-z0-9]+\.(jpg|png|webp)$/.test(publisher)) upstream = 'https://www.bookrepclub.com.tw/webroot/file/book/' + publisher
-   else if (google && /^[A-Za-z0-9_-]{1,80}$/.test(google)) upstream = 'https://books.google.com/books/content?' + new URLSearchParams({ id: google, printsec: 'frontcover', img: '1', zoom: '1', source: 'gbs_api' })
+   else if (google && /^[A-Za-z0-9_-]{1,80}$/.test(google)) return await googleCover(google, fetcher)
    else if (path && /^\/b\/(?:id|olid)\/[A-Za-z0-9-]+\.jpg$/.test(path)) upstream = 'https://covers.openlibrary.org' + path + '?default=false'
    else return fail('封面識別無效', 400)
    const response = await fetcher(upstream, { signal: AbortSignal.timeout(12000), redirect: 'manual' })
