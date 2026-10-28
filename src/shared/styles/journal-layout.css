@@ -247,3 +247,29 @@ input::placeholder, textarea::placeholder { color:var(--ink-soft); opacity:1; }
 }
 .record-heading { flex-wrap: wrap; }
 .record-heading strong { flex: 1 1 10rem; }
+
+/* Small illustrated entry badges retain the surrounding text labels. */
+.entry-icon {
+  --entry-tint: var(--blossom);
+  --entry-outline: var(--accent-deep);
+  flex: 0 0 auto;
+  display: block;
+  overflow: visible;
+}
+.entry-icon--library { --entry-tint: var(--entry-sage); --entry-outline: var(--entry-sage-ink); }
+.entry-icon--notes { --entry-tint: var(--source-bg); --entry-outline: var(--ink); }
+.entry-icon-shadow { fill: var(--entry-outline); opacity: .15; }
+.entry-icon-disc { fill: var(--entry-tint); }
+.entry-icon-glint { stroke: var(--on-primary); stroke-width: 2; opacity: .65; }
+.entry-icon-art { stroke: var(--entry-outline); stroke-width: 1.35; }
+.entry-icon-spine { fill: var(--entry-outline); fill-opacity: .3; }
+.entry-icon-page { fill: var(--surface); }
+.entry-icon-book { fill: var(--entry-outline); fill-opacity: .25; }
+.entry-icon-ribbon { fill: var(--entry-outline); stroke-width: 1; }
+.entry-icon--add { width: 24px; height: 24px; --entry-outline: var(--on-primary); }
+.entry-icon--add .entry-icon-disc { fill: var(--on-primary); fill-opacity: .18; }
+.entry-icon-plus { stroke: var(--on-primary); stroke-width: 2.8; }
+.site-header .nav-item .entry-icon { width: 30px; height: 30px; }
+@media (max-width: 760px) {
+  .site-header .nav-item .entry-icon { width: 28px; height: 28px; }
+}

@@ -21,7 +21,7 @@ import { ReadingDashboard } from '../features/reading-overview/ReadingDashboard'
 import { ReadingOverviewService } from '../features/reading-overview/reading-overview-service'
 import { Button } from '../shared/ui/Button'
 import { Header } from '../shared/ui/Header'
-import { Icon } from '../shared/ui/Icon'
+import { EntryIcon } from '../shared/ui/EntryIcon'
 import { Popover } from '../shared/ui/Popover'
 import { Modal } from '../shared/ui/Modal'
 import type { NavigationId } from './navigation'
@@ -148,7 +148,7 @@ export function App() {
     <Header active={active} summary={<HeaderReadingSummary service={overviewService} revision={readingRevision + contentRevision + cloudSync.revision} />} sync={<div className="header-sync">{localAccess && <Popover label="同步狀態" trigger={props => <button type="button" className={`sync-indicator${cloudSync.syncing ? ' is-syncing' : cloudSync.message === '已同步。' ? ' is-synced' : ' needs-attention'}`} aria-label={`同步狀態：${cloudSync.syncing ? '正在同步…' : cloudSync.message}`} title={cloudSync.syncing ? '正在同步…' : cloudSync.message} {...props}><span aria-hidden="true" className="sync-dot" /><span className="sync-status sr-only" role="status">{cloudSync.syncing ? '正在同步…' : cloudSync.message}</span></button>} content={<><p>{cloudSync.syncing ? '正在同步…' : cloudSync.message}</p>{cloudSync.local && <Button onClick={() => { navigate('management'); setSyncPreview(true) }}>核對同步問題</Button>}</>} />}</div>} onLogout={localAccess ? () => { if (mayLeaveEditor()) void logout() } : undefined} onNavigate={navigate} />
     <main id="main" className="page-shell">
       {active !== 'reading' && active !== 'library' && <div className="page-heading"><h1>{pageTitles[active]}</h1></div>}
-      <button className="floating-create create-action" aria-label="新增書籍" title="新增書籍" type="button" onClick={openCreate}><Icon name="plus" size={19} /><span>新增書籍</span></button>
+      <button className="floating-create create-action" aria-label="新增書籍" title="新增書籍" type="button" onClick={openCreate}><EntryIcon name="add" /><span>新增書籍</span></button>
       {active === 'reading' && <ReadingDashboard progressService={progressService} onProgressChanged={() => setReadingRevision(value => value + 1)} onOpenBook={openDetail} revision={readingRevision + contentRevision + cloudSync.revision} service={overviewService} />}
       {active === 'library' && <LibraryCatalog books={books} dictionaries={dictionaries} cycles={catalogCycles} records={catalogRecords} sourceDays={catalogSourceDays} readingLoaded={catalogReadingLoaded} loadError={loadError} onOpen={openDetail} />}
       {active === 'notes' && <ReadingNotes books={books} onChanged={() => setContentRevision(value => value + 1)} onOpenBook={openDetail} revision={contentRevision + cloudSync.revision} service={contentService} />}
