@@ -1,6 +1,7 @@
 import type { Book, DictionaryEntry, ReadingCycle, ReadingProgress, ReadingRecord, SourceReadingDay } from '../../domain'
 import { getBookDisplayTitle } from '../../domain'
 import { qualifiedSourceBookIds } from './source-reading-scope'
+import { cycleProgress } from '../reading-overview/cycle-progress'
 import { isWaitingBook } from './library-reading-scope'
 
 export type LibraryReadingStatus = 'planned' | 'reading' | 'completed' | 'paused' | 'abandoned' | 'unknown'
@@ -34,7 +35,13 @@ export function libraryBookReadings(books: readonly Book[], cycles: readonly Rea
       ...relatedRecords.filter(row => row.progress !== null).map(row => ({ date: row.startedAt, progress: row.progress! })),
       ...rows.map(row => ({ date: row.date, progress: { unit: 'percent' as const, value: row.progressPercent } })),
     ].sort((a, b) => b.date.localeCompare(a.date) || b.progress.value - a.progress.value)
-    result.set(book.id, { status, progress: evidence[0]?.progress ?? null })
+    let progress: ReadingProgress | null = evidence[0]?.progress ?? null
+    if (cycle?.reportedProgressPercent != null) {
+      const latest = evidence[0]
+      const localDay = latest && (/^\d{4}-\d{2}-\d{2}$/.test(latest.date) ? latest.date : new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(latest.date)))
+      if (!latest || (cycle.lastReadOn && localDay && cycle.lastReadOn > localDay)) progress = cycleProgress(cycle, relatedRecords)
+    }
+    result.set(book.id, { status, progress })
   }
   return result
 }

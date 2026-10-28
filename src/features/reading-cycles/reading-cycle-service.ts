@@ -5,6 +5,8 @@ export interface ReadingCycleDraft {
   status: ReadingCycleStatus
   startedAt?: IsoDateTime | null
   finishedAt?: IsoDateTime | null
+  startedOn?: string | null
+  lastReadOn?: string | null
   completionDate?: ReadingCompletionDate | null
   reportedReadingDays?: number | null
   reportedDurationMinutes?: number | null
@@ -27,6 +29,8 @@ export class ReadingCycleService {
       ...createMetadata({ id: this.createId(), now: this.now() }), bookId,
       sequence: (existing.at(-1)?.sequence ?? 0) + 1,
       status: draft.status, startedAt: draft.startedAt ?? null, finishedAt: draft.finishedAt ?? null, completionDate: draft.completionDate ?? null,
+      ...(draft.startedOn !== undefined ? { startedOn: draft.startedOn } : {}),
+      ...(draft.lastReadOn !== undefined ? { lastReadOn: draft.lastReadOn } : {}),
       reportedReadingDays: draft.reportedReadingDays ?? null,
       reportedDurationMinutes: draft.reportedDurationMinutes ?? null,
       abandonedReason: draft.status === 'abandoned' ? draft.abandonedReason?.trim() || null : null
@@ -42,6 +46,8 @@ export class ReadingCycleService {
     if (expectedRevision !== undefined && existing.revision !== expectedRevision) throw new Error('資料已有新版本；草稿已保留，請核對最新內容後再儲存')
     const cycle = updateEntity(existing, {
       status: draft.status, startedAt: draft.startedAt ?? null, finishedAt: draft.finishedAt ?? null,
+      ...(draft.startedOn !== undefined ? { startedOn: draft.startedOn } : {}),
+      ...(draft.lastReadOn !== undefined ? { lastReadOn: draft.lastReadOn } : {}),
       completionDate: draft.completionDate === undefined ? (draft.status === 'completed' ? existing.completionDate ?? null : null) : draft.completionDate,
       reportedReadingDays: draft.reportedReadingDays === undefined ? existing.reportedReadingDays ?? null : draft.reportedReadingDays,
       reportedDurationMinutes: draft.reportedDurationMinutes === undefined ? existing.reportedDurationMinutes ?? null : draft.reportedDurationMinutes,

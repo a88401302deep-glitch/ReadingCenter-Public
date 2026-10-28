@@ -1,7 +1,7 @@
 import { assertValidBook, createMetadata, updateEntity, type Book, type DictionaryEntry } from '../domain'
 import { isMetadataSourceUrl } from '../domain/book-metadata'
 import type { ReadingCenterRepositories } from '../data'
-export interface PhotoBookDraft { title: string; author: string; publisher: string; isbn: string; visibleText: string; completedOn?: string; totalMinutes?: string; authors?: string[]; metadataSourceUrl?: string; publishedOn?: string }
+export interface PhotoBookDraft { title: string; author: string; publisher: string; isbn: string; visibleText: string; progressPercent?: string; startedOn?: string; lastReadOn?: string; completedOn?: string; totalMinutes?: string; authors?: string[]; metadataSourceUrl?: string; publishedOn?: string }
 export const photoTitleKey = (title: string) => title.normalize('NFKC').trim().replace(/\s+/g, '').toLocaleLowerCase()
 
 /** Candidate suggestions only; never selects or writes a book. */

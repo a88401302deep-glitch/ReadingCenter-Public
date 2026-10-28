@@ -41,7 +41,7 @@ export class PhotoReviewQueue extends Dexie {
     const editionKey = (value: PhotoBookDraft) => value.isbn.replace(/[\s-]/g,'') || value.author.normalize('NFKC').trim()
     const publisherVariant = drafts.some((other, otherIndex) => otherIndex !== index && other.title.normalize('NFKC').replace(/\s/g,'').toLowerCase() === draft.title.normalize('NFKC').replace(/\s/g,'').toLowerCase() && editionKey(other) === editionKey(draft) && other.publisher.normalize('NFKC').trim() !== draft.publisher.normalize('NFKC').trim())
     const variant = `variant:${editionKey(draft) || index}${publisherVariant ? `:publisher:${JSON.stringify(draft.publisher.normalize('NFKC').trim())}` : ''}`
-    return { id: `${id}:${index}`, draft, source: item.source, mediaType: item.mediaType, bookId: null, allowSameTitle: false, savedBookId: null, status: 'pending' as const, reading: { ...emptyPhotoReading, completedOn: draft.completedOn ?? '', totalMinutes: draft.totalMinutes ?? '' }, ...(duplicateTitle ? { variant } : {}) }
+    return { id: `${id}:${index}`, draft, source: item.source, mediaType: item.mediaType, bookId: null, allowSameTitle: false, savedBookId: null, status: 'pending' as const, reading: { ...emptyPhotoReading, progressPercent: draft.progressPercent ?? '', startedOn: draft.startedOn ?? '', lastReadOn: draft.lastReadOn ?? '', status: draft.completedOn || !draft.startedOn && !draft.lastReadOn && !draft.progressPercent?.trim() ? 'completed' as const : 'reading' as const, completedOn: draft.completedOn ?? '', totalMinutes: draft.totalMinutes ?? '' }, ...(duplicateTitle ? { variant } : {}) }
    })
    await this.items.update(id, { candidates, draft: drafts[0] ?? { ...emptyPhotoDraft }, status: 'ready', error: drafts.length ? '' : '未辨識到清楚書名，可手動填寫或重新選圖' })
   })
@@ -95,7 +95,7 @@ export async function recognizeQueuedPhoto(image: Blob, signal?: AbortSignal, re
   if (!item || typeof item !== 'object') throw new PhotoRecognitionError('辨識回應無效')
   for (const [key, maximum] of Object.entries(limits)) { const value = (item as Record<string, unknown>)[key]; if (typeof value !== 'string' || value.length > maximum) throw new PhotoRecognitionError('辨識回應無效') }
   const book: PhotoBookDraft = { title: String(item.title).trim(), author: String(item.author).trim(), publisher: String(item.publisher).trim(), isbn: String(item.isbn).trim(), visibleText: String(item.visibleText).trim() }
-  for (const [key, maximum] of [['completedOn', 10], ['totalMinutes', 12]] as const) {
+  for (const [key, maximum] of [['progressPercent', 16], ['startedOn', 10], ['lastReadOn', 10], ['completedOn', 10], ['totalMinutes', 12]] as const) {
    const value = (item as Record<string, unknown>)[key]
    if (value !== undefined) { if (typeof value !== 'string' || value.length > maximum) throw new PhotoRecognitionError('閱讀辨識回應無效'); book[key] = value.trim() }
   }

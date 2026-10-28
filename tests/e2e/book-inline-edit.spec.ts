@@ -11,7 +11,7 @@ for (const width of [360, 1280]) test(`book editor retains context and fits the 
   await search.fill('直接編輯')
   await page.locator('.book-cover-open').first().click()
   const dialog = page.getByRole('dialog')
-  const publication = dialog.locator('.book-reading-management')
+  const publication = dialog.locator('.reading-cycle-unassigned .cycle-record-details')
   await publication.locator('summary').click()
   await dialog.evaluate(node => { node.scrollTop = 120 })
   const originalTop = await dialog.evaluate(node => node.scrollTop)

@@ -28,7 +28,7 @@ describe('reading cycle dates', () => {
     fireEvent.click(within(document.querySelector('.cycle-list') as HTMLElement).getByRole('button', { name: '編輯' }))
     fireEvent.change(screen.getByLabelText('閱讀天數'), { target: { value: '8' } })
     fireEvent.click(screen.getByRole('button', { name: '儲存' }))
-    await screen.findByText('來源回報閱讀 8 天')
+    await screen.findByText('閱讀 8 天')
     await waitFor(async () => expect(await repositories.readingCycles.getById(cycle.id)).toMatchObject({ completionDate, startedAt: null, finishedAt: null, reportedReadingDays: 8 }))
     expect(screen.getByText(label)).toBeTruthy()
     expect(await repositories.readingRecords.getAll()).toHaveLength(0)

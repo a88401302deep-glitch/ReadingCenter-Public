@@ -113,7 +113,7 @@ export function PhotoBookImport({ repositories, onBack, queue = photoReviewQueue
   try { await pendingEdits.current; await queue.remove(id); const rows = await refresh(); if (alive.current && activeId === id) setActiveId(rows.find(row => row.status !== 'saved')?.id ?? rows[0]?.id ?? '') }
   catch (reason) { if (alive.current) setError(reason instanceof Error ? reason.message : '無法移除圖片') }
  }
- const reading = active?.reading ?? { ...emptyPhotoReading, completedOn: active?.draft.completedOn ?? '', totalMinutes: active?.draft.totalMinutes ?? '' }
+ const reading = active?.reading ?? { ...emptyPhotoReading, progressPercent: active?.draft.progressPercent ?? '', startedOn: active?.draft.startedOn ?? '', lastReadOn: active?.draft.lastReadOn ?? '', status: active?.draft.completedOn || !active?.draft.startedOn && !active?.draft.lastReadOn && !active?.draft.progressPercent?.trim() ? 'completed' as const : 'reading' as const, completedOn: active?.draft.completedOn ?? '', totalMinutes: active?.draft.totalMinutes ?? '' }
  const editReading = (changes: Partial<PhotoReadingDraft>) => {
   if (!active || busy || active.savedReadingCycleId) return
   const id = active.id, selectedId = candidate?.id, value = { ...reading, ...changes }, sequence = ++editSequence.current
@@ -130,11 +130,11 @@ export function PhotoBookImport({ repositories, onBack, queue = photoReviewQueue
    await pendingEdits.current
    const item = await queue.items.get(active.id), selected = candidate ? item?.candidates?.find(value => value.id === candidate.id) : item
    if (!item || !selected?.savedBookId || selected.savedReadingCycleId) throw new Error('候選狀態已有更新，請重新載入')
-   const value = selected.reading ?? { ...emptyPhotoReading, completedOn: selected.draft.completedOn ?? '', totalMinutes: selected.draft.totalMinutes ?? '' }
+   const value = selected.reading ?? { ...emptyPhotoReading, progressPercent: selected.draft.progressPercent ?? '', startedOn: selected.draft.startedOn ?? '', lastReadOn: selected.draft.lastReadOn ?? '', status: selected.draft.completedOn || !selected.draft.startedOn && !selected.draft.lastReadOn && !selected.draft.progressPercent?.trim() ? 'completed' as const : 'reading' as const, completedOn: selected.draft.completedOn ?? '', totalMinutes: selected.draft.totalMinutes ?? '' }
    const cycle = await confirmPhotoReading(repositories, selected.savedBookId, item.hash, value)
    await queue.patchReading(item.id, candidate?.id, value, cycle.id)
    await refresh(); onChanged?.()
-   if (alive.current) setMessage('已確認保存完讀日期與累計閱讀時間；未新增書籍或封面。')
+   if (alive.current) setMessage(cycle.status === 'completed' ? '已確認保存完讀日期與累計閱讀時間；未新增書籍或封面。' : '已保存開始／最後閱讀日期與累計閱讀時間；維持閱讀中，未標記完讀。')
   } catch (reason) { if (alive.current) setError(reason instanceof Error ? reason.message : '閱讀紀錄保存失敗') }
   finally { if (alive.current) setBusy(false) }
  }
@@ -197,11 +197,15 @@ export function PhotoBookImport({ repositories, onBack, queue = photoReviewQueue
    {candidate?.status !== 'ignored' && <form className="entity-form" aria-label="核對閱讀紀錄" onSubmit={event => void saveReading(event)}>
     <h3>核對閱讀紀錄</h3>
     {!active.savedBookId && <p>先確認上方書籍配對，再另外確認閱讀紀錄。</p>}
-    <label>完讀日期<input type="date" required value={reading.completedOn} disabled={busy || Boolean(active.savedReadingCycleId)} onChange={event => editReading({ completedOn: event.target.value })} /></label>
+    <label>閱讀狀態<select value={reading.status ?? 'completed'} disabled={busy || Boolean(active.savedReadingCycleId)} onChange={event => editReading({ status: event.target.value as 'reading' | 'completed', ...(event.target.value === 'reading' ? { completedOn: '' } : {}) })}><option value="reading">閱讀中</option><option value="completed">已讀完</option></select></label>
+    <label>進度（%）<input type="number" min="0" max="100" step="any" value={reading.progressPercent ?? ''} disabled={busy || Boolean(active.savedReadingCycleId)} onChange={event => editReading({ progressPercent: event.target.value })} /></label>
+    <label>開始閱讀日<input type="date" value={reading.startedOn ?? ''} disabled={busy || Boolean(active.savedReadingCycleId)} onChange={event => editReading({ startedOn: event.target.value })} /></label>
+    <label>最後閱讀日<input type="date" value={reading.lastReadOn ?? ''} disabled={busy || Boolean(active.savedReadingCycleId)} onChange={event => editReading({ lastReadOn: event.target.value })} /></label>
+    {(reading.status ?? 'completed') === 'completed' && <label>完讀日期<input type="date" required value={reading.completedOn} disabled={busy || Boolean(active.savedReadingCycleId)} onChange={event => editReading({ completedOn: event.target.value })} /></label>}
     <label>累計閱讀時間（分鐘）<input type="number" min="0" step="1" value={reading.totalMinutes} disabled={busy || Boolean(active.savedReadingCycleId)} onChange={event => editReading({ totalMinutes: event.target.value })} /></label>
-    <p>日期與時間請逐本核對；不確定的時間可留白。累計時長不代表完讀當天的閱讀時間。</p>
+    <p>日期與時間請逐本核對，不確定可留白；已讀完仍需確認完讀日期。最後閱讀日不代表完讀日，累計時長不會分配到某一天。進度可留白；100% 不會自動標記完讀。</p>
     <label><input type="checkbox" checked={reading.allowReread} disabled={busy || Boolean(active.savedReadingCycleId)} onChange={event => editReading({ allowReread: event.target.checked })} />若已有完讀紀錄，已核對本次為另一次重讀</label>
-    <Button type="submit" disabled={busy || !active.savedBookId || Boolean(active.savedReadingCycleId) || !reading.completedOn}>{active.savedReadingCycleId ? '閱讀紀錄已保存' : '確認匯入閱讀紀錄'}</Button>
+    <Button type="submit" disabled={busy || !active.savedBookId || Boolean(active.savedReadingCycleId) || ((reading.status ?? 'completed') === 'completed' ? !reading.completedOn : !reading.startedOn && !reading.lastReadOn && !reading.progressPercent?.trim())}>{active.savedReadingCycleId ? '閱讀紀錄已保存' : '確認匯入閱讀紀錄'}</Button>
    </form>}
   </>}
   {error && <p role="alert">{error}</p>}{message && <p role="status">{message}</p>}

@@ -29,8 +29,8 @@ describe('single-book editing', () => {
     fireEvent.click(screen.getByRole('button', { name: '書庫' }))
     fireEvent.click(await screen.findByRole('button', { name: /^開啟《/ }))
     const dialog = screen.getByRole('dialog')
-    const publication = dialog.querySelector('.book-reading-management') as HTMLDetailsElement
-    fireEvent.click(within(dialog).getByText('修改狀態／重讀', { exact: true }))
+    const publication = dialog.querySelector('.reading-cycle-unassigned .cycle-record-details') as HTMLDetailsElement
+    fireEvent.click(within(dialog).getByText('未分次閱讀明細（0）', { exact: true }))
     const trigger = within(dialog).getByRole('button', { name: '編輯書籍' })
     dialog.scrollTop = 123
     fireEvent.click(trigger)

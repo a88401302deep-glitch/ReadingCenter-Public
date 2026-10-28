@@ -81,3 +81,23 @@ it('keeps publisher editions distinct through recognition, queueing and confirma
  expect(await repo.readingRecords.getAll()).toEqual([])
  expect((await repo.books.getAll()).every(book => book.cover === null)).toBe(true)
 })
+
+it('retains separate reading dates and corrections per candidate across reopening before confirmation', async () => {
+ const value = queue(), added = await value.add(new File(['dates'], 'dates.png', { type: 'image/png' }))
+ const base = { title: '閱讀中', author: '', publisher: '', isbn: '', visibleText: '日期' }
+ const drafts = await recognizeQueuedPhoto(new Blob(), undefined, vi.fn().mockResolvedValue(Response.json({ data: { books: [
+  { ...base, progressPercent: '0', startedOn: '2026-09-01', lastReadOn: '2026-10-04', completedOn: '' },
+  { ...base, title: '已讀完', completedOn: '2026-10-02' }
+ ] } })))
+ await value.setCandidates(added.id, drafts)
+ const item = (await value.list())[0]
+ expect(item.candidates![0].reading).toMatchObject({ status: 'reading', progressPercent: '0', startedOn: '2026-09-01', lastReadOn: '2026-10-04', completedOn: '' })
+ expect(item.candidates![1].reading).toMatchObject({ status: 'completed', startedOn: '', lastReadOn: '', completedOn: '2026-10-02' })
+ await value.patchReading(item.id, item.candidates![0].id, { ...item.candidates![0].reading!, lastReadOn: '2026-10-03' })
+ const name = value.name; value.close()
+ const reopened = new PhotoReviewQueue(name); queues.push(reopened)
+ const rows = await reopened.list()
+ expect(rows[0].candidates![0].reading).toMatchObject({ status: 'reading', progressPercent: '0', lastReadOn: '2026-10-03' })
+ expect(rows[0].candidates![1].reading?.completedOn).toBe('2026-10-02')
+ for (const key of ['startedOn', 'lastReadOn', 'progressPercent']) await expect(recognizeQueuedPhoto(new Blob(), undefined, vi.fn().mockResolvedValue(Response.json({ data: { ...base, [key]: 123 } })))).rejects.toThrow('無效')
+})
