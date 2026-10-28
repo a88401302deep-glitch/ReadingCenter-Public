@@ -1,5 +1,5 @@
 import type { Page, TestInfo } from '@playwright/test'
-import { expect, test } from './fixtures'
+import { expect, test, enterManagement } from './fixtures'
 
 const visualBaselineTime = new Date('2026-09-13T00:00:00.000Z')
 
@@ -31,6 +31,7 @@ test('filled reading overview shows covers and count charts on phone and desktop
     await page.getByLabel('出版書名', { exact: true }).fill(title)
     await page.getByRole('button', { name: '儲存', exact: true }).click()
     await page.locator('article.book-row').filter({ has: page.getByRole('heading', { name: title, exact: true }) }).getByRole('button', { name: /^開啟《/ }).click()
+    await enterManagement(page, '閱讀')
     await page.getByRole('button', { name: '新增一次閱讀', exact: true }).click()
     await page.locator('.cycle-form').getByRole('combobox').selectOption('completed')
     await page.getByLabel('結束時間', { exact: true }).fill(`2026-09-${10 + index}T10:30`)

@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises'
-import { test, expect } from './fixtures'
+import { test, expect, enterManagement } from './fixtures'
 
 for (const choice of ['local', 'remote'] as const) {
   test(`reviews a real UI conflict, adopts ${choice}, and exports both retained copies`, async ({ page, baseURL }) => {
@@ -42,6 +42,7 @@ for (const choice of ['local', 'remote'] as const) {
     await expect.poll(() => rows.size).toBe(1)
     await expect(page.locator('.sync-status[role="status"]')).toHaveText('已同步。')
     await page.locator('.book-cover-open').first().click()
+  await enterManagement(page, '書籍')
   await page.getByRole('button', { name: '編輯書籍', exact: true }).click()
     await page.getByLabel('出版書名', { exact: true }).fill('本機核對選擇內容')
     const [id, original] = [...rows.entries()][0]

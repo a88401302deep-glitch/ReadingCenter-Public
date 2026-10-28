@@ -7,6 +7,8 @@ import { cycleProgress } from '../reading-overview/cycle-progress'
 import { cycleDateLabel, statusLabel } from './reading-cycle-labels'
 
 interface Props {
+  showActions?: boolean
+  onRecordEditingChange?: (cycleId: string | null, active: boolean) => void
   cycles: ReadingCycle[]
   records: ReadingRecord[]
   bookId: string
@@ -28,12 +30,12 @@ function RecordDetails({ records, label }: { records: ReadingRecord[]; label: st
     </div>)}</dl>
   </section>
 }
-export function BookReadingCycles({ cycles, records, bookId, revision, recordService, onRecordsChanged, onEdit, onDelete, onComplete }: Props) {
+export function BookReadingCycles({ showActions = true, onRecordEditingChange, cycles, records, bookId, revision, recordService, onRecordsChanged, onEdit, onDelete, onComplete }: Props) {
   const entries = (cycleId: string | null) => records.filter(record => record.cycleId === cycleId).sort((a, b) => b.startedAt.localeCompare(a.startedAt))
   const unassigned = entries(null)
   const unmatched = records.filter(record => record.cycleId !== null && !cycles.some(cycle => cycle.id === record.cycleId))
   return <div className="book-reading-cycles">
-    <div className="section-heading"><h4>每次閱讀</h4><Button size="small" onClick={() => onEdit(null)}>新增一次閱讀</Button></div>
+    {(cycles.length > 0 || showActions) && <div className="section-heading"><h4>每次閱讀</h4>{showActions && <Button className="create-action" size="small" onClick={() => onEdit(null)}>新增一次閱讀</Button>}</div>}
     {cycles.length > 0 && <ol className="cycle-list cycle-list--grouped">{cycles.map(cycle => {
       const ownRecords = entries(cycle.id)
       const progress = cycleProgress(cycle, ownRecords)
@@ -49,11 +51,11 @@ export function BookReadingCycles({ cycles, records, bookId, revision, recordSer
           <div><dt>閱讀天數</dt><dd>{cycle.reportedReadingDays == null ? '未記錄' : `${cycle.reportedReadingDays} 天`}</dd></div>
         </dl>
         <RecordDetails records={ownRecords} label={`第 ${cycle.sequence} 次閱讀明細`} />
-        <div className="cycle-heading-actions"><ReadingRecordPopover onMarkCompleted={cycle.status !== 'completed' && onComplete ? () => onComplete(cycle) : undefined} triggerLabel="更新閱讀紀錄" revision={revision} bookId={bookId} cycleId={cycle.id} cycleSequence={cycle.sequence} service={recordService} onChanged={onRecordsChanged} /><Button size="small" onClick={() => onEdit(cycle)}>編輯本次閱讀</Button><Button size="small" variant="danger" onClick={() => onDelete(cycle)}>刪除本次閱讀</Button></div>
+        {showActions && <div className="cycle-heading-actions"><ReadingRecordPopover onEditingChange={onRecordEditingChange} onMarkCompleted={cycle.status !== 'completed' && onComplete ? () => onComplete(cycle) : undefined} triggerLabel="更新閱讀紀錄" revision={revision} bookId={bookId} cycleId={cycle.id} cycleSequence={cycle.sequence} service={recordService} onChanged={onRecordsChanged} /><Button size="small" onClick={() => onEdit(cycle)}>編輯本次閱讀</Button><Button size="small" variant="danger" onClick={() => onDelete(cycle)}>刪除本次閱讀</Button></div>}
       </section></li>
     })}</ol>}
-    {(unassigned.length > 0 || cycles.length === 0) && <section className="reading-cycle-group reading-cycle-unassigned" aria-label="未分次紀錄">
-      <div className="reading-cycle-heading"><h4>未分次紀錄</h4><ReadingRecordPopover triggerLabel="更新未分次紀錄" revision={revision} bookId={bookId} cycleId={null} service={recordService} onChanged={onRecordsChanged} /></div>
+    {(unassigned.length > 0 || showActions && cycles.length === 0) && <section className="reading-cycle-group reading-cycle-unassigned" aria-label="未分次紀錄">
+      <div className="reading-cycle-heading"><h4>未分次紀錄</h4>{showActions && <ReadingRecordPopover onEditingChange={onRecordEditingChange} triggerLabel="更新未分次紀錄" revision={revision} bookId={bookId} cycleId={null} service={recordService} onChanged={onRecordsChanged} />}</div>
       <RecordDetails records={unassigned} label="未分次閱讀明細" />
     </section>}
     {unmatched.length > 0 && <section className="reading-cycle-group" aria-label="待核對紀錄"><h4>待核對紀錄</h4><RecordDetails records={unmatched} label="待核對閱讀明細" /></section>}

@@ -4,7 +4,7 @@ import type { ReadingContent, ReadingContentType, ReadingCycle } from '../../dom
 import { Button, FormMessage, Icon } from '../../shared/ui'
 import { ReadingContentService, type ReadingContentDraft } from './reading-content-service'
 
-interface Props { heading?: string; revision?: number; bookId: string; cycles: ReadingCycle[]; onChanged?: () => void; service: ReadingContentService }
+interface Props { browseFirst?: boolean; heading?: string; revision?: number; bookId: string; cycles: ReadingCycle[]; onChanged?: () => void; service: ReadingContentService }
 const typeLabel: Record<ReadingContentType, string> = { highlight: '畫線', shortReview: '短評', longReview: '長篇心得' }
 const toInput = (value: string | null) => {
   if (!value) return ''
@@ -13,7 +13,9 @@ const toInput = (value: string | null) => {
 }
 const toIso = (value: string) => value ? new Date(value).toISOString() : null
 
-export function ReadingContentManager({ heading = '閱讀內容', revision = 0, bookId, cycles, onChanged, service }: Props) {
+export function ReadingContentManager({ browseFirst = false, heading = '閱讀內容', revision = 0, bookId, cycles, onChanged, service }: Props) {
+  const [managing, setManaging] = useState(false)
+  const showActions = !browseFirst || managing
   const [contents, setContents] = useState<ReadingContent[]>([])
   const [editing, setEditing] = useState<ReadingContent | null | undefined>(undefined)
   const [deleting, setDeleting] = useState<ReadingContent | null>(null)
@@ -69,19 +71,19 @@ export function ReadingContentManager({ heading = '閱讀內容', revision = 0, 
   }
 
   return <section className="reading-content-manager" aria-label={heading}>
-    <div className="section-heading"><h3>{heading === '閱讀心得' && <Icon name="editNote" />}{heading}</h3><div className="content-heading-actions">
+    <div className="section-heading"><h3>{heading === '閱讀心得' && <Icon name="editNote" />}{heading}</h3>{browseFirst && <Button size="small" variant="ghost" aria-pressed={managing} disabled={editing !== undefined || deleting !== null} onClick={() => setManaging(value => !value)}>{managing ? '完成心得管理' : '管理心得'}</Button>}{showActions && <div className="content-heading-actions">
       {contents.some((item) => item.type === 'longReview') && <span className="long-review-marker">有長文</span>}
       <Button size="small" onClick={() => openForm(null, 'highlight')}>畫線</Button>
       <Button size="small" onClick={() => openForm(null, 'shortReview')}>短評</Button>
       <Button size="small" onClick={() => openForm(null, 'longReview')}>長篇心得</Button>
-    </div></div>
+    </div>}</div>
     {contents.length === 0 ? <p className="empty-line">尚無閱讀內容</p> : <ol className="reading-content-list">{contents.map((content) => <li key={content.id}>
       <div className="content-meta"><span>{typeLabel[content.type]}</span><ReadingContentDate content={content} cycles={cycles} />{content.cycleId && <small>第 {cycles.find((cycle) => cycle.id === content.cycleId)?.sequence ?? '—'} 次閱讀</small>}</div>
       {content.type === 'longReview' && content.title && <strong>{content.title}</strong>}
       <p>{content.text}</p>
       {content.type === 'highlight' && content.note && <p className="highlight-note">{content.note}</p>}
       {content.type === 'highlight' && content.locator && <small>{content.locator}</small>}
-      <div className="content-row-actions"><Button size="small" onClick={() => openForm(content)}>編輯</Button><Button size="small" variant="danger" onClick={() => setDeleting(content)}>刪除</Button></div>
+      {showActions && <div className="content-row-actions"><Button size="small" onClick={() => openForm(content)}>編輯</Button><Button size="small" variant="danger" onClick={() => setDeleting(content)}>刪除</Button></div>}
     </li>)}</ol>}
     {editing !== undefined && <form className="entity-form content-form" onSubmit={submit}>
       <label>類型<select disabled={editing !== null} value={type} onChange={(event) => setType(event.target.value as ReadingContentType)}>{Object.entries(typeLabel).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>

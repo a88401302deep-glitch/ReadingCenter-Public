@@ -8,6 +8,7 @@ import { uploadBookCover, validateCoverFile } from '../books/book-cover-upload'
 import type { BookDraft } from '../books/book-service'
 
 interface Props {
+ showActions?: boolean
  book: Book
  author: string
  busy: boolean
@@ -16,7 +17,7 @@ interface Props {
  onSave: (draft: BookDraft, revision: number) => Promise<Book | null>
 }
 
-export function BookDetailCover({ book, author, busy, onDirtyChange, onPendingChange, onSave }: Props) {
+export function BookDetailCover({ showActions = true, book, author, busy, onDirtyChange, onPendingChange, onSave }: Props) {
  const { previewReadOnly = false } = useAuth()
  const [selection, setSelection] = useState<{ file: File; url: string; baseline: Book } | null>(null)
  const [mode, setMode] = useState<'search' | 'paste' | null>(null)
@@ -72,13 +73,13 @@ export function BookDetailCover({ book, author, busy, onDirtyChange, onPendingCh
   <div className="book-detail-cover-layout">
    <div className="book-detail-cover"><BookCover src={selection?.url ?? book.cover?.path} title={title} /></div>
    <div className="book-detail-introduction"><p className="book-detail-kicker">READING JOURNAL</p><h3>{title}</h3>{author && <p>{author}</p>}</div>
-   <div className="book-detail-cover-actions" aria-label="封面操作">
+   {showActions && <div className="book-detail-cover-actions" aria-label="封面操作">
     <Button size="small" disabled={disabled} onClick={event => { returnFocus.current = event.currentTarget; setMode('search') }}>尋找</Button>
     <Button size="small" disabled={disabled} onClick={event => { returnFocus.current = event.currentTarget; setMode('paste') }}>更換</Button>
     <Button size="small" disabled={disabled} onClick={() => fileInput.current?.click()}>上傳</Button>
     <input hidden ref={fileInput} aria-label="上傳封面圖片" type="file" accept="image/jpeg,image/png,image/webp" disabled={disabled} onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; if (file) select(file) }} />
     {selection && <><Button size="small" variant="primary" disabled={disabled || previewReadOnly} onClick={() => void save()}>{pending ? '存檔中' : '存檔'}</Button><Button size="small" disabled={disabled} onClick={discard}>取消換圖</Button></>}
-   </div>
+   </div>}
   </div>
   {selection && <p role="status">{previewReadOnly ? '封面試看中；此預覽不儲存或上傳。' : '封面已更換，請存檔。'}</p>}
   {notice && <p role="status">{notice}</p>}

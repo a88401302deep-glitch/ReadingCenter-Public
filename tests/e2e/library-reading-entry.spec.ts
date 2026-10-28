@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures'
+import { expect, test, enterManagement } from './fixtures'
 
 test('mobile cover entry creates a record and short review that survive reload', async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 780 })
@@ -9,6 +9,7 @@ test('mobile cover entry creates a record and short review that survive reload',
   await page.getByRole('button', { name: '儲存', exact: true }).click()
   await page.getByRole('searchbox', { name: '搜尋書庫' }).fill('清單新增')
   await page.locator('.book-cover-open').first().click()
+  await enterManagement(page, '閱讀')
   await page.getByRole('button', { name: '更新未分次紀錄（0）' }).click()
   await page.getByRole('button', { name: '新增紀錄', exact: true }).click()
   const record = page.locator('.record-form')
@@ -19,7 +20,9 @@ test('mobile cover entry creates a record and short review that survive reload',
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(1)
   await record.getByRole('button', { name: '儲存', exact: true }).click()
   await expect(record).toHaveCount(0)
+  await enterManagement(page, '閱讀')
   await page.getByRole('button', { name: '更新未分次紀錄（1）' }).click()
+  await enterManagement(page, '心得')
   await page.getByRole('button', { name: '短評', exact: true }).click()
   const review = page.locator('.content-form')
   await review.getByLabel('短評內容').fill('直接在清單寫下心得')

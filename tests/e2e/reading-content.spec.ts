@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures'
+import { expect, test, enterManagement } from './fixtures'
 
 test('creates, edits, and deletes a short review in the book modal', async ({ page }) => {
   await page.goto('/')
@@ -7,6 +7,7 @@ test('creates, edits, and deletes a short review in the book modal', async ({ pa
   await page.getByLabel('出版書名', { exact: true }).fill('短評操作測試')
   await page.getByRole('button', { name: '儲存', exact: true }).click()
   await page.getByRole('button', { name: /^開啟《/ }).click()
+  await enterManagement(page, '心得')
   await page.getByRole('button', { name: '短評', exact: true }).click()
   await page.getByLabel('短評內容').fill('第一則短評')
   await page.getByRole('button', { name: '儲存', exact: true }).click()

@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures'
+import { expect, test, enterManagement } from './fixtures'
 
 test('new book cover picker previews exact pixels, allows retry, and saves the adopted image under the same book identity', async ({ page }, testInfo) => {
  // WebKit may omit binary request bodies from its interception protocol. Observe
@@ -74,6 +74,7 @@ test('new book cover picker previews exact pixels, allows retry, and saves the a
  await page.getByRole('button', { name: `開啟《${title}》`, exact: true }).click()
  expect(await page.evaluate(() => history.state.readingCenterBookId)).toBe(uploads[0].id)
  await expect(page.getByRole('region', { name: '書籍封面' }).getByRole('img')).toHaveJSProperty('naturalWidth', 800)
+ await enterManagement(page, '書籍')
  await page.getByRole('button', { name: '編輯書籍', exact: true }).click()
  await expect(page.getByLabel('出版書名', { exact: true })).toHaveValue(title)
  await page.getByRole('button', { name: '取消', exact: true }).click()
@@ -88,6 +89,7 @@ test('new book cover picker previews exact pixels, allows retry, and saves the a
  await expect(coverRegion.getByRole('status')).toHaveText('封面已存檔。')
  expect(uploads).toHaveLength(2)
  expect(uploads[1].id).toBe(uploads[0].id)
+ await enterManagement(page, '書籍')
  await page.getByRole('button', { name: '編輯書籍', exact: true }).click()
  await expect(page.getByLabel('出版書名', { exact: true })).toHaveValue(title)
  await expect(page.getByLabel('作者（每行一位）')).toHaveValue('人工作者')

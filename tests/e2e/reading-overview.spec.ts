@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures'
+import { expect, test, enterManagement } from './fixtures'
 
 test('a ReadingRecord updates book summary, reading totals and library statistics consistently', async ({ page }) => {
   await page.goto('/')
@@ -7,6 +7,7 @@ test('a ReadingRecord updates book summary, reading totals and library statistic
   await page.getByLabel('出版書名', { exact: true }).fill('跨畫面一致性測試')
   await page.getByRole('button', { name: '儲存', exact: true }).click()
   await page.getByRole('button', { name: /^開啟《/ }).click()
+  await enterManagement(page, '閱讀')
   await page.getByRole('button', { name: '更新未分次紀錄（0）' }).click()
   await page.getByRole('button', { name: '新增紀錄' }).click()
   await page.getByLabel('開始時間').fill('2026-10-04T10:30')
@@ -23,6 +24,7 @@ test('a ReadingRecord updates book summary, reading totals and library statistic
   await expect(page.getByRole('button', { name: '統計', exact: true })).toHaveCount(0)
   await page.getByRole('button', { name: '書庫', exact: true }).click()
   await page.getByRole('button', { name: /^開啟《/ }).click()
+  await enterManagement(page, '閱讀')
   await page.getByRole('button', { name: '更新未分次紀錄（1）' }).click()
   await page.locator('.record-list li').first().getByRole('button', { name: '刪除' }).click()
   await page.getByRole('button', { name: '確認刪除' }).click()

@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test'
-import { test, expect } from './fixtures'
+import { test, expect, enterManagement } from './fixtures'
 
 test('signed-in edits reach another device and remote reads do not echo writes', async ({ page, browser, baseURL }) => {
   if (!baseURL || new URL(baseURL).hostname !== '127.0.0.1') throw new Error('Sync fixture requires the local preview')
@@ -71,6 +71,7 @@ test('signed-in edits reach another device and remote reads do not echo writes',
     await second.getByRole('button', { name: '書庫', exact: true }).click()
     await expect(second.getByRole('heading', { name: '跨裝置瀏覽器合成資料' })).toBeVisible()
     await second.locator('.book-cover-open').first().click()
+    await enterManagement(second, '書籍')
     await second.getByRole('button', { name: '編輯書籍', exact: true }).click()
     await second.getByLabel('出版書名', { exact: true }).fill('另一裝置更新合成資料')
     await second.getByRole('button', { name: '儲存', exact: true }).click()

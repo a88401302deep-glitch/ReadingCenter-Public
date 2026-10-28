@@ -561,8 +561,10 @@ body.book-editor-open .modal-backdrop:has(.book-detail) { visibility:hidden; }
 }
 
 /* Single-book browsing: paper, quiet actions and independent mobile cover. */
+.book-detail .book-detail-tools { grid-column:1 / -1; display:flex; justify-content:flex-end; margin-bottom:-1rem; }
+.book-detail .book-field-unknown { color:var(--ink-soft); }
 .modal-panel:has(.book-detail) { scroll-padding-block:5.5rem 2rem; overflow-anchor:none; }
-.modal-panel:has(.book-detail) > .modal-header h2 { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.modal-panel:has(.book-detail) > .modal-header h2 { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-family:ui-rounded,"Microsoft JhengHei","PingFang TC","Noto Sans TC",system-ui,sans-serif; }
 .book-detail .button { scroll-margin-block:5.5rem 2rem; }
 .book-detail .book-detail-view { gap:1.5rem; }
 .book-detail .book-detail-view > .book-detail-cover-section { grid-column:1 / -1; padding-bottom:1.5rem; border-bottom:1px solid var(--line); }
@@ -580,9 +582,9 @@ body.book-editor-open .modal-backdrop:has(.book-detail) { visibility:hidden; }
 .book-detail .book-detail-personal, .book-detail .reading-content-manager { padding-top:1.25rem; border-top:1px solid var(--line); }
 .book-detail .book-detail-panel-heading h3, .book-detail .reading-content-manager > .section-heading h3 { font-size:1rem; font-weight:500; }
 .book-detail .book-publication-row { padding:.35rem 0; }
-.book-detail .book-detail-panel .button:not(.button--primary):not(.button--danger),
+.book-detail .book-detail-panel .button:not(.button--primary):not(.button--danger):not(.create-action),
 .book-detail .book-detail-cover-actions .button:not(.button--primary),
-.book-detail .cycle-heading-actions .button:not(.button--danger),
+.book-detail .cycle-heading-actions .button:not(.button--danger):not(.create-action),
 .book-detail .content-heading-actions .button,
 .book-detail .content-row-actions .button:not(.button--danger) { background:transparent; }
 .book-detail .book-reading-details h4, .book-detail .cycle-record-details h5 { margin:.5rem 0; font-size:.875rem; font-weight:500; color:var(--ink-soft); }
@@ -616,3 +618,6 @@ body.book-editor-open .modal-backdrop:has(.book-detail) { visibility:hidden; }
 @media (min-width:1024px) and (pointer:fine) {
  .book-detail .button--small { min-height:32px; padding:.25rem .5rem; font-size:.8125rem; }
 }
+.book-detail { font-family:ui-rounded,"Microsoft JhengHei","PingFang TC","Noto Sans TC",system-ui,sans-serif; letter-spacing:.025em; }
+.book-detail .book-detail-introduction h3, .book-detail .book-reading-summary strong, .book-detail .reading-content-list strong { font-family:inherit; font-weight:600; }
+.book-detail .book-detail-panel-heading h3, .book-detail .reading-content-manager > .section-heading h3 { font-weight:600; }

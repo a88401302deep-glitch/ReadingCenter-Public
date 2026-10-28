@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { enterManagement } from './book-management-test-helpers'
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReadingCenterRepositories } from '../../src/data'
@@ -31,6 +32,7 @@ describe('single-book editing', () => {
     const dialog = screen.getByRole('dialog')
     expect(dialog.querySelector('details')).toBeNull()
     expect(within(dialog).queryByText('未分次閱讀明細（0）')).toBeNull()
+    enterManagement('書籍')
     const trigger = within(dialog).getByRole('button', { name: '編輯書籍' })
     dialog.scrollTop = 123
     fireEvent.click(trigger)
@@ -84,6 +86,7 @@ describe('single-book editing', () => {
     render(<App />)
     fireEvent.click(screen.getByRole('button', { name: '書庫' }))
     fireEvent.click(await screen.findByRole('button', { name: /^開啟《/ }))
+    enterManagement('書籍')
     fireEvent.click(screen.getByRole('button', { name: '編輯書籍' }))
     expect(screen.getByRole('dialog')).toBeTruthy()
     const editor = document.querySelector('.book-form') as HTMLElement
@@ -101,6 +104,7 @@ describe('single-book editing', () => {
     await waitFor(() => expect(document.querySelector('.book-form')).toBeNull())
     expect(screen.getByRole('searchbox', { name: '搜尋書庫' })).toHaveProperty('value', '不符合書名')
     expect(await state.repositories!.books.getById(book.id)).toMatchObject({ bookNote: '保留草稿', wordCount: 12345 })
+    enterManagement('閱讀')
     fireEvent.change(screen.getByLabelText('書籍閱讀狀態'), { target: { value: 'planned' } })
     await waitFor(async () => expect(await state.repositories!.readingCycles.getAll()).toEqual([expect.objectContaining({ bookId: book.id, status: 'planned', startedAt: null, finishedAt: null })]))
     confirm.mockRestore()
@@ -119,6 +123,7 @@ describe('single-book editing', () => {
     render(<App />)
     fireEvent.click(screen.getByRole('button', { name: '書庫' }))
     fireEvent.click(await screen.findByRole('button', { name: /^開啟《/ }))
+    enterManagement('書籍')
     fireEvent.click(screen.getByRole('button', { name: '編輯書籍' }))
     const editor = document.querySelector('.book-form') as HTMLFormElement
     fireEvent.change(within(editor).getByLabelText('書籍備註'), { target: { value: '只儲存一次' } })
@@ -140,6 +145,7 @@ describe('single-book editing', () => {
     render(<App />)
     fireEvent.click(screen.getByRole('button', { name: '書庫' }))
     fireEvent.click(await screen.findByRole('button', { name: /^開啟《/ }))
+    enterManagement('書籍')
     fireEvent.click(screen.getByRole('button', { name: '編輯書籍' }))
     const editor = document.querySelector('.book-form') as HTMLElement
     fireEvent.change(within(editor).getByLabelText('書籍備註'), { target: { value: '本機草稿' } })
@@ -177,6 +183,7 @@ it('keeps personal edits in their own dialog across consecutive saves and restor
   fireEvent.click(screen.getByRole('button', { name: '書庫' }))
   fireEvent.click(await screen.findByRole('button', { name: /^開啟《/ }))
   const detail = screen.getByRole('dialog')
+  enterManagement('書籍')
   const trigger = within(detail).getByRole('button', { name: '編輯我的分類' })
   detail.scrollTop = 200
   fireEvent.click(trigger)
@@ -196,6 +203,7 @@ it('keeps personal edits in their own dialog across consecutive saves and restor
   expect(document.querySelector('.book-form')).toBeNull()
   expect(detail.scrollTop).toBe(200)
   expect(document.activeElement).toBe(trigger)
+  enterManagement('書籍')
   fireEvent.click(within(detail).getByRole('button', { name: '編輯書籍' }))
   expect(screen.getByRole('dialog', { name: '編輯書籍' })).toBeTruthy()
   expect(screen.getByLabelText('出版書名')).toHaveProperty('value', book.title)

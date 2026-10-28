@@ -84,6 +84,31 @@ it('keeps unmatched references visible for review and preserves position units',
   expect(records.every(record => record.cycleId === 'missing-cycle')).toBe(true)
 })
 
+it('keeps a record draft when leaving management, including after an outside pointer closes its popover', async () => {
+  const f = await fixture()
+  const before = await f.records.listForBook(f.book.id)
+  render(<ReadingCycleManager compact readingSummary={<p>閱讀摘要</p>} bookId={f.book.id} service={f.cycles} recordService={f.records} contentService={new ReadingContentService(f.repositories)} />)
+  const second = await screen.findByRole('region', { name: '第 2 次閱讀' })
+  expect(within(second).queryByRole('button')).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: '管理閱讀' }))
+  fireEvent.click(await within(second).findByRole('button', { name: '更新閱讀紀錄（1）' }))
+  fireEvent.click(screen.getByRole('button', { name: '新增紀錄' }))
+  fireEvent.change(screen.getByLabelText('目前進度'), { target: { value: '89' } })
+  const done = screen.getByRole('button', { name: '完成閱讀管理' })
+  expect(done).toHaveProperty('disabled', true)
+  fireEvent.pointerDown(screen.getByText('閱讀摘要'))
+  fireEvent.click(done)
+  expect(done).toHaveProperty('disabled', true)
+  expect(screen.queryByRole('button', { name: '管理閱讀' })).toBeNull()
+  fireEvent.click(within(second).getByRole('button', { name: '更新閱讀紀錄（1）' }))
+  expect(screen.getByLabelText('目前進度')).toHaveProperty('value', '89')
+  fireEvent.click(screen.getByRole('button', { name: '取消' }))
+  fireEvent.click(done)
+  expect(screen.getByRole('button', { name: '管理閱讀' })).toBeTruthy()
+  expect(within(second).queryByRole('button')).toBeNull()
+  expect(await f.records.listForBook(f.book.id)).toEqual(before)
+})
+
 const dates: { date: ReadingCompletionDate; text: string }[] = [
   { date: { precision: 'minute', completedOn: '2026-10-02', localTime: '00:05', offsetMinutes: 480 }, text: '2026-10-02 00:05（UTC+08:00）' },
   { date: { precision: 'range', startedOn: '2026-09-30', completedOn: '2026-10-02' }, text: '2026-09-30－2026-10-02' },

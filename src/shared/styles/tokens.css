@@ -1,4 +1,5 @@
 :root {
+  --font-rounded: ui-rounded, "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", system-ui, sans-serif;
   color-scheme: light;
   font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
   font-synthesis: none;
@@ -24,6 +25,8 @@
   --focus: #7D4859;
   /* Showa Sakura: presentation roles; stored preferences and reading data are unchanged. */
   --milk-tea: #AC866E;
+  --entry-sage: #DFE6D7;
+  --entry-sage-ink: #596B50;
   --progress-fill: var(--accent);
   --progress-track: #EEDFE1;
   --chart-primary: var(--accent);

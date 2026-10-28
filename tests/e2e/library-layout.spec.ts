@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures'
+import { expect, test, enterManagement } from './fixtures'
 
 for (const width of [360, 1280]) {
  test(`compact shelf and list preserve search and filters after single-book save and cancel at ${width}px`, async ({ page }) => {
@@ -34,9 +34,13 @@ for (const width of [360, 1280]) {
   await expect(search).toHaveValue('封面書架')
   await page.getByRole('button', { name: '開啟《封面書架測試》', exact: true }).click()
   await expect(page.getByRole('dialog')).not.toContainText('資料待補：')
-  await expect(page.getByRole('dialog').getByRole('img', { name: 'ISBN待編輯', exact: true })).toBeVisible()
+  await expect(page.getByRole('dialog').getByText('ISBN', { exact: true }).locator('..')).toContainText('未提供')
+  await expect(page.getByRole('dialog').getByRole('img', { name: 'ISBN待編輯', exact: true })).toHaveCount(0)
+  await enterManagement(page, '閱讀')
   await page.getByLabel('書籍閱讀狀態').selectOption('planned')
+  await enterManagement(page, '閱讀')
   await expect(page.getByLabel('書籍閱讀狀態')).toBeEnabled()
+  await enterManagement(page, '書籍')
   await page.getByRole('button', { name: '編輯我的分類', exact: true }).click()
   await expect(page.getByRole('dialog', { name: '編輯我的分類與標籤', exact: true })).toBeVisible()
   await expect(page.getByLabel('出版書名', { exact: true })).toHaveCount(0)
@@ -46,6 +50,7 @@ for (const width of [360, 1280]) {
   await expect(page.locator('.book-form').getByRole('status')).toHaveText('已儲存，可繼續編輯。')
   await page.locator('.book-form').getByRole('button', { name: '完成', exact: true }).click()
   await expect(page.locator('.book-detail')).toContainText('類型｜網文')
+  await enterManagement(page, '書籍')
   await page.getByRole('button', { name: '編輯書籍', exact: true }).click()
   await expect(page.getByRole('combobox', { name: '類型', exact: true })).toHaveCount(0)
   await expect(page.getByLabel('搜尋標籤', { exact: true })).toHaveCount(0)
@@ -77,6 +82,7 @@ for (const width of [360, 1280]) {
   await page.getByRole('button', { name: '書庫', exact: true }).click()
   await page.getByRole('button', { name: '開啟《封面書架測試》', exact: true }).click()
   await expect(page.locator('.book-detail')).toContainText('類型｜網文')
+  await enterManagement(page, '閱讀')
   await expect(page.getByLabel('書籍閱讀狀態')).toHaveValue('planned')
  })
 }

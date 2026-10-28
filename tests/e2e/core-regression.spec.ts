@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures'
+import { expect, test, enterManagement } from './fixtures'
 
 test('saved local data survives an application reload and remains searchable', async ({ page }) => {
   await page.goto('/')
@@ -34,13 +34,16 @@ test('deleting a book removes its record and note from every related view', asyn
   await page.getByRole('button', { name: '儲存', exact: true }).click()
   await page.getByRole('button', { name: /^開啟《/ }).click()
 
+  await enterManagement(page, '閱讀')
   await page.getByRole('button', { name: '更新未分次紀錄（0）' }).click()
   await page.getByRole('button', { name: '新增紀錄' }).click()
   await page.getByLabel('開始時間').fill(startedAt)
   await page.getByLabel('閱讀時間（分鐘）').fill('18')
   await page.getByRole('button', { name: '儲存', exact: true }).click()
 
+  await enterManagement(page, '閱讀')
   await page.getByRole('button', { name: '更新未分次紀錄（1）' }).click()
+  await enterManagement(page, '心得')
   await page.getByRole('button', { name: '短評', exact: true }).click()
   await page.getByLabel('短評內容').fill('刪書時一併消失的短評')
   await page.getByRole('button', { name: '儲存', exact: true }).click()
@@ -48,6 +51,7 @@ test('deleting a book removes its record and note from every related view', asyn
 
   await page.locator('.book-cover-open').first().click()
   await expect(page.locator('.book-detail-view details')).toHaveCount(0)
+  await enterManagement(page, '書籍')
   await page.getByRole('button', { name: '刪除書籍', exact: true }).click()
   await page.getByRole('button', { name: '確認刪除' }).click()
   await expect(page.getByText('整體刪除同步測試', { exact: true })).toHaveCount(0)

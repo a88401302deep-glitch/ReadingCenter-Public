@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures'
+import { expect, test, enterManagement } from './fixtures'
 
 test('Google empty stage counts explain the result while preserving the unsaved book draft', async ({ page }) => {
  await page.route('**/api/v1/books/metadata?**', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: [], partial: false, diagnostics: [{ source: 'Google Books', status: 'empty', count: 0, steps: [{ query: 'title', received: 0, parsed: 0, kept: 0, explicitZero: true }, { query: 'general', received: 2, parsed: 1, kept: 0, explicitZero: false }] }] }) }))
@@ -57,6 +57,7 @@ test('mobile metadata search separates choosing a book, reviewing changes and ap
  await page.getByLabel('作者（每行一位）').fill('人工作者')
  await page.getByRole('button', { name: '儲存', exact: true }).click()
  await page.locator('.book-cover-open').first().click()
+  await enterManagement(page, '書籍')
   await page.getByRole('button', { name: '編輯書籍', exact: true }).click()
  const editor = page.locator('.book-form')
  await editor.getByText('搜尋並補全書籍資料', { exact: true }).click()
