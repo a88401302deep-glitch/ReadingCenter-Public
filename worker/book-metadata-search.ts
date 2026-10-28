@@ -63,9 +63,11 @@ async function googleCover(id: string, fetcher: typeof fetch): Promise<Response>
  if (original && original.width < 800) {
   try {
    const larger = await read(true), size = coverDimensions(larger.bytes)
-   // Some volumes return a cropped banner for larger sizes. Keep the complete
-   // original unless both axes improve and its aspect ratio agrees within 3%.
-   if (size && size.width > original.width && size.height > original.height
+   // Google also returns HTTP 200 white PNG placeholders at the correct size.
+   // Conservatively retain the original on format changes or reduced data,
+   // as well as cropped banners. This does not attempt arbitrary image decoding.
+   if (size && larger.mime === image.mime && larger.bytes.byteLength > image.bytes.byteLength
+    && size.width > original.width && size.height > original.height
     && Math.abs(size.width * original.height / (size.height * original.width) - 1) <= .03) image = larger
   } catch { /* An unavailable larger image must not remove a usable cover. */ }
  }

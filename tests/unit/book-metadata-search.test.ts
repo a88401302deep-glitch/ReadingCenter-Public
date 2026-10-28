@@ -93,7 +93,28 @@ it.each([301, 302, 303, 307, 308])('rejects HTTP %i redirects without following 
 })
 
 // Minimal dimension headers; the proxy reads dimensions without decoding pixels.
-const jpegHeader = (width: number, height: number, marker = 0xc0) => new Uint8Array([255, 216, 255, marker, 0, 7, 8, height >> 8, height & 255, width >> 8, width & 255, 255, 217])
+const jpegHeader = (width: number, height: number, marker = 0xc0) => {
+ const bytes = new Uint8Array(width > 128 ? 32 : 13)
+ bytes.set([255, 216, 255, marker, 0, 7, 8, height >> 8, height & 255, width >> 8, width & 255, 255, 217])
+ return bytes
+}
+it('rejects the white Google PNG returned with matching larger dimensions and HTTP 200', async () => {
+ const original = new Uint8Array(12643)
+ original.set(jpegHeader(128, 182))
+ const blank = readFileSync(new URL('../fixtures/book-metadata/google-blank-cover.png', import.meta.url))
+ const fetcher = vi.fn().mockResolvedValueOnce(new Response(original, { headers: { 'Content-Type': 'image/jpeg' } })).mockResolvedValueOnce(new Response(blank, { headers: { 'Content-Type': 'image/png' } }))
+ const response = await handleBookMetadataSearch(new Request('https://app.test/api/v1/books/metadata/cover?google=JiS9EAAAQBAJ'), undefined, fetcher)
+ expect(response.status).toBe(200)
+ expect(response.headers.get('Content-Type')).toBe('image/jpeg')
+ expect(new Uint8Array(await response.arrayBuffer())).toEqual(original)
+ expect(fetcher).toHaveBeenCalledTimes(2)
+})
+it('conservatively retains the original when larger dimensions have fewer image bytes', async () => {
+ const original = new Uint8Array(64); original.set(jpegHeader(128, 182))
+ const fetcher = vi.fn().mockResolvedValueOnce(new Response(original, { headers: { 'Content-Type': 'image/jpeg' } })).mockResolvedValueOnce(new Response(jpegHeader(800, 1135), { headers: { 'Content-Type': 'image/jpeg' } }))
+ const response = await handleBookMetadataSearch(new Request('https://app.test/api/v1/books/metadata/cover?google=volume1'), undefined, fetcher)
+ expect(new Uint8Array(await response.arrayBuffer())).toEqual(original)
+})
 it('requests a larger Google cover for the same volume and preserves its image bytes', async () => {
  const original = jpegHeader(128, 182), bytes = jpegHeader(800, 1135, 0xc2)
  const signals: (AbortSignal | null | undefined)[] = []
@@ -150,7 +171,7 @@ it('does not replace a cover whose dimensions cannot safely be identified', asyn
 })
 it('accepts a complete larger PNG cover without converting the image', async () => {
  const pngHeader = (width: number, height: number) => {
-  const bytes = new Uint8Array(24), view = new DataView(bytes.buffer)
+  const bytes = new Uint8Array(width > 128 ? 32 : 24), view = new DataView(bytes.buffer)
   bytes.set([137, 80, 78, 71, 13, 10, 26, 10])
   view.setUint32(12, 0x49484452); view.setUint32(16, width); view.setUint32(20, height)
   return bytes
