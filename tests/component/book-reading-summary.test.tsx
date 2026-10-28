@@ -11,6 +11,18 @@ import { bookReadingDays } from '../../src/features/reading-overview/book-readin
 
 afterEach(cleanup)
 
+it('keeps a reported total visible without an empty daily-details section or invented records', async () => {
+  const repositories = createInMemoryRepositories()
+  const book = await new BookService(repositories).create({ title: '只有累計', mediaTypeId: 'ebook' })
+  await new ReadingCycleService(repositories).create(book.id, { status: 'reading', reportedDurationMinutes: 125 })
+  render(<BookReadingSummary bookId={book.id} revision={0} service={new ReadingOverviewService(repositories)} />)
+  await screen.findByText('2 小時 5 分')
+  expect(screen.queryByRole('region', { name: '每日閱讀明細' })).toBeNull()
+  expect(screen.queryByText('尚無有日期的閱讀紀錄')).toBeNull()
+  expect(document.querySelector('details')).toBeNull()
+  expect(await repositories.readingRecords.getAll()).toHaveLength(0)
+})
+
 it('combines devices and manual entries by day, without counting completion evidence twice or changing originals', async () => {
   const repositories = createInMemoryRepositories()
   const book = await new BookService(repositories, () => 'unified').create({ title: '整合閱讀', mediaTypeId: 'ebook' })
@@ -31,12 +43,12 @@ it('combines devices and manual entries by day, without counting completion evid
   expect(overview.byBook[book.id].totalMinutes).toBe(45)
   render(<BookReadingSummary bookId={book.id} revision={0} service={service} />)
   await screen.findByText('100%')
-  expect(screen.getByText('閱讀明細').closest('details')!.textContent).toContain('70%')
+  expect(screen.getByRole('region', { name: '每日閱讀明細' }).textContent).toContain('70%')
   expect(screen.queryByText('來源每日紀錄')).toBeNull()
   expect(screen.queryByText('閱讀紀錄')).toBeNull()
-  const details = screen.getByText('閱讀明細').closest('details')!
-  expect(details.open).toBe(false)
-  expect(within(details).getAllByRole('listitem', { hidden: true })).toHaveLength(1)
+  const details = screen.getByRole('region', { name: '每日閱讀明細' })
+  expect(details.closest('details')).toBeNull()
+  expect(within(details).getAllByRole('listitem')).toHaveLength(1)
   expect(details.textContent).toContain('45 分鐘')
   expect(await repositories.sourceReadingDays.getAll()).toEqual(before)
 })
@@ -54,7 +66,7 @@ it('does not display zero or stale data before load, and does not invent time fo
   expect(screen.queryByText('0 分鐘')).toBeNull()
   await act(async () => resolve(data))
   expect(screen.getByText('2026-10-02', { selector: 'strong' })).toBeTruthy()
-  expect(screen.getByText(/閱讀時間：未記錄/)).toBeTruthy()
+  expect(screen.getByText('總閱讀時長').parentElement!.textContent).toContain('未記錄')
   expect(await repositories.readingRecords.getAll()).toHaveLength(0)
 })
 

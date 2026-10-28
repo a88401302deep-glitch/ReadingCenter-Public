@@ -47,7 +47,7 @@ test('deleting a book removes its record and note from every related view', asyn
   await page.keyboard.press('Escape')
 
   await page.locator('.book-cover-open').first().click()
-  await page.getByText('更多操作', { exact: true }).click()
+  await expect(page.locator('.book-detail-view details')).toHaveCount(0)
   await page.getByRole('button', { name: '刪除書籍', exact: true }).click()
   await page.getByRole('button', { name: '確認刪除' }).click()
   await expect(page.getByText('整體刪除同步測試', { exact: true })).toHaveCount(0)

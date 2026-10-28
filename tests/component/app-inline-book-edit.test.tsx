@@ -22,15 +22,15 @@ beforeEach(async () => {
 afterEach(() => vi.restoreAllMocks())
 
 describe('single-book editing', () => {
-  it('restores expanded book details, dialog position and edit focus after cancel and save', async () => {
+  it('keeps book content visible and restores dialog position and edit focus after cancel and save', async () => {
     const service = new BookService(state.repositories!, () => 'return-book')
     const book = await service.create({ title: '編輯返回', mediaTypeId: 'ebook', sourceUrls: ['https://example.com/retained'] })
     render(<App />)
     fireEvent.click(screen.getByRole('button', { name: '書庫' }))
     fireEvent.click(await screen.findByRole('button', { name: /^開啟《/ }))
     const dialog = screen.getByRole('dialog')
-    const publication = dialog.querySelector('.reading-cycle-unassigned .cycle-record-details') as HTMLDetailsElement
-    fireEvent.click(within(dialog).getByText('未分次閱讀明細（0）', { exact: true }))
+    expect(dialog.querySelector('details')).toBeNull()
+    expect(within(dialog).queryByText('未分次閱讀明細（0）')).toBeNull()
     const trigger = within(dialog).getByRole('button', { name: '編輯書籍' })
     dialog.scrollTop = 123
     fireEvent.click(trigger)
@@ -49,7 +49,7 @@ describe('single-book editing', () => {
     fireEvent.click(within(editor).getByRole('button', { name: '取消' }))
     expect(document.querySelector('.book-form')).toBeNull()
     expect(dialog.hasAttribute('aria-hidden')).toBe(false)
-    expect(publication.open).toBe(true)
+    expect(dialog.querySelector('details')).toBeNull()
     expect(dialog.scrollTop).toBe(123)
     expect(document.activeElement).toBe(trigger)
     expect(await service.get(book.id)).toMatchObject({ bookNote: '', sourceUrls: ['https://example.com/retained'] })
@@ -72,7 +72,7 @@ describe('single-book editing', () => {
     expect(await service.get(book.id)).toMatchObject({ revision: book.revision + 2, bookNote: '第二次保存' })
     fireEvent.click(screen.getByRole('button', { name: '完成' }))
     await waitFor(() => expect(document.querySelector('.book-form')).toBeNull())
-    expect(publication.open).toBe(true)
+    expect(dialog.querySelector('details')).toBeNull()
     expect(dialog.scrollTop).toBe(123)
     expect(document.activeElement).toBe(trigger)
     expect(await service.get(book.id)).toMatchObject({ bookNote: '第二次保存', sourceUrls: ['https://example.com/retained'] })
