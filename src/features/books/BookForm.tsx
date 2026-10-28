@@ -85,7 +85,7 @@ export function BookForm({ scope = 'all', restoreView, saveNotice, book, busy = 
   const [categoryIds, setCategoryIds] = useState(book?.categoryIds ?? [])
   const [sourceIds, setSourceIds] = useState(book?.sourceIds ?? [])
   const [tagIds, setTagIds] = useState(book?.tagIds ?? [])
-  useEffect(() => {
+  useLayoutEffect(() => {
     const dirty =
       translatorNamesText !== initialTranslators || illustratorNamesText !== initialIllustrators || originalTitle !== (book?.originalTitle ?? '') || authorOriginalNamesText !== (book?.authorOriginalNames?.join('\n') ?? '') ||
       bookForm !== (book ? libraryBookType(book, dictionaries) ?? 'other' : 'other') || collectionId !== (book?.collectionId ?? '') || Boolean(collectionId === '__new' && newSeriesName) || sequenceLabel !== (book?.sequence?.label ?? '') || sequenceOrder !== (book?.sequence?.sortValue.toString() ?? '') ||
