@@ -1,13 +1,13 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import type { ReadingCycle, ReadingCycleStatus } from '../../domain'
-import { Button, FormMessage } from '../../shared/ui'
+import { Button, FormMessage, Icon } from '../../shared/ui'
 import { ReadingCycleService, type ReadingCycleDeletionImpact } from './reading-cycle-service'
 import { ReadingRecordPopover } from '../reading-records/ReadingRecordPopover'
 import type { ReadingRecordService } from '../reading-records/reading-record-service'
 import { ReadingContentManager } from '../reading-contents/ReadingContentManager'
 import type { ReadingContentService } from '../reading-contents/reading-content-service'
 
-interface Props { readingSummary?: ReactNode; compact?: boolean; revision?: number; bookId: string; service: ReadingCycleService; recordService: ReadingRecordService; contentService: ReadingContentService; onContentChanged?: () => void; onReadingChanged?: () => void }
+interface Props { readingActions?: ReactNode; readingSummary?: ReactNode; compact?: boolean; revision?: number; bookId: string; service: ReadingCycleService; recordService: ReadingRecordService; contentService: ReadingContentService; onContentChanged?: () => void; onReadingChanged?: () => void }
 const statusLabel: Record<ReadingCycleStatus, string> = { planned: '預計閱讀', reading: '閱讀中', paused: '暫停', completed: '已讀完', abandoned: '已棄讀' }
 const toInput = (value: string | null) => value?.slice(0, 16) ?? ''
 const toIso = (value: string) => value ? new Date(value).toISOString() : null
@@ -26,7 +26,7 @@ const cycleDateLabel = (cycle: ReadingCycle) => {
   return cycle.finishedAt ? `結束：${cycle.finishedAt.slice(0, 10)}` : '日期未設定'
 }
 
-export function ReadingCycleManager({ readingSummary, compact = false, revision = 0, bookId, contentService, onContentChanged, onReadingChanged, recordService, service }: Props) {
+export function ReadingCycleManager({ readingActions, readingSummary, compact = false, revision = 0, bookId, contentService, onContentChanged, onReadingChanged, recordService, service }: Props) {
   const [cycles, setCycles] = useState<ReadingCycle[]>([])
   const [editing, setEditing] = useState<ReadingCycle | null | undefined>(undefined)
   const [deleting, setDeleting] = useState<{ cycle: ReadingCycle; impact: ReadingCycleDeletionImpact } | null>(null)
@@ -59,8 +59,8 @@ export function ReadingCycleManager({ readingSummary, compact = false, revision 
     {deleting && <div className="delete-confirmation"><p>確定刪除第 {deleting.cycle.sequence} 次閱讀？</p><ul><li>{deleting.impact.readingRecords} 筆閱讀紀錄</li><li>{deleting.impact.readingContents} 筆閱讀內容</li></ul><div className="form-actions"><Button onClick={() => setDeleting(null)}>取消</Button><Button variant="danger" onClick={() => void confirmDelete()}>確認刪除</Button></div></div>}
   </>
   return <section className="cycle-manager">
-    {readingSummary ? <section className="book-detail-reading" aria-label="閱讀紀錄"><h3>閱讀紀錄</h3>{readingSummary}{compact ? <details className="book-reading-management"><summary>修改狀態／重讀</summary>{controls}</details> : controls}</section> : compact ? <details className="book-reading-management"><summary>修改狀態／重讀</summary>{controls}</details> : controls}
-    <ReadingContentManager heading={readingSummary ? '心得與畫線' : undefined} revision={revision} bookId={bookId} cycles={cycles} onChanged={onContentChanged} service={contentService} />
+    {readingSummary ? <section className="book-detail-reading book-detail-panel" aria-label="閱讀紀錄"><h3 className="book-detail-panel-heading"><Icon name="list" />閱讀紀錄</h3>{readingActions}{readingSummary}{compact ? <details className="book-reading-management"><summary>修改狀態／重讀</summary>{controls}</details> : controls}</section> : compact ? <details className="book-reading-management"><summary>修改狀態／重讀</summary>{controls}</details> : controls}
+    <ReadingContentManager heading={readingSummary ? '閱讀心得' : undefined} revision={revision} bookId={bookId} cycles={cycles} onChanged={onContentChanged} service={contentService} />
   </section>
 }
 

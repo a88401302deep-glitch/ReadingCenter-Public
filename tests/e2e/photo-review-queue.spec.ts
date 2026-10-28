@@ -48,6 +48,7 @@ test('multiple photos keep reviewed drafts after reload and only confirmed books
  await page.getByRole('button', { name: '查詢書籍資料', exact: true }).click()
  await page.getByRole('button', { name: '核對《合成核對甲》', exact: true }).click()
  await page.getByRole('button', { name: '帶入下列表單', exact: true }).click()
+ await page.getByRole('button', { name: '返回編輯表單', exact: true }).click()
  await expect(page.getByLabel('出版社', { exact: true })).toHaveValue('補全出版社')
  await page.getByRole('button', { name: '儲存', exact: true }).click()
  await expect(page.getByText('書籍資料已保存；沒有新增書籍或閱讀紀錄。')).toBeVisible()

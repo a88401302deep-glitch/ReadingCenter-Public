@@ -4,7 +4,7 @@ import { Tag } from './Tag'
 
 export interface MultiSelectOption { id: string; label: string }
 interface MultiSelectProps {
-  kind: 'category' | 'tag'
+  kind: 'category' | 'tag' | 'source'
   label: string
   options: MultiSelectOption[]
   recommendations?: MultiSelectOption[]

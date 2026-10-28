@@ -1,22 +1,45 @@
+import { metadataFields } from '../../domain/book-metadata'
 import { bookTypeLabels, libraryBookType } from '../library/library-book-summary'
 import { useAuth } from '../auth/auth-context'
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from 'react'
 import { getBookDisplayTitle, getBookNotes, getBookSourceUrls, type Book, type BookCover, type BookCollection, type DictionaryEntry } from '../../domain'
 import { Button } from '../../shared/ui/Button'
 import { FormMessage } from '../../shared/ui/FormMessage'
 import { MultiSelect, type MultiSelectOption } from '../../shared/ui/MultiSelect'
+import { BookMetadataDialog } from './BookMetadataDialog'
 import { BookMetadataSearch } from './BookMetadataSearch'
 import { BookCoverSearch } from './BookCoverSearch'
 import { BookCoverPaste } from './BookCoverPaste'
 import { uploadBookCover, validateCoverFile } from './book-cover-upload'
 import type { BookDraft } from './book-service'
 
-interface BookFormProps { book?: Book; busy?: boolean; dictionaries?: DictionaryEntry[]; collections?: BookCollection[]; books?: Book[]; categoryRecommendations?: MultiSelectOption[]; tagRecommendations?: MultiSelectOption[]; error?: string | null; onCancel: () => void; onDirtyChange?: (dirty: boolean) => void; onSubmit: (draft: BookDraft) => Promise<void> }
+export type BookEditScope = 'all' | 'bibliography' | 'personal' | 'rating'
 
-export function BookForm({ book, busy = false, dictionaries = [], collections = [], books = [], categoryRecommendations, tagRecommendations, error, onCancel, onDirtyChange, onSubmit }: BookFormProps) {
+interface BookFormProps { scope?: BookEditScope; restoreView?: { scrollTop: number; openDetails: string[] }; saveNotice?: string; book?: Book; busy?: boolean; dictionaries?: DictionaryEntry[]; collections?: BookCollection[]; books?: Book[]; categoryRecommendations?: MultiSelectOption[]; tagRecommendations?: MultiSelectOption[]; error?: string | null; onCancel: () => void; onDirtyChange?: (dirty: boolean) => void; onSubmit: (draft: BookDraft) => Promise<void> }
+
+export function BookForm({ scope = 'all', restoreView, saveNotice, book, busy = false, dictionaries = [], collections = [], books = [], categoryRecommendations, tagRecommendations, error, onCancel, onDirtyChange, onSubmit }: BookFormProps) {
   const { previewReadOnly = false } = useAuth()
+  const bibliography = scope === 'all' || scope === 'bibliography'
+  const personal = scope === 'all' || scope === 'personal'
   const titleInputRef = useRef<HTMLInputElement>(null)
-  useEffect(() => { titleInputRef.current?.focus({ preventScroll: true }) }, [])
+  const formRef = useRef<HTMLFormElement>(null)
+  const fieldsRef = useRef<HTMLFieldSetElement>(null)
+  const savePending = useRef(false)
+  const restored = useRef(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [metadataBusy, setMetadataBusy] = useState(false)
+  useEffect(() => { if (restoreView === undefined) titleInputRef.current?.focus({ preventScroll: true }) }, [restoreView])
+  useLayoutEffect(() => {
+    if (!restoreView || busy || restored.current) return
+    restored.current = true
+    if (fieldsRef.current) {
+      fieldsRef.current.querySelectorAll('details').forEach(details => {
+        details.open = restoreView.openDetails.includes(details.querySelector('summary')?.textContent ?? '')
+      })
+      fieldsRef.current.scrollTop = restoreView.scrollTop
+    }
+    formRef.current?.querySelector<HTMLButtonElement>('button[type="submit"]')?.focus({ preventScroll: true })
+  }, [restoreView, busy])
   useEffect(() => { document.body.classList.add('book-editor-open'); return () => document.body.classList.remove('book-editor-open') }, [])
   const mediaTypeChoices = dictionaries.filter(item => item.kind === 'mediaType')
   const notes = book ? getBookNotes(book) : { bookNote: '' }
@@ -49,17 +72,18 @@ export function BookForm({ book, busy = false, dictionaries = [], collections = 
   const [bookNote, setBookNote] = useState(notes.bookNote)
   const [ratingScale, setRatingScale] = useState<5 | 10>(book?.rating?.scale ?? 5)
   const [rating, setRating] = useState(book?.rating?.value?.toString() ?? '')
-  const [cover, setCover] = useState<BookCover | null>(book?.cover ?? null)
-  const [coverFile, setCoverFile] = useState<File | null>(null)
   const [coverBookId] = useState(() => book?.id ?? crypto.randomUUID())
   const [coverSearchOpen, setCoverSearchOpen] = useState(false)
   const [coverSize, setCoverSize] = useState<{ src: string; width: number; height: number } | null>(null)
+  const [cover, setCover] = useState<BookCover | null>(book?.cover ?? null)
+  const [coverFile, setCoverFile] = useState<File | null>(null)
   const [coverPreview, setCoverPreview] = useState('')
   const [coverError, setCoverError] = useState('')
   const [uploadingCover, setUploadingCover] = useState(false)
   useEffect(() => () => { if (coverPreview) URL.revokeObjectURL(coverPreview) }, [coverPreview])
   const [coverPath, setCoverPath] = useState(book?.cover?.path ?? '')
   const [categoryIds, setCategoryIds] = useState(book?.categoryIds ?? [])
+  const [sourceIds, setSourceIds] = useState(book?.sourceIds ?? [])
   const [tagIds, setTagIds] = useState(book?.tagIds ?? [])
   useEffect(() => {
     const dirty =
@@ -78,14 +102,18 @@ export function BookForm({ book, busy = false, dictionaries = [], collections = 
       coverFile !== null ||
       coverPath !== (book?.cover?.path ?? '') ||
       categoryIds.join('\u0000') !== (book?.categoryIds ?? []).join('\u0000') ||
+      sourceIds.join('\u0000') !== (book?.sourceIds ?? []).join('\u0000') ||
       tagIds.join('\u0000') !== (book?.tagIds ?? []).join('\u0000')
     onDirtyChange?.(dirty)
-  }, [dictionaries, translatorNamesText, initialTranslators, illustratorNamesText, initialIllustrators, originalTitle, authorOriginalNamesText, bookForm, collectionId, newSeriesName, sequenceLabel, sequenceOrder, authorNamesText, initialAuthors, initialPublisher, publisherName, isbn, publishedOn, metadataSourceUrl, book, bookNote, categoryIds, coverFile, coverPath, languageTag, mediaTypeId, onDirtyChange, preferredTitle, rating, ratingScale, tagIds, title, sourceUrlsText, wordCount, wordCountSourceUrl])
+  }, [dictionaries, translatorNamesText, initialTranslators, illustratorNamesText, initialIllustrators, originalTitle, authorOriginalNamesText, bookForm, collectionId, newSeriesName, sequenceLabel, sequenceOrder, authorNamesText, initialAuthors, initialPublisher, publisherName, isbn, publishedOn, metadataSourceUrl, book, bookNote, categoryIds, coverFile, coverPath, languageTag, mediaTypeId, onDirtyChange, preferredTitle, rating, ratingScale, sourceIds, tagIds, title, sourceUrlsText, wordCount, wordCountSourceUrl])
 
-  const options = (kind: 'category' | 'tag') => dictionaries.filter((item) => item.kind === kind).map((item) => ({ id: item.id, label: item.name }))
+  const options = (kind: 'category' | 'tag' | 'source') => dictionaries.filter((item) => item.kind === kind).map((item) => ({ id: item.id, label: item.name }))
   const submit = async (event: FormEvent) => {
     event.preventDefault()
-    if (busy || uploadingCover || previewReadOnly) return
+    if (busy || uploadingCover || previewReadOnly || savePending.current) return
+    savePending.current = true
+    setSubmitting(true)
+    try {
     let savedCover = coverPath.trim() ? (cover?.path === coverPath.trim() ? cover : { path: coverPath.trim(), mimeType: 'image/jpeg' as const }) : null
     if (coverFile) {
       setUploadingCover(true); setCoverError('')
@@ -95,53 +123,32 @@ export function BookForm({ book, busy = false, dictionaries = [], collections = 
       } catch (reason) { setCoverError(reason instanceof Error ? reason.message : '封面上傳失敗'); return }
       finally { setUploadingCover(false) }
     }
-    await onSubmit({ ...(!book ? { reservedId: coverBookId } : {}), wordCountSourceUrl, originalTitle, authorOriginalNames: namesFrom(authorOriginalNamesText), bookForm,
+    const draft: BookDraft = { ...(!book ? { reservedId: coverBookId } : {}), wordCountSourceUrl, originalTitle, authorOriginalNames: namesFrom(authorOriginalNamesText), bookForm,
       translatorNames: translatorNamesText === initialTranslators ? undefined : namesFrom(translatorNamesText), illustratorNames: illustratorNamesText === initialIllustrators ? undefined : namesFrom(illustratorNamesText),
       collectionId: collectionId === '__new' ? null : collectionId === (book?.collectionId ?? '') ? undefined : collectionId || null,
       ...(collectionId === '__new' ? { newSeriesName } : {}),
       sequence: sequenceLabel === (book?.sequence?.label ?? '') && sequenceOrder === (book?.sequence?.sortValue.toString() ?? '') ? undefined : sequenceLabel.trim() ? { kind: 'volume', label: sequenceLabel.trim(), sortValue: sequenceOrder.trim() ? Number(sequenceOrder) : 0 } : null,
- authorNames: authorNamesText === initialAuthors ? undefined : [...new Set(authorNamesText.split('\n').map(name => name.trim()).filter(Boolean))], publisherName: publisherName === initialPublisher ? undefined : publisherName, isbn: isbn === (book?.isbn ?? '') ? undefined : isbn, publishedOn: publishedOn === (book?.publishedOn ?? '') ? undefined : publishedOn, metadataSourceUrl: metadataSourceUrl || undefined, wordCount: wordCount.trim() ? Number(wordCount) : null, sourceUrls: [...new Set(sourceUrlsText.split('\n').map((url) => url.trim()).filter(Boolean))], title, preferredTitle, languageTag, mediaTypeId, bookNote, rating: rating ? { value: Number(rating), scale: ratingScale } : null, categoryIds, tagIds, cover: savedCover })
+ authorNames: authorNamesText === initialAuthors ? undefined : [...new Set(authorNamesText.split('\n').map(name => name.trim()).filter(Boolean))], publisherName: publisherName === initialPublisher ? undefined : publisherName, isbn: isbn === (book?.isbn ?? '') ? undefined : isbn, publishedOn: publishedOn === (book?.publishedOn ?? '') ? undefined : publishedOn, metadataSourceUrl: metadataSourceUrl || undefined, wordCount: wordCount.trim() ? Number(wordCount) : null, sourceUrls: [...new Set(sourceUrlsText.split('\n').map((url) => url.trim()).filter(Boolean))], title, preferredTitle, languageTag, mediaTypeId, bookNote, rating: rating ? { value: Number(rating), scale: ratingScale } : null, categoryIds, tagIds, sourceIds, cover: savedCover }
+    await onSubmit(scope === 'rating' && book ? {
+      title: book.title, preferredTitle: book.preferredTitle, mediaTypeId: book.mediaTypeId, cover: book.cover, rating: draft.rating,
+    } : scope === 'personal' && book ? {
+      title: book.title, preferredTitle: book.preferredTitle, mediaTypeId: book.mediaTypeId, cover: book.cover,
+      bookForm, sourceIds, tagIds, sourceUrls: draft.sourceUrls,
+    } : scope === 'bibliography' ? {
+      ...draft, bookForm: undefined, sourceIds: undefined, tagIds: undefined, rating: undefined, sourceUrls: undefined,
+    } : draft)
+    } finally { savePending.current = false; setSubmitting(false) }
   }
-  return <form className="entity-form book-form" onSubmit={submit} onKeyDown={event => { if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); if (!busy && !uploadingCover) onCancel() } }}>
-    <header className="book-editor-heading"><div><h2>{book ? '編輯書籍' : '新增書籍'}</h2></div><Button aria-label="離開書籍編輯" disabled={busy || uploadingCover} onClick={onCancel}>取消</Button></header>
-    <div className="book-form-fields" role="group" aria-label="書籍資料欄位">
+  return <form ref={formRef} className="entity-form book-form" onSubmit={submit} onKeyDown={event => { if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); if (!busy && !submitting && !uploadingCover) onCancel() } }}>
+    <header className="book-editor-heading"><div><h2>{scope === 'rating' ? '編輯評分' : scope === 'personal' ? '編輯我的分類與標籤' : book ? '編輯書籍' : '新增書籍'}</h2></div><Button aria-label="離開書籍編輯" disabled={busy || submitting || uploadingCover} onClick={onCancel}>{saveNotice ? '完成' : '取消'}</Button></header>
+    <fieldset ref={fieldsRef} className="book-form-fields" aria-label={scope === 'rating' ? '評分欄位' : scope === 'personal' ? '我的分類與標籤欄位' : '書籍資料欄位'} disabled={busy || submitting || uploadingCover}>
     {previewReadOnly && <p role="status">查詢預覽：可核對書籍資料與封面，暫不儲存或上傳。</p>}
-    <h3 className="book-form-heading book-form-heading--first">基本資料</h3>
-    <div className="book-field"><span className="field-requirement" aria-hidden="true">必填</span><label><span className="field-caption">出版書名</span><input ref={titleInputRef} required aria-label="出版書名" value={title} onChange={(e) => setTitle(e.target.value)} /></label></div>
-    <div className="book-field"><span className="field-requirement" aria-hidden="true">完整度必備</span><label><span className="field-caption">作者（每行一位）</span><textarea rows={2} maxLength={4000} value={authorNamesText} onChange={event => setAuthorNamesText(event.target.value)} /></label></div>
-    <div className="book-form-grid">
-    <div className="book-field"><span className="field-requirement" aria-hidden="true">完整度必備</span><label><span className="field-caption">類型</span><select value={bookForm} onChange={event => setBookForm(event.target.value as NonNullable<Book['bookForm']>)}><option value="other">未設定</option><option value="novel">小說</option><option value="manga">漫畫</option><option value="magazine">雜誌</option><option value="webNovel">網文</option></select></label></div>
-    <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">書籍版本</span><select aria-label="書籍版本" value={mediaTypeId} onChange={(e) => setMediaTypeId(e.target.value)}>{!mediaTypeChoices.some(item => item.id === 'ebook') && <option value="ebook">電子書</option>}{mediaTypeChoices.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}{mediaTypeId !== 'ebook' && !mediaTypeChoices.some(item => item.id === mediaTypeId) && <option value={mediaTypeId}>原有格式（未分類）</option>}</select></label></div>
-    </div>
-    <h3 className="book-form-heading">分類、標籤與評分</h3>
-    <MultiSelect kind="category" label="分類" options={options('category')} recommendations={categoryRecommendations} value={categoryIds} onChange={setCategoryIds} />
-    <MultiSelect kind="tag" label="標籤" options={options('tag')} recommendations={tagRecommendations} value={tagIds} onChange={setTagIds} />
-    <div className="book-form-grid">
-    <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">評分刻度</span><select value={ratingScale} onChange={(e) => { setRatingScale(Number(e.target.value) as 5 | 10); setRating('') }}><option value="5">5 分制</option><option value="10">10 分制</option></select></label></div>
-    <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">評分</span><select value={rating} onChange={(e) => setRating(e.target.value)}><option value="">未評分</option>{Array.from({ length: ratingScale }, (_, index) => <option key={index + 1} value={index + 1}>{index + 1} 分</option>)}</select></label></div>
-    </div>
-    <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">書籍備註</span><textarea rows={4} value={bookNote} onChange={(e) => setBookNote(e.target.value)} /></label></div>
-    <h3 className="book-form-heading">封面與資料查詢</h3>
-    <div className="book-cover-editor">
-      {(coverPreview || coverPath) && <img key={coverPreview || coverPath} className="book-cover-editor-preview" src={coverPreview || coverPath} alt="封面預覽" onLoad={event => setCoverSize({ src: coverPreview || coverPath, width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight })} />}
-      {coverSize?.src === (coverPreview || coverPath) && <p role="status">目前封面：{coverSize.width} × {coverSize.height} 像素{coverSize.width < 400 ? '（小圖，放大可能模糊）' : ''}{coverFile ? '，尚未儲存' : ''}</p>}
-      <Button disabled={busy || uploadingCover} onClick={() => setCoverSearchOpen(true)}>選擇封面／重新找封面</Button>
-      {coverFile && previewReadOnly && <p role="status">封面已選入預覽，尚未上傳。</p>}
-      <div className="book-field"><span className="field-requirement" aria-hidden="true">完整度必備</span><label><span className="field-caption">選擇封面</span><input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy || uploadingCover} onChange={event => {
-        const file = event.target.files?.[0]; event.target.value = ''; if (!file) return
-        try { validateCoverFile(file); setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); setCoverError('') } catch (reason) { setCoverError(reason instanceof Error ? reason.message : '無效圖片') }
-      }} /></label></div>
-      <BookCoverPaste disabled={busy || uploadingCover} onSelect={file => { setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); setCoverError('') }} />
-      <BookCoverSearch key={coverSearchOpen ? 'open' : 'closed'} title={title} author={authorNamesText.replaceAll('\n', ' ')} isbn={isbn || null} open={coverSearchOpen} onOpenChange={setCoverSearchOpen} disabled={busy || uploadingCover} onSelect={file => { setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); setCoverError('') }} />
-      {(coverFile || coverPath) && <Button disabled={busy || uploadingCover} onClick={() => { setCoverFile(null); setCoverPreview(''); setCover(null); setCoverPath(''); setCoverError('') }}>移除封面</Button>}
-      <details><summary>封面路徑</summary><div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">封面檔案路徑</span><input placeholder="covers/example.jpg" disabled={busy || uploadingCover} value={coverPath} onChange={(event) => { setCoverPath(event.target.value); setCoverFile(null); setCoverPreview('') }} /></label></div></details>
-      {coverError && <FormMessage tone="error">{coverError}</FormMessage>}
-    </div>
-    <BookMetadataSearch mediaTypeId={mediaTypeId} currentValues={{ bookForm: bookForm === 'other' ? '' : bookTypeLabels[bookForm], title, authors: namesFrom(authorNamesText).join('、'), publisher: publisherName, isbn, publishedOn, originalTitle, authorOriginalNames: namesFrom(authorOriginalNamesText).join('、'), translators: namesFrom(translatorNamesText).join('、'), illustrators: namesFrom(illustratorNamesText).join('、'), wordCount, seriesName: collectionId === '__new' ? newSeriesName : collectionId ? collections.find(item => item.id === collectionId)?.name || '已設定系列' : '', sequenceLabel }} title={title} author={authorNamesText.split('\n')[0]} disabled={busy || uploadingCover} onSelect={(candidate, replace, fields) => {
+    {bibliography && <>
+    <BookMetadataDialog disabled={busy || submitting || uploadingCover || metadataBusy}><BookMetadataSearch supportedFields={scope === 'bibliography' ? metadataFields.filter(field => field !== 'bookForm') : undefined} embeddedInDialog onBusyChange={setMetadataBusy} mediaTypeId={mediaTypeId} currentValues={{ bookForm: bookForm === 'other' ? '' : bookTypeLabels[bookForm], title, authors: namesFrom(authorNamesText).join('、'), publisher: publisherName, isbn, publishedOn, originalTitle, authorOriginalNames: namesFrom(authorOriginalNamesText).join('、'), translators: namesFrom(translatorNamesText).join('、'), illustrators: namesFrom(illustratorNamesText).join('、'), wordCount, seriesName: collectionId === '__new' ? newSeriesName : collectionId ? collections.find(item => item.id === collectionId)?.name || '已設定系列' : '', sequenceLabel }} title={title} author={authorNamesText.split('\n')[0]} disabled={busy || submitting || uploadingCover} onSelect={(candidate, replace, fields) => {
       if (candidate.bookForm && bookForm !== 'other' && candidate.bookForm !== bookForm && !replace) return
       const versionMatches = replace || !['讀書共和國', '台灣角川'].includes(candidate.source) || mediaTypeId !== 'ebook'
       let applied = false
-      if (fields.includes('bookForm') && candidate.bookForm && (replace || bookForm === 'other')) { setBookForm(candidate.bookForm); applied = true }
+      if (scope === 'all' && fields.includes('bookForm') && candidate.bookForm && (replace || bookForm === 'other')) { setBookForm(candidate.bookForm); applied = true }
       if (fields.includes('title') && (replace || !title.trim())) { setTitle(candidate.title); applied = true }
       if (fields.includes('authors') && (replace || !authorNamesText.trim()) && candidate.authors.length) { setAuthorNamesText(candidate.authors.join('\n')); applied = true }
       if (fields.includes('publisher') && (replace || !publisherName.trim()) && candidate.publisher) { setPublisherName(candidate.publisher); applied = true }
@@ -155,7 +162,12 @@ export function BookForm({ book, busy = false, dictionaries = [], collections = 
       if (fields.includes('seriesName') && (replace || !collectionId && !newSeriesName.trim()) && candidate.seriesName) { setCollectionId('__new'); setNewSeriesName(candidate.seriesName); applied = true }
       if (fields.includes('sequenceLabel') && (replace || !sequenceLabel.trim()) && candidate.sequenceLabel) { setSequenceLabel(candidate.sequenceLabel); setSequenceOrder(''); applied = true }
       if (applied) setMetadataSourceUrl(candidate.sourceUrl)
-    }} onCover={file => { setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); setCoverError('') }} />
+    }} onCover={scope === 'all' ? file => { setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); setCoverError('') } : undefined} /></BookMetadataDialog>
+    <h3 className="book-form-heading book-form-heading--first">基本資料</h3>
+    <div className="book-field"><span className="field-requirement" aria-hidden="true">必填</span><label><span className="field-caption">出版書名</span><input ref={titleInputRef} required aria-label="出版書名" value={title} onChange={(e) => setTitle(e.target.value)} /></label></div>
+    <div className="book-field"><span className="field-requirement" aria-hidden="true">完整度必備</span><label><span className="field-caption">作者（每行一位）</span><textarea rows={2} maxLength={4000} value={authorNamesText} onChange={event => setAuthorNamesText(event.target.value)} /></label></div>
+    <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">書籍版本</span><select aria-label="書籍版本" value={mediaTypeId} onChange={(e) => setMediaTypeId(e.target.value)}>{!mediaTypeChoices.some(item => item.id === 'ebook') && <option value="ebook">電子書</option>}{mediaTypeChoices.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}{mediaTypeId !== 'ebook' && !mediaTypeChoices.some(item => item.id === mediaTypeId) && <option value={mediaTypeId}>原有格式（未分類）</option>}</select></label></div>
+    <MultiSelect kind="category" label="分類" options={options('category')} recommendations={categoryRecommendations} value={categoryIds} onChange={setCategoryIds} />
     <h3 className="book-form-heading">出版資訊</h3>
     <div className="book-field"><span className="field-requirement" aria-hidden="true">完整度必備</span><label><span className="field-caption">出版社</span><input maxLength={200} value={publisherName} onChange={event => setPublisherName(event.target.value)} /></label></div>
     <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">ISBN</span><input maxLength={40} value={isbn} onChange={event => setIsbn(event.target.value)} /></label></div>
@@ -173,14 +185,48 @@ export function BookForm({ book, busy = false, dictionaries = [], collections = 
     <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">卷次／集數</span><input maxLength={100} value={sequenceLabel} onChange={event => setSequenceLabel(event.target.value)} placeholder="例如：第 1 集、外傳" /></label></div>
     <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">卷次排序（選填）</span><input type="number" min="0" step="any" value={sequenceOrder} onChange={event => setSequenceOrder(event.target.value)} /></label></div>
     </div>
-    <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">書籍網址（每行一個）</span><textarea rows={2} value={sourceUrlsText} onChange={(e) => setSourceUrlsText(e.target.value)} /></label></div>
     <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">書籍字數</span><input type="number" inputMode="numeric" min="1" step="1" max={Number.MAX_SAFE_INTEGER} placeholder="未知請留白" value={wordCount} onChange={event => { setWordCount(event.target.value); setWordCountSourceUrl(null) }} /></label></div>
     {wordCountSourceUrl && <p><a href={wordCountSourceUrl} target="_blank" rel="noopener noreferrer">核對字數來源</a></p>}
     <p>填書籍標示或文字檔的總字數；閱讀筆記字數另計。</p>
+    <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">書籍備註</span><textarea rows={4} value={bookNote} onChange={(e) => setBookNote(e.target.value)} /></label></div>
+    </>}
+    {personal && <>
+    <h3 className="book-form-heading">我的分類與標籤</h3>
+    <div className="book-field"><span className="field-requirement" aria-hidden="true">完整度必備</span><label><span className="field-caption">類型</span><select value={bookForm} onChange={event => setBookForm(event.target.value as NonNullable<Book['bookForm']>)}><option value="other">{scope === 'all' ? '未設定' : '一般書籍'}</option><option value="novel">小說</option><option value="manga">漫畫</option><option value="magazine">雜誌</option><option value="webNovel">網文</option></select></label></div>
+    <MultiSelect kind="source" label="書籍來源" options={[...options('source'), ...sourceIds.filter(id => !dictionaries.some(item => item.id === id && item.kind === 'source')).map(id => ({ id, label: '原有來源' }))]} value={sourceIds} onChange={setSourceIds} />
+    <MultiSelect kind="tag" label="標籤" options={options('tag')} recommendations={tagRecommendations} value={tagIds} onChange={setTagIds} />
+    <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">書籍網址（每行一個）</span><textarea rows={2} value={sourceUrlsText} onChange={(e) => setSourceUrlsText(e.target.value)} /></label></div>
+    </>}
+    {(scope === 'all' || scope === 'rating') && <>
+    <h3 className="book-form-heading">評分</h3>
+    <div className="book-form-grid">
+    <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">評分刻度</span><select value={ratingScale} onChange={(e) => { setRatingScale(Number(e.target.value) as 5 | 10); setRating('') }}><option value="5">5 分制</option><option value="10">10 分制</option></select></label></div>
+    <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">評分</span><select value={rating} onChange={(e) => setRating(e.target.value)}><option value="">未評分</option>{Array.from({ length: ratingScale }, (_, index) => <option key={index + 1} value={index + 1}>{index + 1} 分</option>)}</select></label></div>
     </div>
+    </>}
+    {scope === 'all' && <>
+    <h3 className="book-form-heading">封面與資料查詢</h3>
+    <div className="book-cover-editor">
+      {(coverPreview || coverPath) && <img key={coverPreview || coverPath} className="book-cover-editor-preview" src={coverPreview || coverPath} alt="封面預覽" onLoad={event => setCoverSize({ src: coverPreview || coverPath, width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight })} />}
+      {coverSize?.src === (coverPreview || coverPath) && <p role="status">目前封面：{coverSize.width} × {coverSize.height} 像素{coverSize.width < 400 ? '（小圖，放大可能模糊）' : ''}{coverFile ? '，尚未儲存' : ''}</p>}
+      <Button disabled={busy || uploadingCover} onClick={() => setCoverSearchOpen(true)}>選擇封面／重新找封面</Button>
+      {coverFile && previewReadOnly && <p role="status">封面已選入預覽，尚未上傳。</p>}
+      <div className="book-field"><span className="field-requirement" aria-hidden="true">完整度必備</span><label><span className="field-caption">選擇封面</span><input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy || uploadingCover} onChange={event => {
+        const file = event.target.files?.[0]; event.target.value = ''; if (!file) return
+        try { validateCoverFile(file); setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); setCoverError('') } catch (reason) { setCoverError(reason instanceof Error ? reason.message : '無效圖片') }
+      }} /></label></div>
+      <BookCoverPaste disabled={busy || uploadingCover} onSelect={file => { setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); setCoverError('') }} />
+      <BookCoverSearch key={coverSearchOpen ? 'open' : 'closed'} title={title} author={authorNamesText.replaceAll('\n', ' ')} isbn={isbn || null} open={coverSearchOpen} onOpenChange={setCoverSearchOpen} disabled={busy || uploadingCover} onSelect={file => { setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); setCoverError('') }} />
+      {(coverFile || coverPath) && <Button disabled={busy || uploadingCover} onClick={() => { setCoverFile(null); setCoverPreview(''); setCover(null); setCoverPath(''); setCoverError('') }}>移除封面</Button>}
+      <details><summary>封面路徑</summary><div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">封面檔案路徑</span><input placeholder="covers/example.jpg" disabled={busy || uploadingCover} value={coverPath} onChange={(event) => { setCoverPath(event.target.value); setCoverFile(null); setCoverPreview('') }} /></label></div></details>
+      {coverError && <FormMessage tone="error">{coverError}</FormMessage>}
+    </div>
+    </>}
+    </fieldset>
     <div className="book-form-footer">
     {error && <FormMessage tone="error">{error}</FormMessage>}
-    <div className="form-actions"><Button disabled={busy || uploadingCover} onClick={onCancel}>取消</Button><Button disabled={busy || uploadingCover || previewReadOnly} type="submit" variant="primary">{previewReadOnly ? '此預覽不儲存' : uploadingCover ? '上傳封面中' : busy ? '儲存中' : '儲存'}</Button></div>
+    {saveNotice && !error && <p role="status" className="book-save-notice">{saveNotice}</p>}
+    <div className="form-actions"><Button disabled={busy || submitting || uploadingCover} onClick={onCancel}>{saveNotice ? '完成' : '取消'}</Button><Button disabled={busy || submitting || uploadingCover || previewReadOnly} type="submit" variant="primary">{previewReadOnly ? '此預覽不儲存' : uploadingCover ? '上傳封面中' : busy || submitting ? '儲存中' : '儲存'}</Button></div>
     </div>
   </form>
 }

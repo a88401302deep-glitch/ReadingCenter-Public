@@ -5,6 +5,17 @@ import { migrateBookToWork } from '../../src/domain/legacy-migration'
 import { BookService } from '../../src/features/books/book-service'
 
 describe('BookService', () => {
+  it('persists source selections, preserves omitted sources and clears only on an explicit empty selection', async () => {
+    const service = new BookService(createInMemoryRepositories())
+    const book = await service.create({ reservedId: 'source-book', title: '來源保留', mediaTypeId: 'ebook', sourceIds: ['source-1'], cover: { path: '/cover.jpg', mimeType: 'image/jpeg' }, categoryIds: ['category-1'], tagIds: ['tag-1'], rating: { value: 4, scale: 5 }, bookNote: '人工備註' })
+    const draft = { title: book.title, mediaTypeId: book.mediaTypeId, cover: book.cover }
+    const updated = await service.update(book.id, draft, book.revision)
+    expect(updated.sourceIds).toEqual(['source-1'])
+    const cleared = await service.update(book.id, { ...draft, sourceIds: [] }, updated.revision)
+    expect(cleared).toMatchObject({ sourceIds: [], categoryIds: ['category-1'], tagIds: ['tag-1'], rating: book.rating, bookNote: '人工備註', cover: book.cover })
+    await expect(service.update(book.id, { ...draft, sourceIds: ['stale'] }, updated.revision)).rejects.toThrow()
+    expect((await service.get(book.id))?.sourceIds).toEqual([])
+  })
   it('uses the reserved draft identity for a new cover without persisting draft-only fields', async () => {
     const repositories = createInMemoryRepositories(), service = new BookService(repositories)
     const book = await service.create({ reservedId: 'reserved-book', title: '新書', mediaTypeId: 'ebook', cover: { path: '/api/v1/covers/covers/reserved.jpg', mimeType: 'image/jpeg', width: 800, height: 1135 } })

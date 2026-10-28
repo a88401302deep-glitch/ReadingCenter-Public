@@ -21,7 +21,9 @@ async function setup() {
 it('opens progress separately from the cover without writing on open', async () => {
   const { repos, service } = await setup(), open = vi.fn()
   render(<ReadingDashboard service={new ReadingOverviewService(repos)} revision={0} onOpenBook={open} progressService={service} />)
-  fireEvent.click(await screen.findByRole('button', { name: '更新《快捷進度》進度' }))
+  const trigger = await screen.findByRole('button', { name: '更新《快捷進度》進度' })
+ trigger.blur()
+ fireEvent.click(trigger)
   expect(await screen.findByRole('dialog', { name: '更新閱讀進度' })).toBeTruthy()
   expect(screen.queryByRole('dialog', { name: '《快捷進度》封面預覽' })).toBeNull()
   expect(open).not.toHaveBeenCalled()
