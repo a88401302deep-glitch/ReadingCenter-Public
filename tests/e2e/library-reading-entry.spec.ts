@@ -32,9 +32,8 @@ test('mobile cover entry creates a record and short review that survive reload',
   await page.getByRole('button', { name: '書庫', exact: true }).click()
   await page.getByRole('button', { name: /^開啟《/ }).click()
   await expect(page.getByText('直接在清單寫下心得', { exact: true })).toBeVisible()
-  await page.getByText('閱讀明細', { exact: true }).click()
+  await expect(page.getByRole('region', { name: '每日閱讀明細', exact: true })).toBeVisible()
   const summary = page.getByRole('region', { name: '單書閱讀統計', exact: true })
-  await expect(summary).toContainText('閱讀時間：25 分鐘')
+  await expect(summary).toContainText('25 分鐘')
   await expect(summary).toContainText('40%')
 })
-

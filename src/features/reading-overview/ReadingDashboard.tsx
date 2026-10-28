@@ -49,7 +49,7 @@ export function BookReadingSummary({ bookId, revision, service }: SummaryProps) 
   const completion = days.find(day => day.completed)
   const completionRange = overview?.timeline?.entries.find(entry => entry.book.id === bookId && entry.kind === 'completion' && entry.cycle.completionDate?.precision === 'range' && entry.cycle.completionDate.completedOn === completion?.date)
   const range = completionRange?.kind === 'completion' && completionRange.cycle.completionDate?.precision === 'range' ? completionRange.cycle.completionDate : null
-  const hasDuration = recent?.hasRecordedDuration === true
+  const hasDuration = recent?.hasRecordedDuration === true || metrics.totalMinutes > 0
   return <section className="book-reading-summary" aria-label="單書閱讀統計" aria-busy={!overview && !error}>
     {error ? <p role="alert">{error}</p> : !overview ? <p role="status">正在載入閱讀紀錄…</p> : <>
       <dl className="book-reading-totals">
@@ -60,11 +60,10 @@ export function BookReadingSummary({ bookId, revision, service }: SummaryProps) 
         <div><dt>總閱讀時長</dt><dd>{hasDuration ? formatDuration(metrics.totalMinutes) : '未記錄'}</dd></div>
         {metrics.readWords != null && metrics.readWords > 0 && <div><dt>閱讀字數</dt><dd>{metrics.readWords.toLocaleString('zh-TW')} 字</dd></div>}
       </dl>
-      <details className="book-reading-details">
-        <summary>閱讀明細</summary>
-        <p>閱讀天數：{metrics.readingDays || '未記錄'} · 閱讀時間：{hasDuration ? formatDuration(metrics.totalMinutes) : '未記錄'}{metrics.readWords != null && metrics.readWords > 0 ? ` · 閱讀字數：${metrics.readWords.toLocaleString('zh-TW')} 字` : ''}</p>
-        {days.length === 0 ? <p>尚無有日期的閱讀紀錄</p> : <ul>{days.map(day => <li key={day.date}><time dateTime={day.date}>{day.date}</time>{day.progress ? ` · ${readingProgressLabel(day.progress)}` : ''}{day.completed ? ' · 完讀' : ''}{day.minutes !== null ? ` · ${formatDuration(day.minutes)}` : ''}{day.words !== null ? ` · ${day.words.toLocaleString('zh-TW')} 字` : ''}</li>)}</ul>}
-      </details>
+      {days.length > 0 && <section className="book-reading-details" aria-label="每日閱讀明細">
+        <h4>閱讀明細</h4>
+        <ul>{days.map(day => <li key={day.date}><time dateTime={day.date}>{day.date}</time>{day.progress ? ` · ${readingProgressLabel(day.progress)}` : ''}{day.completed ? ' · 完讀' : ''}{day.minutes !== null ? ` · ${formatDuration(day.minutes)}` : ''}{day.words !== null ? ` · ${day.words.toLocaleString('zh-TW')} 字` : ''}</li>)}</ul>
+      </section>}
     </>}
   </section>
 }

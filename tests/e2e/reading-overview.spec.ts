@@ -26,7 +26,7 @@ test('a ReadingRecord updates book summary, reading totals and library statistic
   await page.getByRole('button', { name: '更新未分次紀錄（1）' }).click()
   await page.locator('.record-list li').first().getByRole('button', { name: '刪除' }).click()
   await page.getByRole('button', { name: '確認刪除' }).click()
-  await expect(summary).toContainText('閱讀時間：未記錄')
+  await expect(summary.locator('.book-reading-totals > div').filter({ hasText: '總閱讀時長' })).toContainText('未記錄')
   await page.keyboard.press('Escape')
   await page.getByRole('button', { name: '閱讀', exact: true }).click()
   await expect(page.locator('.recent-book-list')).toHaveCount(0)

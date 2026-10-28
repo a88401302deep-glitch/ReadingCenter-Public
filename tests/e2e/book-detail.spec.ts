@@ -1,6 +1,6 @@
 import { expect, test } from './fixtures'
 
-for (const width of [360, 768, 1024, 1280]) test(`single-book sections preserve library context and browser Back at ${width}px`, async ({ page }) => {
+for (const width of [320, 360, 768, 1024, 1280, 1440]) test(`single-book sections preserve library context and browser Back at ${width}px`, async ({ page }) => {
   await page.setViewportSize({ width, height: 780 })
   await page.goto('/')
   await page.getByRole('button', { name: '新增書籍' }).click()
@@ -18,9 +18,18 @@ for (const width of [360, 768, 1024, 1280]) test(`single-book sections preserve 
   await expect(page.locator('.book-detail-title')).toHaveCount(0)
   const coverLayout = page.locator('.book-detail-cover-layout')
   const cover = coverLayout.locator('.book-detail-cover')
-  const ratio = await cover.evaluate(node => node.getBoundingClientRect().width / node.parentElement!.getBoundingClientRect().width)
-  expect(ratio).toBeGreaterThan(.62)
-  expect(ratio).toBeLessThan(.68)
+  const coverBounds = (await cover.boundingBox())!
+  const layoutBounds = (await coverLayout.boundingBox())!
+  const titleBounds = (await coverLayout.locator('.book-detail-introduction').boundingBox())!
+  if (width < 1024) {
+    expect(coverBounds.width).toBeGreaterThanOrEqual(Math.min(320, layoutBounds.width) - 1)
+    expect(Math.abs(coverBounds.x + coverBounds.width / 2 - layoutBounds.x - layoutBounds.width / 2)).toBeLessThan(1)
+    expect(titleBounds.y).toBeGreaterThanOrEqual(coverBounds.y + coverBounds.height)
+  } else {
+    expect(coverBounds.width).toBe(112)
+    expect(titleBounds.x).toBeGreaterThan(coverBounds.x + coverBounds.width)
+  }
+  await expect(page.locator('.book-detail-view details')).toHaveCount(0)
   for (const name of ['尋找', '更換', '上傳']) await expect(coverLayout.getByRole('button', { name, exact: true })).toBeVisible()
   await coverLayout.getByRole('button', { name: '尋找', exact: true }).click()
   await expect(page.getByRole('dialog', { name: '尋找封面', exact: true })).toBeVisible()
@@ -49,8 +58,7 @@ for (const width of [360, 768, 1024, 1280]) test(`single-book sections preserve 
   for (const region of ['書籍資料', '我的分類與標籤', '閱讀紀錄', '閱讀心得']) {
     const panel = dialog.getByRole('region', { name: region, exact: true })
     const style = await panel.evaluate(node => { const s = getComputedStyle(node); return { border: parseFloat(s.borderTopWidth), radius: parseFloat(s.borderTopLeftRadius) } })
-    expect(style.border).toBeGreaterThanOrEqual(1)
-    expect(style.radius).toBeGreaterThanOrEqual(16)
+    expect(style.radius).toBe(0)
     await expect(panel.locator('h3 svg').first()).toBeVisible()
   }
   await expect(dialog.getByText('匯入原始資料', { exact: true })).toHaveCount(0)
@@ -93,8 +101,9 @@ test('book note can be edited from the single-book view at 360px', async ({ page
   await expect(page.getByText('手機可編輯的書籍備註', { exact: true })).toBeVisible()
 })
 
-test('long imported metadata and notes fit a mobile book dialog without horizontal scrolling', async ({ page }) => {
-  await page.setViewportSize({ width: 360, height: 780 })
+for (const textScale of [1, 2]) test(`long imported metadata fits without horizontal scrolling at ${textScale * 100}% text`, async ({ page }) => {
+  const width = textScale === 1 ? 360 : 1440
+  await page.setViewportSize({ width, height: 780 })
   await page.goto('/')
   await page.getByRole('button', { name: '新增書籍' }).click()
   await page.getByRole('button', { name: '輸入書名', exact: true }).click()
@@ -103,14 +112,16 @@ test('long imported metadata and notes fit a mobile book dialog without horizont
   await page.getByLabel('書籍備註').fill('https://example.com/' + 'unbroken'.repeat(45))
   await page.getByRole('button', { name: '儲存', exact: true }).click()
   await page.getByRole('button', { name: /^開啟《/ }).click()
+  await page.locator('html').evaluate((node, scale) => { node.style.fontSize = `${scale * 100}%` }, textScale)
   const dialog = page.getByRole('dialog')
   await expect(dialog.locator('.book-publication-row').filter({ hasText: '書籍版本' }).getByText('電子書', { exact: true })).toBeVisible()
   await expect(dialog.getByText(/notion:dictionary:/)).toHaveCount(0)
   await expect.poll(() => dialog.evaluate((node) => node.scrollWidth - node.clientWidth)).toBeLessThanOrEqual(1)
   const bounds = await dialog.boundingBox()
   expect(bounds!.x).toBeGreaterThanOrEqual(0)
-  expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(361)
+  expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width + 1)
   await page.getByRole('button', { name: '編輯書籍' }).click()
+  await expect(page.locator('.book-form')).toBeVisible()
   await expect.poll(() => dialog.evaluate((node) => node.scrollWidth - node.clientWidth)).toBeLessThanOrEqual(1)
   await page.getByRole('button', { name: '取消', exact: true }).click()
   await page.getByRole('button', { name: '關閉' }).click()

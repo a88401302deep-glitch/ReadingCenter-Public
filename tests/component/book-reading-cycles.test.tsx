@@ -30,6 +30,7 @@ it('groups overlapping dates by actual cycle IDs and keeps unassigned entries se
   const first = screen.getByRole('region', { name: '第 1 次閱讀' })
   const unassigned = screen.getByRole('region', { name: '未分次紀錄' })
   expect(within(first).getByText('30%')).toBeTruthy()
+  expect(within(first).getByRole('region', { name: '第 1 次閱讀明細' }).closest('details')).toBeNull()
   expect(within(first).queryByText('80%')).toBeNull()
   expect(within(second).getByText('80%')).toBeTruthy()
   expect(first.textContent).not.toContain('55%')
@@ -67,6 +68,8 @@ it('offers the first reading without creating a fake cycle while browsing', asyn
   expect(screen.getByRole('button', { name: '新增一次閱讀' })).toBeTruthy()
   expect(screen.queryByRole('region', { name: '第 1 次閱讀' })).toBeNull()
   expect(screen.getByRole('region', { name: '未分次紀錄' })).toBeTruthy()
+  expect(screen.queryByText('尚無閱讀明細')).toBeNull()
+  expect(screen.queryByText('未分次閱讀明細（0）')).toBeNull()
   expect(await repositories.readingCycles.getAll()).toEqual([])
 })
 
@@ -89,6 +92,7 @@ for (const { date, text } of dates) it('preserves completion display precision: 
   const f = await fixture()
   render(<BookReadingCycles bookId={f.book.id} cycles={[{ ...f.first, completionDate: date }]} records={[]} revision={0} recordService={f.records} onRecordsChanged={vi.fn()} onEdit={vi.fn()} onDelete={vi.fn()} />)
   expect(screen.getByText(text)).toBeTruthy()
+  expect(screen.queryByRole('region', { name: '第 1 次閱讀明細' })).toBeNull()
 })
 
 it('marks only the selected reading complete without inventing progress or adding duration', async () => {

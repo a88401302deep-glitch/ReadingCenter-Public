@@ -20,12 +20,13 @@ interface Props {
 const progressLabel = (progress: ReadingProgress | null | undefined) => progress?.unit === 'position' ? `${progress.value} ${progress.label || '位置'}` : readingProgressLabel(progress)
 const dateLabel = (value: string | null) => value?.replace('T', ' ').slice(0, 16) ?? '未記錄'
 function RecordDetails({ records, label }: { records: ReadingRecord[]; label: string }) {
-  return <details className="cycle-record-details"><summary>{label}（{records.length}）</summary>
-    {records.length === 0 ? <p>尚無閱讀明細</p> : <dl className="cycle-record-rows">{records.map(record => <div key={record.id}>
+  if (records.length === 0) return null
+  return <section className="cycle-record-details" aria-label={label}><h5>{label}（{records.length}）</h5>
+    <dl className="cycle-record-rows">{records.map(record => <div key={record.id}>
       <dt><time dateTime={record.startedAt}>{dateLabel(record.startedAt)}</time></dt>
       <dd>{progressLabel(record.progress)}{record.durationMinutes !== null ? ` · ${record.durationMinutes} 分鐘` : ''}</dd>
-    </div>)}</dl>}
-  </details>
+    </div>)}</dl>
+  </section>
 }
 export function BookReadingCycles({ cycles, records, bookId, revision, recordService, onRecordsChanged, onEdit, onDelete, onComplete }: Props) {
   const entries = (cycleId: string | null) => records.filter(record => record.cycleId === cycleId).sort((a, b) => b.startedAt.localeCompare(a.startedAt))

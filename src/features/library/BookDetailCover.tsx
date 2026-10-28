@@ -71,6 +71,7 @@ export function BookDetailCover({ book, author, busy, onDirtyChange, onPendingCh
  return <section className="book-detail-cover-section" aria-label="書籍封面">
   <div className="book-detail-cover-layout">
    <div className="book-detail-cover"><BookCover src={selection?.url ?? book.cover?.path} title={title} /></div>
+   <div className="book-detail-introduction"><p className="book-detail-kicker">READING JOURNAL</p><h3>{title}</h3>{author && <p>{author}</p>}</div>
    <div className="book-detail-cover-actions" aria-label="封面操作">
     <Button size="small" disabled={disabled} onClick={event => { returnFocus.current = event.currentTarget; setMode('search') }}>尋找</Button>
     <Button size="small" disabled={disabled} onClick={event => { returnFocus.current = event.currentTarget; setMode('paste') }}>更換</Button>
