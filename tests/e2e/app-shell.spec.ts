@@ -8,6 +8,9 @@ for (const width of [360, 1440]) test(`starts with the ReadingCenter shell and s
   const nav = page.getByRole('navigation', { name: '主要導覽' })
   await expect(nav.getByRole('button')).toHaveCount(3)
   await expect(nav.locator('.entry-icon[aria-hidden="true"]')).toHaveCount(3)
+  await expect(nav.locator('.icon--solid')).toHaveCount(3)
+  if (width < 761) await expect(nav.locator('.nav-label').first()).toBeHidden()
+  else await expect(nav.locator('.nav-label').first()).toBeVisible()
   for (const button of await nav.getByRole('button').all()) {
     expect(await button.evaluate(node => node.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44)
   }

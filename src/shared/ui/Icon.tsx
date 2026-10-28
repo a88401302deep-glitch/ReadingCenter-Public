@@ -1,9 +1,10 @@
 interface IconProps {
   name: 'arrowRight' | 'book' | 'chevronDown' | 'close' | 'logOut' | 'plus' | 'search' | 'library' | 'settings' | 'grid' | 'list' | 'filter' | 'journalExit' | 'journalTools' | 'editNote' | 'deleteNote'
+  className?: string
   size?: number
 }
 
-export function Icon({ name, size = 18 }: IconProps) {
+export function Icon({ name, size = 18, className = '' }: IconProps) {
   const paths = {
     editNote: <><path d="m5 16.8 10.9-12 3.6 3.1-11 12-4.1.6.6-3.7ZM13.8 7.1l3.6 3.1M5 16.8l3.5 3.1" /><path d="m4.4 21 7-.2" /></>,
     deleteNote: <><path d="m4.7 7.1 14.6-.2M9 4.3l5.7.1.8 2.6M6.4 7.2l.8 12.5 9.7.1.7-12.6M10 10.5l.3 6.4M14 10.4l-.1 6.5" /></>,
@@ -23,9 +24,19 @@ export function Icon({ name, size = 18 }: IconProps) {
     search: <><circle cx="11" cy="11" r="6" /><path d="m16 16 4 4" /></>
   }
 
+  const solidPaths: Partial<typeof paths> = {
+    book: <path d="M3 4c3-1 6-.5 8 1v15c-2-1.5-5-2-8-1a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Zm18 0c-3-1-6-.5-8 1v15c2-1.5 5-2 8-1a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1Z" />,
+    library: <path d="M4 3h3a1 1 0 0 1 1 1v15H3V4a1 1 0 0 1 1-1Zm6 2h3a1 1 0 0 1 1 1v13H9V6a1 1 0 0 1 1-1Zm6-2 3-.7a1 1 0 0 1 1.2.8l2.5 15-5 .8-2.5-14.7A1 1 0 0 1 16 3ZM2 20h21v2H2Z" />,
+    list: <path fillRule="evenodd" d="M6 2h10l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm9 2v5h5l-5-5ZM8 12v2h9v-2H8Zm0 5v2h7v-2H8Z" />,
+    editNote: <path d="m15 3 5 5-12 12-6 2 2-6L15 3Zm2-2 2-1a2 2 0 0 1 2 0l3 3a2 2 0 0 1 0 2l-2 2-5-6Z" />,
+    journalTools: <path fillRule="evenodd" d="M10 2h4l1 2.5 2 1.2 2.8-.4 2 3.4-1.8 2v2.6l1.8 2-2 3.4-2.8-.4-2 1.2-1 2.5h-4l-1-2.5-2-1.2-2.8.4-2-3.4 1.8-2v-2.6l-1.8-2 2-3.4 2.8.4 2-1.2 1-2.5ZM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z" />,
+    settings: <path fillRule="evenodd" d="M2 5h20v3H2V5Zm0 11h20v3H2v-3ZM8 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm8 11a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z" />,
+    grid: <path d="M3 2h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1Zm12 0h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1ZM3 14h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1Zm12 0h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1Z" />
+  }
+  const solid = solidPaths[name]
   return (
-    <svg aria-hidden="true" className="icon" fill="none" height={size} viewBox="0 0 24 24" width={size}>
-      {paths[name]}
+    <svg aria-hidden="true" focusable="false" className={`icon${solid ? ' icon--solid' : ''} ${className}`.trim()} fill={solid ? 'currentColor' : 'none'} height={size} viewBox="0 0 24 24" width={size}>
+      {solid ?? paths[name]}
     </svg>
   )
 }

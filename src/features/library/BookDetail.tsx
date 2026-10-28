@@ -129,25 +129,26 @@ export function BookDetail({ book, onDirtyChange, onCoverPendingChange, readingS
       onSubmit={save}
     /></dialog>, document.body)}
     <div ref={viewRef} className="book-detail-view">
-      <div className="book-detail-tools"><Button className="management-action" size="small" aria-pressed={managingBook} disabled={busy || coverDirty} onClick={event => { if (managingBook) setManagingBook(false); else { setManagingBook(true); openEditor(event.currentTarget, 'all') } }}>{managingBook ? '完成書籍管理' : '管理書籍'}</Button></div>
+      <section className="book-detail-book-card" aria-label="書籍總覽"><header className="book-card-heading"><h3>書籍資料</h3><Button variant="edit" size="small" aria-pressed={managingBook} disabled={busy || coverDirty} onClick={event => { if (managingBook) setManagingBook(false); else { setManagingBook(true); openEditor(event.currentTarget, 'all') } }}>{managingBook ? '完成書籍編輯' : '編輯書籍資料'}</Button></header>
       <BookDetailCover showActions={managingBook} book={currentBook} author={currentBook.authorIds.map(id => names.get(id)).filter(Boolean).join('、')} busy={busy} onSave={onSave} onPendingChange={onCoverPendingChange} onDirtyChange={value => { setCoverDirty(value); onDirtyChange?.(value || dirty) }} />
       <div className="book-detail-sidebar">
       <section className="book-detail-information book-detail-panel" aria-label="書籍資料">
-        <div className="book-detail-panel-heading"><h3><Icon name="book" />書籍資訊</h3>{managingBook && <Button size="small" disabled={busy || coverDirty} onClick={event => openEditor(event.currentTarget, 'bibliography')}>編輯書籍</Button>}</div>
+        <div className="book-detail-panel-heading"><h3><Icon name="book" />書籍資訊</h3>{managingBook && <Button variant="edit" size="small" disabled={busy || coverDirty} onClick={event => openEditor(event.currentTarget, 'bibliography')}>編輯書籍</Button>}</div>
         {error && <p role="alert">{error}</p>}
         <BookPublicationList showMissingIcons={managingBook} book={currentBook} dictionaries={dictionaries} collections={collections} mediaTypeName={mediaTypeName} />
         <BookSeriesList book={currentBook} books={books} collections={collections} />
         {notes.bookNote && <div className="book-note"><h4>書籍備註</h4><p>{notes.bookNote}</p></div>}
       </section>
       <section className="book-detail-personal book-detail-panel" aria-label="我的分類與標籤">
-        <div className="book-detail-panel-heading"><h3><Icon name="library" />我的分類與標籤</h3>{managingBook && <Button size="small" disabled={busy || coverDirty} onClick={event => openEditor(event.currentTarget, 'personal')}>編輯我的分類</Button>}</div>
+        <div className="book-detail-panel-heading"><h3><Icon name="library" />我的分類與標籤</h3>{managingBook && <Button variant="edit" size="small" disabled={busy || coverDirty} onClick={event => openEditor(event.currentTarget, 'personal')}>編輯我的分類</Button>}</div>
         <p>書籍類型｜{type ? bookTypeLabels[type] : currentBook.bookForm === 'other' ? '一般書籍' : '未設定'}</p>
         <div className="book-detail-source-tags"><h4>書籍來源</h4><div className="book-row-tags">{currentBook.sourceIds.length ? currentBook.sourceIds.map(id => <Tag key={id} kind="source">{names.get(id) ?? '未設定'}</Tag>) : <span>未設定</span>}</div></div>
         <div><h4>標籤</h4><div className="book-row-tags">{currentBook.tagIds.length ? currentBook.tagIds.map(id => <Tag key={id} kind="tag">{names.get(id) ?? '未設定'}</Tag>) : <span>未設定</span>}</div></div>
-        <div className="book-detail-panel-heading"><p>評分｜{currentBook.rating ? `${currentBook.rating.value}／${currentBook.rating.scale}` : '尚未評分'}</p>{managingBook && <Button size="small" disabled={busy || coverDirty} onClick={event => openEditor(event.currentTarget, 'rating')}>編輯評分</Button>}</div>
+        <div className="book-detail-panel-heading"><p>評分｜{currentBook.rating ? `${currentBook.rating.value}／${currentBook.rating.scale}` : '尚未評分'}</p>{managingBook && <Button variant="edit" size="small" disabled={busy || coverDirty} onClick={event => openEditor(event.currentTarget, 'rating')}>編輯評分</Button>}</div>
         {sourceUrls.length > 0 && <ul className="book-detail-links">{sourceUrls.map(url => <li key={url}><a href={url} target="_blank" rel="noopener noreferrer">{url}</a></li>)}</ul>}
       </section>
       </div>
+      </section>
     <ReadingCycleManager readingStatus={<p>閱讀狀態｜{readingStatusLabels[readingStatus]}</p>} readingActions={onStatusChange ? <label className="book-detail-status">閱讀狀態<select aria-label="書籍閱讀狀態" disabled={busy} value={readingStatus} onChange={event => void onStatusChange(event.target.value as Exclude<LibraryReadingStatus, 'unknown'>)}><option value="unknown" disabled>未設定</option>{Object.entries(readingStatusLabels).filter(([value]) => value !== 'unknown').map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label> : <p>閱讀狀態｜{readingStatusLabels[readingStatus]}</p>} readingSummary={<BookReadingSummary bookId={book.id} revision={readingRevision} service={overviewService} />} compact revision={syncRevision + readingRevision} bookId={book.id} service={cycleService} recordService={recordService} contentService={contentService} onContentChanged={onContentChanged} onReadingChanged={onReadingChanged} />
     {managingBook && onDelete && <footer className="book-detail-more"><Button size="small" variant="danger" onClick={() => onDelete(currentBook)}>刪除書籍</Button></footer>}
     </div>
