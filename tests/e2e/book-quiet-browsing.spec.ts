@@ -24,6 +24,20 @@ for (const width of [360, 1440]) test(`quiet book browsing keeps three entries, 
   await expect(view.locator('.book-detail-tools')).toHaveCount(0)
   const shades = await view.locator('.book-detail-book-card, .book-detail-reading, .reading-content-manager').evaluateAll(nodes => nodes.map(node => getComputedStyle(node).backgroundColor))
   expect(new Set(shades).size).toBe(3)
+  const headers = view.locator('.book-card-heading, .book-detail-reading > .book-detail-panel-heading, .reading-content-manager > .section-heading')
+  const titleStyles = await headers.evaluateAll(nodes => nodes.map(node => {
+    const title = node.querySelector('h3')!, style = getComputedStyle(title)
+    return { background: getComputedStyle(node).backgroundColor, weight: style.fontWeight, family: style.fontFamily, height: node.getBoundingClientRect().height }
+  }))
+  expect(titleStyles).toHaveLength(3)
+  expect(new Set(titleStyles.map(style => style.background)).size).toBe(3)
+  for (const style of titleStyles) {
+    expect(style.background).not.toBe('rgba(0, 0, 0, 0)')
+    expect(style.weight).toBe('700')
+    expect(style.family).toContain('ui-rounded')
+    expect(style.height).toBeGreaterThanOrEqual(76)
+  }
+  if (width >= 1024) expect(Math.max(...titleStyles.map(s => s.height)) - Math.min(...titleStyles.map(s => s.height))).toBeLessThanOrEqual(1)
   await expect(view.getByRole('button')).toHaveCount(3)
   for (const button of await view.getByRole('button').all()) {
     expect(await button.evaluate(node => getComputedStyle(node).borderTopWidth)).toBe('1px')

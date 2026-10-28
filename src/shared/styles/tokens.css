@@ -27,6 +27,12 @@
   --milk-tea: #AC866E;
   --entry-sage: #DFE6D7;
   --entry-sage-ink: #596B50;
+  --book-panel: #F3E4E8;
+  --book-panel-heading: #E4B2BE;
+  --reading-panel: #F7EEDC;
+  --reading-panel-heading: #E8CF9C;
+  --notes-panel: #E7EDE2;
+  --notes-panel-heading: #C0CEB5;
   --progress-fill: var(--accent);
   --progress-track: #EEDFE1;
   --chart-primary: var(--accent);

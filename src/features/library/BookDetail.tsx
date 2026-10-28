@@ -129,7 +129,7 @@ export function BookDetail({ book, onDirtyChange, onCoverPendingChange, readingS
       onSubmit={save}
     /></dialog>, document.body)}
     <div ref={viewRef} className="book-detail-view">
-      <section className="book-detail-book-card" aria-label="書籍總覽"><header className="book-card-heading"><h3>書籍資料</h3><Button variant="edit" size="small" aria-pressed={managingBook} disabled={busy || coverDirty} onClick={event => { if (managingBook) setManagingBook(false); else { setManagingBook(true); openEditor(event.currentTarget, 'all') } }}>{managingBook ? '完成書籍編輯' : '編輯書籍資料'}</Button></header>
+      <section className="book-detail-book-card" aria-label="書籍總覽"><header className="book-card-heading"><h3><Icon name="book" size={22} />書籍資料</h3><Button variant="edit" size="small" aria-pressed={managingBook} disabled={busy || coverDirty} onClick={event => { if (managingBook) setManagingBook(false); else { setManagingBook(true); openEditor(event.currentTarget, 'all') } }}>{managingBook ? '完成書籍編輯' : '編輯書籍資料'}</Button></header>
       <BookDetailCover showActions={managingBook} book={currentBook} author={currentBook.authorIds.map(id => names.get(id)).filter(Boolean).join('、')} busy={busy} onSave={onSave} onPendingChange={onCoverPendingChange} onDirtyChange={value => { setCoverDirty(value); onDirtyChange?.(value || dirty) }} />
       <div className="book-detail-sidebar">
       <section className="book-detail-information book-detail-panel" aria-label="書籍資料">
