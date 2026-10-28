@@ -16,6 +16,7 @@ test('Google empty stage counts explain the result while preserving the unsaved 
   await expect(page.getByRole('button', { name: '儲存', exact: true })).toBeEnabled()
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1)
  }
+ await page.getByRole('button', { name: '返回編輯表單', exact: true }).click()
  page.once('dialog', dialog => dialog.accept())
  await page.getByRole('button', { name: '取消', exact: true }).click()
  await expect(page.locator('.book-form')).toHaveCount(0)
@@ -69,6 +70,7 @@ test('mobile metadata search separates choosing a book, reviewing changes and ap
  await expect(editor.getByRole('group', { name: '選擇要套用的欄位：候選書名' })).not.toBeVisible()
  await editor.getByRole('button', { name: '帶入下列表單' }).click()
  await expect(editor.getByRole('status').filter({ hasText: '已帶入下列表單：出版社' })).toBeVisible()
+ await editor.getByRole('button', { name: '返回編輯表單', exact: true }).click()
  await expect(editor.getByLabel('作者（每行一位）')).toHaveValue('人工作者')
  await expect(editor.getByLabel('出版書名', { exact: true })).toHaveValue('人工書名')
  await expect(editor.getByLabel('出版社', { exact: true })).toHaveValue('候選出版社')
@@ -108,6 +110,7 @@ test('search dialog traps focus, cancels safely and retries without losing the b
  await page.getByRole('button', { name: '重試搜尋', exact: true }).click()
  await expect(page.getByText('查無書目資料；已保留書名與閱讀紀錄，可直接確認匯入，日後再補全。')).toBeVisible()
  await expect(page.getByLabel('出版書名', { exact: true })).toHaveValue('保留原始書名')
+ await page.getByRole('button', { name: '返回編輯表單', exact: true }).click()
  await expect(page.getByRole('button', { name: '儲存', exact: true })).toBeEnabled()
  expect(lookups).toBe(2)
  await page.getByRole('button', { name: '取消', exact: true }).click()

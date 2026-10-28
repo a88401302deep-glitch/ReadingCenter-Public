@@ -1,0 +1,116 @@
+// @vitest-environment jsdom
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { createInMemoryRepositories } from '../../src/data'
+import { BookService } from '../../src/features/books/book-service'
+import { BookDetailCover } from '../../src/features/library/BookDetailCover'
+import { uploadBookCover } from '../../src/features/books/book-cover-upload'
+
+const auth = vi.hoisted(() => ({ previewReadOnly: false }))
+vi.mock('../../src/features/auth/auth-context', () => ({ useAuth: () => auth }))
+vi.mock('../../src/features/books/book-cover-upload', async importOriginal => ({ ...await importOriginal<typeof import('../../src/features/books/book-cover-upload')>(), uploadBookCover: vi.fn() }))
+beforeEach(() => {
+ auth.previewReadOnly = false
+ URL.createObjectURL = vi.fn(() => 'blob:cover-draft')
+ URL.revokeObjectURL = vi.fn()
+ vi.stubGlobal('createImageBitmap', vi.fn(async () => ({ width: 800, height: 1135, close: vi.fn() })))
+ vi.mocked(uploadBookCover).mockReset()
+ HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) { this.open = true })
+ HTMLDialogElement.prototype.close = vi.fn(function (this: HTMLDialogElement) { this.open = false })
+})
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks() })
+async function fixture() {
+ return new BookService(createInMemoryRepositories()).create({ title: '封面操作', preferredTitle: '保留自訂書名', mediaTypeId: 'ebook', cover: { path: '/old.webp', mimeType: 'image/webp' }, bookNote: '保留備註', wordCount: 10000 })
+}
+function chooseFile() {
+ fireEvent.change(screen.getByLabelText('上傳封面圖片'), { target: { files: [new File(['image'], 'cover.png', { type: 'image/png' })] } })
+}
+it('stages on the main cover, cancels without uploading, and never shows a cover URL field', async () => {
+ const book = await fixture(), save = vi.fn(), dirty = vi.fn()
+ render(<BookDetailCover book={book} author="" busy={false} onSave={save} onDirtyChange={dirty} />)
+ chooseFile()
+ expect(screen.getByRole('img').getAttribute('src')).toBe('blob:cover-draft')
+ expect(screen.getByRole('button', { name: '存檔' })).toBeTruthy()
+ expect(uploadBookCover).not.toHaveBeenCalled()
+ expect(save).not.toHaveBeenCalled()
+ expect(screen.queryByLabelText('封面檔案路徑')).toBeNull()
+ fireEvent.click(screen.getByRole('button', { name: '取消換圖' }))
+ expect(screen.getByRole('img').getAttribute('src')).toBe('/old.webp')
+ expect(dirty).toHaveBeenLastCalledWith(false)
+ expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:cover-draft')
+})
+it('pastes in a dialog and replaces the main cover without entering the book form', async () => {
+ const book = await fixture()
+ render(<BookDetailCover book={book} author="" busy={false} onSave={vi.fn()} onDirtyChange={vi.fn()} />)
+ const trigger = screen.getByRole('button', { name: '更換' })
+ fireEvent.click(trigger)
+ fireEvent.paste(screen.getByLabelText('圖片貼上區'), { clipboardData: { files: [new File(['image'], 'paste.png', { type: 'image/png' })] } })
+ expect(screen.queryByRole('dialog')).toBeNull()
+ expect(screen.getByRole('img').getAttribute('src')).toBe('blob:cover-draft')
+ expect(document.activeElement).toBe(trigger)
+})
+it('prevents duplicate saves and reuses an uploaded image when the book save fails', async () => {
+ const book = await fixture(), save = vi.fn().mockResolvedValueOnce(null).mockResolvedValueOnce(book), pending = vi.fn()
+ let finish!: (cover: NonNullable<typeof book.cover>) => void
+ vi.mocked(uploadBookCover).mockReturnValue(new Promise(resolve => { finish = resolve }))
+ render(<BookDetailCover book={book} author="" busy={false} onSave={save} onDirtyChange={vi.fn()} onPendingChange={pending} />)
+ chooseFile()
+ fireEvent.click(screen.getByRole('button', { name: '存檔' }))
+ fireEvent.click(screen.getByRole('button', { name: '存檔中' }))
+ expect(uploadBookCover).toHaveBeenCalledTimes(1)
+ expect(pending).toHaveBeenLastCalledWith(true)
+ await act(async () => finish({ path: '/new.jpg', mimeType: 'image/jpeg' }))
+ await screen.findByRole('button', { name: '存檔' })
+ expect(screen.getByRole('img').getAttribute('src')).toBe('blob:cover-draft')
+ fireEvent.click(screen.getByRole('button', { name: '存檔' }))
+ await screen.findByText('封面已存檔。')
+ expect(uploadBookCover).toHaveBeenCalledTimes(1)
+ expect(save).toHaveBeenLastCalledWith({ title: book.title, preferredTitle: book.preferredTitle, mediaTypeId: book.mediaTypeId, cover: { path: '/new.jpg', mimeType: 'image/jpeg' } }, book.revision)
+ expect(pending).toHaveBeenLastCalledWith(false)
+})
+it('retains the local draft on upload failure and refuses to overwrite a newer book revision', async () => {
+ const book = await fixture(), save = vi.fn(), dirty = vi.fn()
+ vi.mocked(uploadBookCover).mockRejectedValue(new Error('封面上傳失敗'))
+ const view = render(<BookDetailCover book={book} author="" busy={false} onSave={save} onDirtyChange={dirty} />)
+ chooseFile()
+ fireEvent.click(screen.getByRole('button', { name: '存檔' }))
+ await screen.findByText('封面上傳失敗')
+ expect(save).not.toHaveBeenCalled()
+ view.rerender(<BookDetailCover book={{ ...book, revision: book.revision + 1 }} author="" busy={false} onSave={save} onDirtyChange={dirty} />)
+ fireEvent.click(screen.getByRole('button', { name: '存檔' }))
+ await screen.findByText('書籍已有新版本；封面草稿已保留，請取消後重新選圖。')
+ expect(uploadBookCover).toHaveBeenCalledTimes(1)
+ expect(save).not.toHaveBeenCalled()
+})
+it('lets read-only previews stage an image but never upload or save it', async () => {
+ auth.previewReadOnly = true
+ const book = await fixture(), save = vi.fn()
+ render(<BookDetailCover book={book} author="" busy={false} onSave={save} onDirtyChange={vi.fn()} />)
+ chooseFile()
+ expect(screen.getByRole('button', { name: '存檔' })).toHaveProperty('disabled', true)
+ fireEvent.click(screen.getByRole('button', { name: '存檔' }))
+ await waitFor(() => expect(screen.getByRole('status').textContent).toContain('此預覽不儲存或上傳'))
+ expect(uploadBookCover).not.toHaveBeenCalled()
+ expect(save).not.toHaveBeenCalled()
+})
+it('selects a search result into the main cover and Escape closes only the cover tools', async () => {
+ const book = await fixture()
+ const fetcher = vi.fn().mockResolvedValueOnce({ ok: true, json: async () => ({ data: [{ coverId: 12, title: book.title, authors: [], previewUrl: '/candidate.jpg', sourceUrl: 'https://openlibrary.org/works/OL1W' }] }) }).mockResolvedValueOnce({ ok: true, blob: async () => new Blob(['image'], { type: 'image/jpeg' }) })
+ vi.stubGlobal('fetch', fetcher)
+ render(<BookDetailCover book={book} author="" busy={false} onSave={vi.fn()} onDirtyChange={vi.fn()} />)
+ fireEvent.click(screen.getByRole('button', { name: '尋找' }))
+ fireEvent.change(screen.getByLabelText('封面候選來源'), { target: { value: 'openlibrary' } })
+ fireEvent.click(screen.getByRole('button', { name: '尋找候選封面' }))
+ fireEvent.click(await screen.findByRole('button', { name: '預覽此封面' }))
+ await screen.findByText(/原圖：800 × 1135 像素/)
+ expect(uploadBookCover).not.toHaveBeenCalled()
+ fireEvent.click(screen.getByRole('button', { name: '採用這張封面' }))
+ await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+ expect(screen.getByRole('img').getAttribute('src')).toBe('blob:cover-draft')
+ fireEvent.click(screen.getByRole('button', { name: '尋找' }))
+ const escape = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
+ fireEvent(screen.getByRole('dialog'), escape)
+ expect(escape.defaultPrevented).toBe(true)
+ expect(screen.queryByRole('dialog')).toBeNull()
+ expect(screen.getByRole('button', { name: '尋找' })).toBe(document.activeElement)
+})

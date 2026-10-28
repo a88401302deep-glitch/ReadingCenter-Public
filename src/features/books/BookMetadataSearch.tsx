@@ -6,11 +6,12 @@ import { MetadataSearchProgress } from './MetadataSearchProgress'
 import { defaultMetadataFields, isBookMetadataCandidate, metadataFields, metadataFieldValue, METADATA_FIELD_LABELS, type BookMetadataField, type BookMetadataCandidate } from '../../domain/book-metadata'
 import { Button } from '../../shared/ui/Button'
 export interface MetadataLookupResult { candidates: BookMetadataCandidate[]; partial: boolean; warning?: string; warnings?: string[]; diagnostics?: string[] }
-export function BookMetadataSearch({ title, author, disabled, currentValues, mediaTypeId, supportedFields, onSelect, onCover, autoSearch = false, lookupCache }: { autoSearch?: boolean; lookupCache?: Map<string, MetadataLookupResult>; title: string; author: string; disabled: boolean; currentValues?: Partial<Record<BookMetadataField, string>>; mediaTypeId?: string; supportedFields?: BookMetadataField[]; onSelect: (candidate: BookMetadataCandidate, replace: boolean, fields: BookMetadataField[]) => void; onCover?: (file: File) => void }) {
+export function BookMetadataSearch({ title, author, disabled, currentValues, mediaTypeId, supportedFields, onSelect, onCover, autoSearch = false, lookupCache, embeddedInDialog = false, onBusyChange }: { embeddedInDialog?: boolean; onBusyChange?: (busy: boolean) => void; autoSearch?: boolean; lookupCache?: Map<string, MetadataLookupResult>; title: string; author: string; disabled: boolean; currentValues?: Partial<Record<BookMetadataField, string>>; mediaTypeId?: string; supportedFields?: BookMetadataField[]; onSelect: (candidate: BookMetadataCandidate, replace: boolean, fields: BookMetadataField[]) => void; onCover?: (file: File) => void }) {
  const { previewReadOnly = false } = useAuth()
  const [query, setQuery] = useState(title), [queryAuthor, setQueryAuthor] = useState(author), [replace, setReplace] = useState(false)
  const [candidates, setCandidates] = useState<BookMetadataCandidate[]>([]), [busy, setBusy] = useState(false), [error, setError] = useState(''), [searched, setSearched] = useState(false), [incomplete, setIncomplete] = useState(false)
  const [diagnostics, setDiagnostics] = useState<string[]>([])
+ useEffect(() => { onBusyChange?.(busy) }, [busy, onBusyChange])
  const [selected, setSelected] = useState<Record<string, BookMetadataField[]>>({})
  const [source, setSource] = useState('taiwan'), [bookUrl, setBookUrl] = useState('')
  const [pastedText, setPastedText] = useState('')
@@ -112,8 +113,7 @@ export function BookMetadataSearch({ title, author, disabled, currentValues, med
   } catch (reason) { if (current === generation.current) setError(reason instanceof Error ? reason.message : '封面預覽失敗') }
   finally { if (current === generation.current) setBusy(false) }
  }
- return <details className="book-metadata-search" open={autoSearch || undefined}><summary>搜尋並補全書籍資料</summary>
-  <div className="metadata-flow">
+ const content = <div className="metadata-flow">
   <p className="metadata-step">{activeId ? '2 · 核對這一本' : '1 · 搜尋並選一本'}</p>
   <div hidden={Boolean(activeId)}>
 
@@ -165,5 +165,5 @@ export function BookMetadataSearch({ title, author, disabled, currentValues, med
   {searching && <MetadataSearchProgress onCancel={cancelSearch} />}
   {notice && <p className="metadata-feedback" role="status" ref={feedback} tabIndex={-1}>{notice}</p>}
   </div>
- </details>
+ return embeddedInDialog ? content : <details className="book-metadata-search" open={autoSearch || undefined}><summary>搜尋並補全書籍資料</summary>{content}</details>
 }

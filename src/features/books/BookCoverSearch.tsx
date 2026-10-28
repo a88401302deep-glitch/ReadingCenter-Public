@@ -10,7 +10,7 @@ function isLibraryCandidate(value: unknown): value is CoverSearchCandidate {
  const row = value as Partial<CoverSearchCandidate>
  return Number.isSafeInteger(row.coverId) && Number(row.coverId) > 0 && typeof row.title === 'string' && Array.isArray(row.authors) && row.authors.every(name => typeof name === 'string') && typeof row.sourceUrl === 'string' && /^https:\/\/openlibrary.org\/works\/OL\d+W$/.test(row.sourceUrl)
 }
-export function BookCoverSearch({ title, author, isbn, disabled, onSelect, open, onOpenChange }: { title: string; author: string; isbn: string | null; disabled: boolean; onSelect: (file: File) => void; open?: boolean; onOpenChange?: (open: boolean) => void }) {
+export function BookCoverSearch({ title, author, isbn, disabled, onSelect, open, onOpenChange, embedded = false }: { embedded?: boolean; title: string; author: string; isbn: string | null; disabled: boolean; onSelect: (file: File) => void; open?: boolean; onOpenChange?: (open: boolean) => void }) {
  const [queryTitle, setQueryTitle] = useState(title), [queryAuthor, setQueryAuthor] = useState(author), [queryIsbn, setQueryIsbn] = useState(isbn ?? '')
  const [candidates, setCandidates] = useState<Candidate[]>([]), [busy, setBusy] = useState(false), [searched, setSearched] = useState(false), [error, setError] = useState('')
  const [source, setSource] = useState('metadata'), [notice, setNotice] = useState('')
@@ -54,7 +54,7 @@ export function BookCoverSearch({ title, author, isbn, disabled, onSelect, open,
    } catch (reason) { if (current === generation.current) setError(reason instanceof Error ? reason.message : '圖片下載失敗') }
    finally { if (current === generation.current) setBusy(false) }
  }
- return <details className="book-cover-search" open={open} onToggle={event => onOpenChange?.(event.currentTarget.open)}><summary>搜尋封面</summary>
+ const content = <>
    <p>只選封面，不會帶入書名、作者或其他書目欄位。請核對冊次與版本。</p>
    <label>搜尋書名<input value={queryTitle} disabled={disabled || busy} onChange={event => setQueryTitle(event.target.value)} /></label>
    <label>搜尋作者<input value={queryAuthor} disabled={disabled || busy} onChange={event => setQueryAuthor(event.target.value)} /></label>
@@ -69,5 +69,6 @@ export function BookCoverSearch({ title, author, isbn, disabled, onSelect, open,
    {error && <p role="alert">{error}</p>}{searched && !candidates.length && <p>查無候選封面，可調整書名、作者或 ISBN，或手動上傳。</p>}
    <div className="book-cover-candidates">{candidates.map(candidate => <div key={candidate.coverId}><img src={candidate.previewUrl} alt={candidate.title + ' 候選封面'} loading="lazy" /><strong>{candidate.title}</strong><span>{candidate.authors.join('、') || '作者未提供'}</span><span>來源：{candidate.source ?? 'Open Library'}</span>{candidate.firstPublishedYear && <span>首次出版：{candidate.firstPublishedYear}</span>}<a href={candidate.sourceUrl} target="_blank" rel="noopener noreferrer">查看來源與版本</a><Button disabled={disabled || busy} onClick={() => void choose(candidate)}>預覽此封面</Button></div>)}</div>
    {preview && <section aria-label="候選封面原圖預覽"><img className="book-cover-editor-preview" src={preview.url} alt={preview.candidate.title + ' 待採用原圖'} /><p>{preview.candidate.title} · {preview.candidate.source ?? 'Open Library'}</p><p>原圖：{preview.width} × {preview.height} 像素 · {Math.ceil(preview.file.size / 1024)} KB</p>{preview.width < 400 && <p>這張是小圖，放大可能模糊；可以選另一張或重新找封面。</p>}<Button disabled={disabled || busy} onClick={() => { onSelect(preview.file); setPreview(null); setNotice('封面已帶入草稿，尚未儲存；書目欄位未變更。') }}>採用這張封面</Button><Button disabled={disabled || busy} onClick={() => setPreview(null)}>放棄這張，選另一張</Button></section>}
- </details>
+ </>
+ return embedded ? <div className="book-cover-search">{content}</div> : <details className="book-cover-search" open={open} onToggle={event => onOpenChange?.(event.currentTarget.open)}><summary>搜尋封面</summary>{content}</details>
 }

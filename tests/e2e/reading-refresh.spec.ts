@@ -37,7 +37,21 @@ for (const width of [360, 1280]) {
   const buttonColors = await importButton.evaluate(node => ({ foreground: getComputedStyle(node).color, background: getComputedStyle(node).backgroundColor }))
   expect(contrast(buttonColors.foreground, buttonColors.background)).toBeGreaterThanOrEqual(4.5)
   await importButton.click()
-  await expect(page.getByText('已新增 35 本，略過 0 本同名書籍。')).toBeVisible()
+  const importStartedAt = Date.now()
+  try {
+   // Observe this bulk write separately from ordinary UI assertions.
+   await expect(page.getByText('已新增 35 本，略過 0 本同名書籍。')).toBeVisible({ timeout: 20_000 })
+  } finally {
+   const observation = {
+    elapsedMs: Date.now() - importStartedAt,
+    statuses: await page.getByRole('status').allTextContents(),
+    alerts: await page.getByRole('alert').allTextContents()
+   }
+   console.log('spreadsheet-import observation', JSON.stringify(observation))
+   await test.info().attach('spreadsheet-import-observation', {
+    body: JSON.stringify(observation, null, 2), contentType: 'application/json'
+   })
+  }
   await page.getByRole('button', { name: '書庫', exact: true }).click()
   await expect(page.locator('.book-row')).toHaveCount(30)
   await expect(page.getByLabel('依閱讀狀態篩選')).toBeHidden()

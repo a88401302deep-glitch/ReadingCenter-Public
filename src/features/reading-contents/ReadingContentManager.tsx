@@ -1,7 +1,7 @@
 import { ReadingContentDate } from './ReadingContentDate'
 import { useEffect, useState, type FormEvent } from 'react'
 import type { ReadingContent, ReadingContentType, ReadingCycle } from '../../domain'
-import { Button, FormMessage } from '../../shared/ui'
+import { Button, FormMessage, Icon } from '../../shared/ui'
 import { ReadingContentService, type ReadingContentDraft } from './reading-content-service'
 
 interface Props { heading?: string; revision?: number; bookId: string; cycles: ReadingCycle[]; onChanged?: () => void; service: ReadingContentService }
@@ -69,7 +69,7 @@ export function ReadingContentManager({ heading = '閱讀內容', revision = 0, 
   }
 
   return <section className="reading-content-manager" aria-label={heading}>
-    <div className="section-heading"><h3>{heading}</h3><div className="content-heading-actions">
+    <div className="section-heading"><h3>{heading === '閱讀心得' && <Icon name="editNote" />}{heading}</h3><div className="content-heading-actions">
       {contents.some((item) => item.type === 'longReview') && <span className="long-review-marker">有長文</span>}
       <Button size="small" onClick={() => openForm(null, 'highlight')}>畫線</Button>
       <Button size="small" onClick={() => openForm(null, 'shortReview')}>短評</Button>

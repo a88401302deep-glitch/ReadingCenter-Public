@@ -56,6 +56,7 @@ export function App() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [editing, setEditing] = useState<Book | null | undefined>(undefined)
   const [bookFormDirty, setBookFormDirty] = useState(false)
+  const [coverPending, setCoverPending] = useState(false)
   const [deleting, setDeleting] = useState<Book | null>(null)
   const [detailBook, setDetailBook] = useState<Book | null>(null)
   const detailScrollTop = useRef(0)
@@ -63,7 +64,7 @@ export function App() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const reload = async () => setBooks(await service.list())
-  const mayLeaveEditor = () => !busy && (!bookFormDirty || window.confirm('尚有未儲存的變更，確定要離開嗎？'))
+  const mayLeaveEditor = () => !busy && !coverPending && (!bookFormDirty || window.confirm('尚有未儲存的變更，確定要離開嗎？'))
   const clearEditor = () => { setEditing(undefined); setBookFormDirty(false); setError(null) }
   useEffect(() => {
     if (!bookFormDirty) return
@@ -106,11 +107,11 @@ export function App() {
     if (window.history.state?.readingCenterBookId) window.history.back()
     else { setDetailBook(null); restoreLibraryPosition() }
   }
-  const saveDetail = async (draft: BookDraft, expectedRevision: number): Promise<boolean> => {
-    if (!detailBook) return false
+  const saveDetail = async (draft: BookDraft, expectedRevision: number): Promise<Book | null> => {
+    if (!detailBook) return null
     setBusy(true); setError(null)
-    try { const updated = await service.update(detailBook.id, draft, expectedRevision); await reload(); setReadingRevision(value => value + 1); setDetailBook(updated); return true }
-    catch (reason) { setError(reason instanceof Error ? reason.message : '無法儲存書籍'); return false }
+    try { const updated = await service.update(detailBook.id, draft, expectedRevision); await reload(); setReadingRevision(value => value + 1); setDetailBook(updated); return updated }
+    catch (reason) { setError(reason instanceof Error ? reason.message : '無法儲存書籍'); return null }
     finally { setBusy(false) }
   }
   const changeReadingStatus = async (status: Exclude<LibraryReadingStatus, 'unknown'>) => {
@@ -126,7 +127,7 @@ export function App() {
   }
   useEffect(() => {
     const onPopState = () => {
-      if (detailBook && (busy || bookFormDirty && !window.confirm('尚有未儲存的變更，確定要離開嗎？'))) {
+      if (detailBook && (busy || coverPending || bookFormDirty && !window.confirm('尚有未儲存的變更，確定要離開嗎？'))) {
         window.history.pushState({ ...window.history.state, readingCenterBookId: detailBook.id }, '')
         return
       }
@@ -134,7 +135,7 @@ export function App() {
     }
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)
-  }, [restoreLibraryPosition, detailBook, bookFormDirty, busy])
+  }, [restoreLibraryPosition, detailBook, bookFormDirty, busy, coverPending])
   const confirmDelete = async () => {
     if (!deleting) return
     setBusy(true); setError(null)
@@ -154,7 +155,7 @@ export function App() {
       {active === 'management' && (syncPreview ? <SyncManager local={authEnabled ? cloudSync.local : null} message={cloudSync.message} syncing={cloudSync.syncing} onRetry={cloudSync.retry} onResolved={cloudSync.onResolved} onBack={() => setSyncPreview(false)} /> : <LibraryTools task={managementTask} onTask={setManagementTask} onManual={() => { setError(null); setBookFormDirty(false); setEditing(null) }} repositories={repositories} restoreLocal={cloudSync.local ?? undefined} onChanged={() => { setReadingRevision(value => value + 1); setContentRevision(value => value + 1) }} />)}
     </main>
     <Modal hasUnsavedChanges={bookFormDirty} open={editing === null} title={editing ? '編輯書籍' : '新增書籍'} onClose={() => { setBookFormDirty(false); setEditing(undefined) }}><BookForm books={books} book={editing ?? undefined} busy={busy} dictionaries={dictionaries} collections={collections} categoryRecommendations={recommendBookTerms(books, dictionaries, 'category')} tagRecommendations={recommendBookTerms(books, dictionaries, 'tag')} error={error} onCancel={() => { if (busy || bookFormDirty && !window.confirm('尚有未儲存的變更，確定要離開嗎？')) return; setBookFormDirty(false); setEditing(undefined) }} onDirtyChange={setBookFormDirty} onSubmit={save} /></Modal>
-    <Modal hasUnsavedChanges={bookFormDirty || busy} confirmDiscard={mayLeaveEditor} open={detailBook !== null} title={detailBook ? `《${getBookDisplayTitle(detailBook)}》` : '單書頁'} onClose={closeDetail}>{detailBook && <BookDetail onStatusChange={changeReadingStatus} onDirtyChange={setBookFormDirty} readingStatus={libraryBookReadings([detailBook], catalogCycles, catalogRecords, catalogSourceDays).get(detailBook.id)?.status} onDelete={book => { closeDetail(); void requestDelete(book) }} syncRevision={cloudSync.revision} book={detailBook} books={books} busy={busy} contentService={contentService} cycleService={cycleService} dictionaries={dictionaries} collections={collections} error={error} onContentChanged={() => setContentRevision((value) => value + 1)} onReadingChanged={() => setReadingRevision((value) => value + 1)} onSave={saveDetail} overviewService={overviewService} readingRevision={readingRevision + cloudSync.revision} recordService={recordService} />}</Modal>
+    <Modal hasUnsavedChanges={bookFormDirty || busy || coverPending} confirmDiscard={mayLeaveEditor} open={detailBook !== null} title={detailBook ? `《${getBookDisplayTitle(detailBook)}》` : '單書頁'} onClose={closeDetail}>{detailBook && <BookDetail onCoverPendingChange={setCoverPending} onStatusChange={changeReadingStatus} onDirtyChange={setBookFormDirty} readingStatus={libraryBookReadings([detailBook], catalogCycles, catalogRecords, catalogSourceDays).get(detailBook.id)?.status} onDelete={book => { closeDetail(); void requestDelete(book) }} syncRevision={cloudSync.revision} book={detailBook} books={books} busy={busy || coverPending} contentService={contentService} cycleService={cycleService} dictionaries={dictionaries} collections={collections} error={error} onContentChanged={() => setContentRevision((value) => value + 1)} onReadingChanged={() => setReadingRevision((value) => value + 1)} onSave={saveDetail} overviewService={overviewService} readingRevision={readingRevision + cloudSync.revision} recordService={recordService} />}</Modal>
     <Modal open={deleting !== null} title="刪除書籍" onClose={() => { setDeleting(null); setImpact(null) }}><div className="delete-confirmation"><p>確定刪除《{deleting ? getBookDisplayTitle(deleting) : ''}》？此操作同時移除：</p><ul><li>{impact?.readingCycles ?? 0} 個閱讀週期</li><li>{impact?.readingRecords ?? 0} 筆閱讀紀錄</li><li>{impact?.readingContents ?? 0} 筆閱讀內容</li></ul>{error && <p className="form-message form-message--error" role="alert">{error}</p>}<div className="form-actions"><Button onClick={() => setDeleting(null)}>取消</Button><Button disabled={busy} variant="danger" onClick={() => void confirmDelete()}>確認刪除</Button></div></div></Modal>
   </div>
 }
