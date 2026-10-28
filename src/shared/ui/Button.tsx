@@ -1,6 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import { Icon } from './Icon'
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'edit'
 export type ButtonSize = 'small' | 'medium'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -24,7 +25,7 @@ export function Button({
       type={type}
       {...props}
     >
-      {leadingIcon}
+      {leadingIcon ?? (variant === 'edit' ? <Icon name="editNote" size={16} /> : null)}
       <span>{children}</span>
     </button>
   )

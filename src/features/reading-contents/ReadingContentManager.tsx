@@ -71,7 +71,7 @@ export function ReadingContentManager({ browseFirst = false, heading = '閱讀�
   }
 
   return <section className="reading-content-manager" aria-label={heading}>
-    <div className="section-heading"><h3>{heading === '閱讀心得' && <Icon name="editNote" />}{heading}</h3>{browseFirst && <Button size="small" variant="ghost" aria-pressed={managing} disabled={editing !== undefined || deleting !== null} onClick={() => setManaging(value => !value)}>{managing ? '完成心得管理' : '管理心得'}</Button>}{showActions && <div className="content-heading-actions">
+    <div className="section-heading"><h3>{heading === '閱讀心得' && <Icon name="editNote" />}{heading}</h3>{browseFirst && <Button variant="edit" size="small" aria-pressed={managing} disabled={editing !== undefined || deleting !== null} onClick={() => setManaging(value => !value)}>{managing ? '完成心得編輯' : '編輯心得'}</Button>}{showActions && <div className="content-heading-actions">
       {contents.some((item) => item.type === 'longReview') && <span className="long-review-marker">有長文</span>}
       <Button size="small" onClick={() => openForm(null, 'highlight')}>畫線</Button>
       <Button size="small" onClick={() => openForm(null, 'shortReview')}>短評</Button>
@@ -83,7 +83,7 @@ export function ReadingContentManager({ browseFirst = false, heading = '閱讀�
       <p>{content.text}</p>
       {content.type === 'highlight' && content.note && <p className="highlight-note">{content.note}</p>}
       {content.type === 'highlight' && content.locator && <small>{content.locator}</small>}
-      {showActions && <div className="content-row-actions"><Button size="small" onClick={() => openForm(content)}>編輯</Button><Button size="small" variant="danger" onClick={() => setDeleting(content)}>刪除</Button></div>}
+      {showActions && <div className="content-row-actions"><Button variant="edit" size="small" onClick={() => openForm(content)}>編輯</Button><Button size="small" variant="danger" onClick={() => setDeleting(content)}>刪除</Button></div>}
     </li>)}</ol>}
     {editing !== undefined && <form className="entity-form content-form" onSubmit={submit}>
       <label>類型<select disabled={editing !== null} value={type} onChange={(event) => setType(event.target.value as ReadingContentType)}>{Object.entries(typeLabel).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>

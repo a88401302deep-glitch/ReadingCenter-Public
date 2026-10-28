@@ -1,3 +1,4 @@
+import { Button } from '../../shared/ui/Button'
 import { useState } from 'react'
 import { defaultMonthColors, readingMonthColors, type ReadingPreferences } from '../../domain'
 interface Props { value?: ReadingPreferences | null; onSave: (colors: string[], expectedRevision: number) => Promise<void> }
@@ -6,7 +7,7 @@ export function MonthColorSettings({ value, onSave }: Props) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   return <section className="reading-color-settings" aria-label="月份配色設定">
-    {!draft ? <button type="button" onClick={() => { setDraft({ colors: [...readingMonthColors(value)], revision: value?.revision ?? 0 }); setError('') }}>編輯月份配色</button> : <form onSubmit={event => {
+    {!draft ? <Button variant="edit" onClick={() => { setDraft({ colors: [...readingMonthColors(value)], revision: value?.revision ?? 0 }); setError('') }}>編輯月份配色</Button> : <form onSubmit={event => {
       event.preventDefault(); setBusy(true); setError('')
       void onSave(draft.colors, draft.revision).then(() => setDraft(null)).catch(error => setError(error instanceof Error ? error.message : '配色儲存失敗；選色已保留')).finally(() => setBusy(false))
     }}>

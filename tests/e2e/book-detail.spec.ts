@@ -26,8 +26,10 @@ for (const width of [320, 360, 768, 1024, 1280, 1440]) test(`single-book section
     expect(Math.abs(coverBounds.x + coverBounds.width / 2 - layoutBounds.x - layoutBounds.width / 2)).toBeLessThan(1)
     expect(titleBounds.y).toBeGreaterThanOrEqual(coverBounds.y + coverBounds.height)
   } else {
-    expect(coverBounds.width).toBe(112)
-    expect(titleBounds.x).toBeGreaterThan(coverBounds.x + coverBounds.width)
+    expect(coverBounds.width).toBe(240)
+    const info = (await page.locator('.book-detail-information').boundingBox())!
+    expect(info.x).toBeGreaterThan(coverBounds.x + coverBounds.width)
+    expect(titleBounds.y).toBeGreaterThanOrEqual(coverBounds.y + coverBounds.height)
   }
   await expect(page.locator('.book-detail-view details')).toHaveCount(0)
   await expect(page.locator('.book-detail-view').getByRole('button')).toHaveCount(3)
@@ -40,13 +42,15 @@ for (const width of [320, 360, 768, 1024, 1280, 1440]) test(`single-book section
   await expect(page.getByRole('dialog', { name: '尋找封面', exact: true })).toHaveCount(0)
   await expect(coverLayout.getByRole('button', { name: '尋找', exact: true })).toBeFocused()
   const dialog = page.getByRole('dialog')
-  const sidebar = dialog.locator('.book-detail-sidebar')
+  const sidebar = dialog.locator('.book-detail-book-card')
   const reading = dialog.locator('.book-detail-view > .cycle-manager')
   const left = await sidebar.boundingBox(), right = await reading.boundingBox()
   if (width >= 1024) {
     expect((await dialog.boundingBox())!.width).toBeGreaterThanOrEqual(width === 1024 ? 970 : 1000)
-    expect(right!.x).toBeGreaterThanOrEqual(left!.x + left!.width)
-    expect(Math.abs(right!.y - left!.y)).toBeLessThanOrEqual(1)
+    if (width >= 1280) {
+      expect(right!.x).toBeGreaterThanOrEqual(left!.x + left!.width)
+      expect(Math.abs(right!.y - left!.y)).toBeLessThanOrEqual(1)
+    } else expect(right!.y).toBeGreaterThanOrEqual(left!.y + left!.height)
   } else {
     expect(right!.y).toBeGreaterThanOrEqual(left!.y + left!.height)
   }
@@ -61,7 +65,7 @@ for (const width of [320, 360, 768, 1024, 1280, 1440]) test(`single-book section
   for (const region of ['書籍資料', '我的分類與標籤', '閱讀紀錄', '閱讀心得']) {
     const panel = dialog.getByRole('region', { name: region, exact: true })
     const style = await panel.evaluate(node => { const s = getComputedStyle(node); return { border: parseFloat(s.borderTopWidth), radius: parseFloat(s.borderTopLeftRadius) } })
-    expect(style.radius).toBe(0)
+    expect(style.radius).toBe(['閱讀紀錄', '閱讀心得'].includes(region) ? 20 : 0)
     await expect(panel.locator('h3 svg').first()).toBeVisible()
   }
   await expect(dialog.getByText('匯入原始資料', { exact: true })).toHaveCount(0)
@@ -76,7 +80,7 @@ for (const width of [320, 360, 768, 1024, 1280, 1440]) test(`single-book section
   }
   await expect(metadata).not.toContainText('未設定')
   const columns = await metadata.locator('.book-publication-row').first().evaluate(node => getComputedStyle(node).gridTemplateColumns.split(' ').length)
-  expect(columns).toBe(2)
+  expect(columns).toBe(width >= 1024 ? 1 : 2)
   await expect(metadata.getByRole('img', { name: 'ISBN待編輯', exact: true })).toBeVisible()
   await expect.poll(() => dialog.evaluate(node => node.scrollWidth - node.clientWidth)).toBeLessThanOrEqual(1)
   await page.goBack()

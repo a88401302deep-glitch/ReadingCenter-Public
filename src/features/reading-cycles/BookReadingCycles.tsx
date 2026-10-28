@@ -51,7 +51,7 @@ export function BookReadingCycles({ showActions = true, onRecordEditingChange, c
           <div><dt>閱讀天數</dt><dd>{cycle.reportedReadingDays == null ? '未記錄' : `${cycle.reportedReadingDays} 天`}</dd></div>
         </dl>
         <RecordDetails records={ownRecords} label={`第 ${cycle.sequence} 次閱讀明細`} />
-        {showActions && <div className="cycle-heading-actions"><ReadingRecordPopover onEditingChange={onRecordEditingChange} onMarkCompleted={cycle.status !== 'completed' && onComplete ? () => onComplete(cycle) : undefined} triggerLabel="更新閱讀紀錄" revision={revision} bookId={bookId} cycleId={cycle.id} cycleSequence={cycle.sequence} service={recordService} onChanged={onRecordsChanged} /><Button size="small" onClick={() => onEdit(cycle)}>編輯本次閱讀</Button><Button size="small" variant="danger" onClick={() => onDelete(cycle)}>刪除本次閱讀</Button></div>}
+        {showActions && <div className="cycle-heading-actions"><ReadingRecordPopover onEditingChange={onRecordEditingChange} onMarkCompleted={cycle.status !== 'completed' && onComplete ? () => onComplete(cycle) : undefined} triggerLabel="更新閱讀紀錄" revision={revision} bookId={bookId} cycleId={cycle.id} cycleSequence={cycle.sequence} service={recordService} onChanged={onRecordsChanged} /><Button variant="edit" size="small" onClick={() => onEdit(cycle)}>編輯本次閱讀</Button><Button size="small" variant="danger" onClick={() => onDelete(cycle)}>刪除本次閱讀</Button></div>}
       </section></li>
     })}</ol>}
     {(unassigned.length > 0 || showActions && cycles.length === 0) && <section className="reading-cycle-group reading-cycle-unassigned" aria-label="未分次紀錄">
