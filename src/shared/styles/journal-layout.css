@@ -272,4 +272,15 @@ input::placeholder, textarea::placeholder { color:var(--ink-soft); opacity:1; }
 .site-header .nav-item .entry-icon { width: 30px; height: 30px; }
 @media (max-width: 760px) {
   .site-header .nav-item .entry-icon { width: 28px; height: 28px; }
+  .popover-panel:has(> .record-popover) {
+    position: fixed;
+    inset: 50% 1rem auto;
+    transform: translateY(-50%);
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    max-height: calc(100dvh - 3rem);
+    overflow: auto;
+  }
+  .popover-panel > .record-popover { width: 100%; min-width: 0; }
 }
