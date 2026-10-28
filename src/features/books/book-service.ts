@@ -3,7 +3,7 @@ import { planBookMetadata, type BookMetadataDraft } from './book-metadata-plan'
 import { planBookSeries } from './book-series'
 import type { ReadingCenterRepositories } from '../../data'
 
-export interface BookDraft extends BookMetadataDraft { originalTitle?: string | null; authorOriginalNames?: string[]; bookForm?: Book['bookForm']; collectionId?: string | null; newSeriesName?: string; sequence?: BookSequence | null; wordCount?: number | null; wordCountSourceUrl?: string | null; sourceUrls?: string[]; title: string; preferredTitle?: string | null; languageTag?: string; mediaTypeId: EntityId; bookNote?: string; cover?: BookCover | null; rating?: BookRating | null; categoryIds?: EntityId[]; tagIds?: EntityId[] }
+export interface BookDraft extends BookMetadataDraft { reservedId?: EntityId; originalTitle?: string | null; authorOriginalNames?: string[]; bookForm?: Book['bookForm']; collectionId?: string | null; newSeriesName?: string; sequence?: BookSequence | null; wordCount?: number | null; wordCountSourceUrl?: string | null; sourceUrls?: string[]; title: string; preferredTitle?: string | null; languageTag?: string; mediaTypeId: EntityId; bookNote?: string; cover?: BookCover | null; rating?: BookRating | null; categoryIds?: EntityId[]; tagIds?: EntityId[] }
 export interface BookDeletionImpact { readingCycles: number; readingRecords: number; readingContents: number }
 
 export class BookService {
@@ -16,9 +16,11 @@ export class BookService {
 
   async create(draft: BookDraft): Promise<Book> {
     const persist = async () => {
+    const id = draft.reservedId ?? this.createId()
+    if (await this.repositories.books.getById(id)) throw new Error('此書籍識別已存在，未覆寫既有書籍')
     const now = this.now(), metadata = await planBookMetadata(this.repositories, undefined, draft, now)
     const series = await planBookSeries(this.repositories, undefined, draft, now)
-    const book: Book = { ...createMetadata({ id: this.createId(), now }), title: draft.title.trim(), preferredTitle: draft.preferredTitle?.trim() || null, subtitle: null, originalTitle: draft.originalTitle?.trim() || null, authorOriginalNames: draft.authorOriginalNames ?? [], bookForm: draft.bookForm ?? (draft.mediaTypeId === 'manga' ? 'manga' : 'other'), languageTag: draft.languageTag?.trim() || 'und', titleAliases: [], externalReferences: [], publicationKind: 'published', collectionId: null, sequence: null, serialization: null, isbn: null, publishedOn: null, authorIds: [], publisherId: null, mediaTypeId: draft.mediaTypeId.trim(), categoryIds: draft.categoryIds ?? [], tagIds: draft.tagIds ?? [], sourceIds: [], cover: draft.cover ?? null, rating: draft.rating ?? null, sourceUrls: draft.sourceUrls ?? [], wordCount: draft.wordCount ?? null, wordCountSourceUrl: draft.wordCountSourceUrl ?? null, bookNote: draft.bookNote?.trim() ?? '' }
+    const book: Book = { ...createMetadata({ id, now }), title: draft.title.trim(), preferredTitle: draft.preferredTitle?.trim() || null, subtitle: null, originalTitle: draft.originalTitle?.trim() || null, authorOriginalNames: draft.authorOriginalNames ?? [], bookForm: draft.bookForm ?? (draft.mediaTypeId === 'manga' ? 'manga' : 'other'), languageTag: draft.languageTag?.trim() || 'und', titleAliases: [], externalReferences: [], publicationKind: 'published', collectionId: null, sequence: null, serialization: null, isbn: null, publishedOn: null, authorIds: [], publisherId: null, mediaTypeId: draft.mediaTypeId.trim(), categoryIds: draft.categoryIds ?? [], tagIds: draft.tagIds ?? [], sourceIds: [], cover: draft.cover ?? null, rating: draft.rating ?? null, sourceUrls: draft.sourceUrls ?? [], wordCount: draft.wordCount ?? null, wordCountSourceUrl: draft.wordCountSourceUrl ?? null, bookNote: draft.bookNote?.trim() ?? '' }
     Object.assign(book, metadata.fields, series.fields)
     if (draft.metadataSourceUrl) book.sourceUrls = [...new Set([...(book.sourceUrls ?? []), draft.metadataSourceUrl])]
     assertValidBook(book)

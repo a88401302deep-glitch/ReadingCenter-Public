@@ -5,6 +5,21 @@ import { migrateBookToWork } from '../../src/domain/legacy-migration'
 import { BookService } from '../../src/features/books/book-service'
 
 describe('BookService', () => {
+  it('uses the reserved draft identity for a new cover without persisting draft-only fields', async () => {
+    const repositories = createInMemoryRepositories(), service = new BookService(repositories)
+    const book = await service.create({ reservedId: 'reserved-book', title: '新書', mediaTypeId: 'ebook', cover: { path: '/api/v1/covers/covers/reserved.jpg', mimeType: 'image/jpeg', width: 800, height: 1135 } })
+    expect(book.id).toBe('reserved-book')
+    expect(book.cover).toMatchObject({ width: 800, height: 1135 })
+    expect(book).not.toHaveProperty('reservedId')
+    expect(await repositories.books.getAll()).toHaveLength(1)
+  })
+  it('refuses a reserved identity collision without replacing a book or adding metadata', async () => {
+    const repositories = createInMemoryRepositories(), service = new BookService(repositories)
+    const original = await service.create({ title: '原書', mediaTypeId: 'ebook' })
+    await expect(service.create({ reservedId: original.id, title: '不應覆寫', authorNames: ['不應新增作者'], mediaTypeId: 'ebook' })).rejects.toThrow('未覆寫')
+    expect(await service.get(original.id)).toEqual(original)
+    expect(await repositories.dictionaries.getAll()).toEqual([])
+  })
   it('creates and edits a book while preserving identity and creation time', async () => {
     const repositories = createInMemoryRepositories()
     const times = ['2026-09-14T00:00:00.000Z', '2026-09-14T01:00:00.000Z']
