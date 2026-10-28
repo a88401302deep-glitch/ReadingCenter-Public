@@ -1,6 +1,6 @@
 import { expect, test } from './fixtures'
 
-for (const width of [360, 1280]) test(`single-book sections preserve library context and browser Back at ${width}px`, async ({ page }) => {
+for (const width of [360, 768, 1024, 1280]) test(`single-book sections preserve library context and browser Back at ${width}px`, async ({ page }) => {
   await page.setViewportSize({ width, height: 780 })
   await page.goto('/')
   await page.getByRole('button', { name: '新增書籍' }).click()
@@ -28,6 +28,17 @@ for (const width of [360, 1280]) test(`single-book sections preserve library con
   await expect(page.getByRole('dialog', { name: '尋找封面', exact: true })).toHaveCount(0)
   await expect(coverLayout.getByRole('button', { name: '尋找', exact: true })).toBeFocused()
   const dialog = page.getByRole('dialog')
+  const sidebar = dialog.locator('.book-detail-sidebar')
+  const reading = dialog.locator('.book-detail-view > .cycle-manager')
+  const left = await sidebar.boundingBox(), right = await reading.boundingBox()
+  if (width >= 1024) {
+    expect((await dialog.boundingBox())!.width).toBeGreaterThanOrEqual(width === 1024 ? 970 : 1000)
+    expect(right!.x).toBeGreaterThanOrEqual(left!.x + left!.width)
+    expect(Math.abs(right!.y - left!.y)).toBeLessThanOrEqual(1)
+  } else {
+    expect(right!.y).toBeGreaterThanOrEqual(left!.y + left!.height)
+  }
+  await dialog.screenshot({ path: test.info().outputPath(`book-detail-${width}.png`) })
   await expect(dialog.getByRole('region', { name: '書籍資料', exact: true })).toBeVisible()
   await expect(dialog.getByText('圖書分類', { exact: true })).toBeVisible()
   await expect(dialog.getByRole('heading', { name: '標籤', exact: true })).toBeVisible()

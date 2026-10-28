@@ -550,3 +550,12 @@ body.book-editor-open .modal-backdrop:has(.book-detail) { visibility:hidden; }
 
 .complete-reading-dialog { width: min(28rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); overflow: auto; padding: 1.25rem; border: 1px solid var(--color-border, #E7D8D5); border-radius: 20px; color: #514248; background: #FFF9F7; }
 .complete-reading-dialog::backdrop { background: rgb(81 66 72 / 35%); }
+
+.book-detail-sidebar { display:grid; align-content:start; gap:1rem; min-width:0; }
+@media (min-width:1024px) {
+ .modal-panel:has(.book-detail) { width:min(1120px,calc(100vw - 3rem)); }
+ .book-detail .book-detail-view { grid-template-columns:minmax(0,1fr) minmax(0,1.2fr); align-items:start; gap:1.5rem; }
+ .book-detail-sidebar .book-detail-cover-section { width:100%; max-width:320px; justify-self:center; }
+ .book-detail-view > .cycle-manager { min-width:0; }
+ .book-detail-view > .book-detail-more { grid-column:1 / -1; }
+}
