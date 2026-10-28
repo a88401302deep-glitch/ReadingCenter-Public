@@ -52,9 +52,14 @@ export function BookReadingSummary({ bookId, revision, service }: SummaryProps) 
   const hasDuration = recent?.hasRecordedDuration === true
   return <section className="book-reading-summary" aria-label="單書閱讀統計" aria-busy={!overview && !error}>
     {error ? <p role="alert">{error}</p> : !overview ? <p role="status">正在載入閱讀紀錄…</p> : <>
-      <div><span>完讀</span><strong>{metrics.completedBookCount ? '是' : '否'}</strong></div>
-      <div><span>進度</span><strong>{readingProgressLabel(recent?.progress)}</strong></div>
-      {completion && <div><span>{range ? '完讀日期範圍' : '最近完讀日期'}</span><strong>{range ? `${range.startedOn}～${range.completedOn}` : completion.date}</strong></div>}
+      <dl className="book-reading-totals">
+        <div><dt>完讀</dt><dd><strong>{metrics.completedBookCount ? '是' : '否'}</strong></dd></div>
+        <div><dt>進度</dt><dd><strong>{readingProgressLabel(recent?.progress)}</strong></dd></div>
+        {completion && <div><dt>{range ? '完讀日期範圍' : '最近完讀日期'}</dt><dd><strong>{range ? `${range.startedOn}～${range.completedOn}` : completion.date}</strong></dd></div>}
+        <div><dt>總閱讀天數</dt><dd>{metrics.readingDays || '未記錄'}</dd></div>
+        <div><dt>總閱讀時長</dt><dd>{hasDuration ? formatDuration(metrics.totalMinutes) : '未記錄'}</dd></div>
+        {metrics.readWords != null && metrics.readWords > 0 && <div><dt>閱讀字數</dt><dd>{metrics.readWords.toLocaleString('zh-TW')} 字</dd></div>}
+      </dl>
       <details className="book-reading-details">
         <summary>閱讀明細</summary>
         <p>閱讀天數：{metrics.readingDays || '未記錄'} · 閱讀時間：{hasDuration ? formatDuration(metrics.totalMinutes) : '未記錄'}{metrics.readWords != null && metrics.readWords > 0 ? ` · 閱讀字數：${metrics.readWords.toLocaleString('zh-TW')} 字` : ''}</p>

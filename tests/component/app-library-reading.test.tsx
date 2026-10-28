@@ -51,8 +51,7 @@ describe('library reading entries', () => {
     render(<App />)
     fireEvent.click(screen.getByRole('button', { name: '書庫' }))
     fireEvent.click(await screen.findByRole('button', { name: /^開啟《/ }))
-    fireEvent.click(screen.getByText('修改狀態／重讀', { exact: true }))
-    fireEvent.click(screen.getByRole('button', { name: '手動補登（0）' }))
+    fireEvent.click(screen.getByRole('button', { name: '更新未分次紀錄（0）' }))
     fireEvent.click(screen.getByRole('button', { name: '新增紀錄' }))
     const recordForm = document.querySelector('.record-form') as HTMLElement
     expect(screen.getByRole('dialog', { name: '《清單閱讀》' })).toBeTruthy()
@@ -62,7 +61,7 @@ describe('library reading entries', () => {
     fireEvent.click(within(recordForm).getByRole('button', { name: '儲存' }))
     await waitFor(() => expect(document.querySelector('.record-form')).toBeNull())
     expect(await state.repositories!.readingRecords.getAll()).toEqual([expect.objectContaining({ bookId: book.id, startedAt: new Date('2026-10-04T10:30').toISOString(), durationMinutes: 25, progress: { unit: 'percent', value: 40 }, cycleId: null })])
-    fireEvent.click(screen.getByRole('button', { name: '手動補登（1）' }))
+    fireEvent.click(screen.getByRole('button', { name: '更新未分次紀錄（1）' }))
     fireEvent.click(screen.getByRole('button', { name: '短評' }))
     const reviewForm = document.querySelector('.content-form') as HTMLElement
     fireEvent.change(within(reviewForm).getByLabelText('短評內容'), { target: { value: '沒有確切日期的心得' } })
@@ -77,8 +76,7 @@ describe('library reading entries', () => {
     render(<App />)
     fireEvent.click(screen.getByRole('button', { name: '書庫' }))
     fireEvent.click(await screen.findByRole('button', { name: /^開啟《/ }))
-    fireEvent.click(screen.getByText('修改狀態／重讀', { exact: true }))
-    fireEvent.click(screen.getByRole('button', { name: '手動補登（0）' }))
+    fireEvent.click(screen.getByRole('button', { name: '更新未分次紀錄（0）' }))
     fireEvent.click(screen.getByRole('button', { name: '新增紀錄' }))
     const form = document.querySelector('.record-form') as HTMLElement
     fireEvent.change(within(form).getByLabelText('開始時間'), { target: { value: '2026-10-04T10:30' } })

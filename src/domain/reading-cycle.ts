@@ -14,11 +14,16 @@ export interface ReadingCycle extends EntityMetadata {
   status: ReadingCycleStatus
   startedAt: IsoDateTime | null
   finishedAt: IsoDateTime | null
+  /** Date-only evidence; never converted to an invented midnight or completion. */
+  startedOn?: string | null
+  lastReadOn?: string | null
   completionDate?: ReadingCompletionDate | null
   /** Source-reported days spent reading this cycle; never inferred from a date range or converted to hours. */
   reportedReadingDays?: number | null
   /** Whole-cycle source total; never attributed to the completion day. */
   reportedDurationMinutes?: number | null
+  /** Confirmed source percentage; never implies completion or a timed session. */
+  reportedProgressPercent?: number | null
   abandonedReason: string | null
 }
 
@@ -29,6 +34,11 @@ export function assertValidReadingCycle(cycle: ReadingCycle): void {
   }
   if (cycle.startedAt !== null) assertIsoDateTime(cycle.startedAt, 'ReadingCycle startedAt')
   if (cycle.finishedAt !== null) assertIsoDateTime(cycle.finishedAt, 'ReadingCycle finishedAt')
+  if (cycle.startedOn != null) assertIsoDate(cycle.startedOn)
+  if (cycle.lastReadOn != null) assertIsoDate(cycle.lastReadOn)
+  if (cycle.startedOn && cycle.lastReadOn && cycle.startedOn > cycle.lastReadOn) throw new Error('ReadingCycle last reading date must not precede start date')
+  if (cycle.startedOn && cycle.completionDate && cycle.startedOn > cycle.completionDate.completedOn) throw new Error('ReadingCycle completion date must not precede start date')
+  if (cycle.reportedProgressPercent != null && (!Number.isFinite(cycle.reportedProgressPercent) || cycle.reportedProgressPercent < 0 || cycle.reportedProgressPercent > 100)) throw new Error('ReadingCycle progress percent must be between 0 and 100')
   if (cycle.reportedReadingDays != null && (!Number.isSafeInteger(cycle.reportedReadingDays) || cycle.reportedReadingDays < 1)) {
     throw new Error('ReadingCycle reportedReadingDays must be a positive integer')
   }

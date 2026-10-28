@@ -1,5 +1,7 @@
 import { getBookDisplayTitle, type Book, type EntityId, type ReadingProgress, type ReadingRecord, type SourceReadingDay } from '../../domain'
 import { libraryBookReadings, type LibraryReadingStatus } from '../library/library-book-summary'
+import { cycleProgress } from './cycle-progress'
+import { cycleReadingEvidence } from './cycle-reading-evidence'
 import { cycleReportedMinutes } from './cycle-reported-minutes'
 import { sourceCompletions } from './source-completions'
 import { qualifiedSourceBookIds } from '../library/source-reading-scope'
@@ -152,14 +154,12 @@ export class ReadingOverviewService {
     for (const cycle of cycles) {
       const book = booksById.get(cycle.bookId)
       if (!book || cycle.status === 'planned') continue
-      const completion = cycle.completionDate
-      const completionTime = completion?.precision === 'minute'
-        ? new Date(new Date(`${completion.completedOn}T${completion.localTime}:00Z`).getTime() - completion.offsetMinutes * 60_000).toISOString()
-        : completion?.completedOn
-      const evidence = [cycle.startedAt, cycle.finishedAt, completionTime].filter((value): value is string => Boolean(value)).sort(compareEvidence)[0]
+      const evidence = cycleReadingEvidence(cycle).sort(compareEvidence)[0]
       if (!evidence) continue
       const existing = recentMap.get(book.id)
-      if (!existing) recentMap.set(book.id, { book, lastReadAt: evidence, totalMinutes: reportedMinutes.get(book.id) ?? 0, progress: null, hasRecordedDuration: reportedMinutes.has(book.id) })
+      const snapshot = cycleProgress(cycle, records, this.timeZone)
+      if (existing && snapshot && cycle.lastReadOn && compareEvidence(cycle.lastReadOn, existing.lastReadAt) < 0) existing.progress = snapshot
+      if (!existing) recentMap.set(book.id, { book, lastReadAt: evidence, totalMinutes: reportedMinutes.get(book.id) ?? 0, progress: snapshot, hasRecordedDuration: reportedMinutes.has(book.id) })
       else if (compareEvidence(evidence, existing.lastReadAt) < 0) existing.lastReadAt = evidence
     }
     const sourceDaysByBook: Record<EntityId, SourceReadingDay[]> = {}
@@ -179,10 +179,6 @@ export class ReadingOverviewService {
         }
       }
     }
-    for (const [id, minutes] of reportedMinutes) {
-      const recent = recentMap.get(id)
-      if (recent) { recent.totalMinutes = minutes; recent.hasRecordedDuration = true }
-    }
     const byBook: Record<EntityId, ReadingMetrics> = {}
     for (const book of books) {
       const bookRecords = records.filter((record) => record.bookId === book.id)
@@ -197,6 +193,11 @@ export class ReadingOverviewService {
         readWords: bookSourceDays.reduce((sum, row) => sum + row.readWords, 0),
         recordCount: bookRecords.length + bookSourceDays.length
       }
+    }
+    // Match the book summary: detailed minutes plus only unrelated cycle fallbacks.
+    for (const [id, recent] of recentMap) {
+      recent.totalMinutes = byBook[id].totalMinutes
+      recent.hasRecordedDuration ||= reportedMinutes.has(id)
     }
     const summarizeWords = (ids: Set<string>): BookWordCountSummary => {
       let total = 0n, knownBooks = 0, unknownBooks = 0

@@ -524,3 +524,29 @@ body.book-editor-open .modal-backdrop:has(.book-detail) { visibility:hidden; }
 .book-publication-row dd { min-width:0; margin:0; color:var(--ink); overflow-wrap:anywhere; white-space:pre-wrap; }
 .book-field-pending { display:inline-flex; align-items:center; min-height:1.65rem; color:var(--accent-deep); vertical-align:middle; }
 @media (max-width:400px) { .book-publication-row { grid-template-columns:5.5rem minmax(0,1fr); gap:.5rem; } }
+
+/* Single-book reading facts use rows; each reading keeps its own records. */
+.book-detail .book-detail-status { display:flex; flex-wrap:nowrap; align-items:center; gap:.75rem; white-space:nowrap; }
+.book-detail .book-detail-status select { width:auto; min-width:0; max-width:calc(100% - 6rem); font-size:1rem; }
+.book-reading-summary { grid-template-columns:minmax(0,1fr); border:0; min-width:0; }
+.book-reading-summary .book-reading-totals { margin:0; min-width:0; }
+.book-reading-summary .book-reading-totals > div, .cycle-facts > div, .cycle-record-rows > div { display:grid; grid-template-columns:6.5rem minmax(0,1fr); align-items:start; gap:.75rem; padding:.4rem 0; border:0; border-bottom:1px solid var(--line); min-width:0; font-size:1rem; line-height:1.65; }
+.book-reading-totals dt, .cycle-facts dt, .cycle-record-rows dt { color:var(--ink-soft); font-weight:400; }
+.book-reading-totals dd, .cycle-facts dd, .cycle-record-rows dd { margin:0; min-width:0; color:var(--ink); overflow-wrap:anywhere; }
+.book-reading-summary > .book-reading-details { padding:.5rem 0 0; }
+.book-reading-details > summary, .cycle-record-details > summary { min-height:44px; align-content:center; cursor:pointer; color:var(--ink); font-size:1rem; }
+.book-reading-cycles { display:grid; gap:.75rem; min-width:0; }
+.book-reading-cycles h4 { margin:0; color:var(--ink); font-size:1rem; font-weight:550; }
+.book-reading-cycles > .section-heading, .reading-cycle-heading { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:.5rem; min-width:0; }
+.book-detail .cycle-list--grouped > li { display:block; padding:.75rem 0; }
+.reading-cycle-group { display:grid; gap:.5rem; min-width:0; }
+.cycle-facts, .cycle-record-rows { margin:0; min-width:0; }
+.cycle-record-rows > div { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+.cycle-record-rows time { font-variant-numeric:tabular-nums; }
+.reading-cycle-unassigned { border-top:1px solid var(--line); padding-top:.75rem; }
+@media (max-width:400px) {
+ .book-reading-summary .book-reading-totals > div, .cycle-facts > div { grid-template-columns:5.5rem minmax(0,1fr); gap:.5rem; }
+}
+
+.complete-reading-dialog { width: min(28rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); overflow: auto; padding: 1.25rem; border: 1px solid var(--color-border, #E7D8D5); border-radius: 20px; color: #514248; background: #FFF9F7; }
+.complete-reading-dialog::backdrop { background: rgb(81 66 72 / 35%); }

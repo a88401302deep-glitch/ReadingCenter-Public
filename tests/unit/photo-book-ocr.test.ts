@@ -44,3 +44,13 @@ it('keeps per-book explicit dates and cumulative minutes bounded and separate, w
  expect(() => parsePhotoResult({ response: JSON.stringify({ ...result, completedOn: 123 }) })).toThrow()
  expect(() => parsePhotoResult({ response: JSON.stringify({ ...result, totalMinutes: '1'.repeat(13) }) })).toThrow()
 })
+
+it('keeps start, last-read and completion dates separate in single and multiple results', async () => {
+ const { parsePhotoBooks } = await import('../../worker/photo-book-ocr')
+ const books = [{ ...result, progressPercent: '65.5', startedOn: '2026-09-01', lastReadOn: '2026-10-04', completedOn: '' }, { ...result, title: '第二本', startedOn: '', lastReadOn: '', completedOn: '2026-10-02' }]
+ expect(parsePhotoBooks({ response: JSON.stringify({ books }) })).toEqual({ books })
+ for (const key of ['startedOn', 'lastReadOn', 'progressPercent']) {
+  expect(() => parsePhotoResult({ response: JSON.stringify({ ...result, [key]: 123 }) })).toThrow()
+  expect(() => parsePhotoResult({ response: JSON.stringify({ ...result, [key]: '1'.repeat(17) }) })).toThrow()
+ }
+})

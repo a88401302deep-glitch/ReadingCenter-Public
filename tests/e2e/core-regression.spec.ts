@@ -33,15 +33,14 @@ test('deleting a book removes its record and note from every related view', asyn
   await page.getByLabel('出版書名', { exact: true }).fill('整體刪除同步測試')
   await page.getByRole('button', { name: '儲存', exact: true }).click()
   await page.getByRole('button', { name: /^開啟《/ }).click()
-  await page.getByText('修改狀態／重讀', { exact: true }).click()
 
-  await page.getByRole('button', { name: '手動補登（0）' }).click()
+  await page.getByRole('button', { name: '更新未分次紀錄（0）' }).click()
   await page.getByRole('button', { name: '新增紀錄' }).click()
   await page.getByLabel('開始時間').fill(startedAt)
   await page.getByLabel('閱讀時間（分鐘）').fill('18')
   await page.getByRole('button', { name: '儲存', exact: true }).click()
 
-  await page.getByRole('button', { name: '手動補登（1）' }).click()
+  await page.getByRole('button', { name: '更新未分次紀錄（1）' }).click()
   await page.getByRole('button', { name: '短評', exact: true }).click()
   await page.getByLabel('短評內容').fill('刪書時一併消失的短評')
   await page.getByRole('button', { name: '儲存', exact: true }).click()

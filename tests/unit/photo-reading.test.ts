@@ -39,3 +39,25 @@ it('keeps cumulative time out of daily totals and suppresses it when detailed ti
  const record = { ...cycle, startedAt: '2026-09-29T00:00:00Z', endedAt: null, durationMinutes: 20, cycleId: cycle.id, progress: null, deviceId: null, sourceId: null }
  expect(cycleReportedMinutes([cycle], [record], []).has(book.id)).toBe(false)
 })
+
+it('saves date-only reading evidence without marking completion or creating sessions and deduplicates repeats', async () => {
+ const repo = createInMemoryRepositories(), book = await confirmPhotoBook(repo, draft, options)
+ const evidence = { completedOn: '', startedOn: '2026-09-01', lastReadOn: '2026-09-30', totalMinutes: '262', status: 'reading' as const, allowReread: false }
+ const cycle = await confirmPhotoReading(repo, book.id, options.hash, evidence)
+ expect(cycle).toMatchObject({ status: 'reading', startedOn: evidence.startedOn, lastReadOn: evidence.lastReadOn, startedAt: null, finishedAt: null, completionDate: null, reportedDurationMinutes: 262 })
+ expect(await confirmPhotoReading(repo, book.id, options.hash, evidence)).toEqual(cycle)
+ await expect(confirmPhotoReading(repo, book.id, options.hash, { ...evidence, lastReadOn: '2026-09-29' })).rejects.toThrow('內容不同')
+ await expect(confirmPhotoReading(repo, book.id, 'b'.repeat(64), evidence)).rejects.toThrow('已有閱讀中')
+ expect(await repo.readingCycles.getAll()).toEqual([cycle])
+ expect(await repo.readingRecords.getAll()).toEqual([])
+})
+it('validates reading date order and rejects contradictory completion without writing', async () => {
+ const repo = createInMemoryRepositories(), book = await confirmPhotoBook(repo, draft, options)
+ for (const evidence of [
+  { startedOn: '2026-02-30' }, { startedOn: '2026-10-02', lastReadOn: '2026-10-01' },
+  { completedOn: '2026-10-01', lastReadOn: '2026-10-01' }, {}
+ ]) await expect(confirmPhotoReading(repo, book.id, options.hash, { completedOn: '', totalMinutes: '', status: 'reading', allowReread: false, ...evidence })).rejects.toThrow()
+ expect(await repo.readingCycles.getAll()).toEqual([])
+ const cycle = await confirmPhotoReading(repo, book.id, options.hash, { ...reading, startedOn: '2026-09-01', lastReadOn: '2026-09-29' })
+ expect(cycle).toMatchObject({ status: 'completed', lastReadOn: '2026-09-29', completionDate: { completedOn: '2026-09-30' } })
+})
