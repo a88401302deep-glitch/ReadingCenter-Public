@@ -84,7 +84,6 @@ export function BookDetail({ book, onDirtyChange, onCoverPendingChange, readingS
   }
   const currentBook = books.find((item) => item.id === book.id) ?? book
   const names = new Map(dictionaries.map((entry) => [entry.id, entry.name]))
-  const mediaTypeName = names.get(currentBook.mediaTypeId) ?? ({ ebook: '電子書', print: '紙本書', manga: '漫畫' } as Record<string, string>)[currentBook.mediaTypeId] ?? '媒體類型未分類'
   const sourceUrls = getBookSourceUrls(currentBook)
   const notes = getBookNotes(currentBook)
   const type = libraryBookType(currentBook, dictionaries)
@@ -120,7 +119,7 @@ export function BookDetail({ book, onDirtyChange, onCoverPendingChange, readingS
       <section className="book-detail-information book-detail-panel" aria-label="書籍資料">
         <div className="book-detail-panel-heading"><h3><Icon name="book" />書籍資訊</h3></div>
         {error && <p role="alert">{error}</p>}
-        <BookPublicationList showSparseHint hideEmpty showMissingIcons={false} book={currentBook} dictionaries={dictionaries} collections={collections} mediaTypeName={mediaTypeName} />
+        <BookPublicationList showSparseHint hideEmpty showMissingIcons={false} book={currentBook} dictionaries={dictionaries} collections={collections} />
         <BookSeriesList book={currentBook} books={books} collections={collections} />
         {notes.bookNote && <div className="book-note"><h4>書籍備註</h4><p>{notes.bookNote}</p></div>}
       </section>

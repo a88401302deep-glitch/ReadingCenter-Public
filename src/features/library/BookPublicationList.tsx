@@ -1,7 +1,7 @@
 import { CREATOR_ROLE_LABELS, type Book, type BookCollection, type DictionaryEntry } from '../../domain'
 import { Icon } from '../../shared/ui/Icon'
 
-export function BookPublicationList({ book, dictionaries, collections, mediaTypeName, showMissingIcons = true, hideEmpty = false, showSparseHint = false }: { book: Book; dictionaries: DictionaryEntry[]; collections: BookCollection[]; mediaTypeName: string; showMissingIcons?: boolean; hideEmpty?: boolean; showSparseHint?: boolean }) {
+export function BookPublicationList({ book, dictionaries, collections, showMissingIcons = true, hideEmpty = false, showSparseHint = false }: { book: Book; dictionaries: DictionaryEntry[]; collections: BookCollection[]; showMissingIcons?: boolean; hideEmpty?: boolean; showSparseHint?: boolean }) {
   const name = (id: string) => {
     const entry = dictionaries.find(item => item.id === id)
     if (!entry) return '資料待載入'
@@ -16,7 +16,7 @@ export function BookPublicationList({ book, dictionaries, collections, mediaType
     ...(book.creatorCredits ?? []).filter(credit => !['author', 'translator', 'illustration'].includes(credit.role)).map(credit => [CREATOR_ROLE_LABELS[credit.role], name(credit.creatorId)] as [string, string]),
     ['原文書名', book.originalTitle], ['作者原名', book.authorOriginalNames?.join('、')],
     ['出版社', book.publisherId ? name(book.publisherId) : null], ['ISBN', book.isbn],
-    ['出版日期', book.publishedOn], ['書籍版本', mediaTypeName],
+    ['出版日期', book.publishedOn],
     ['圖書分類', book.categoryIds.map(name).join('、')],
     ['書籍字數', book.wordCount == null ? null : `${book.wordCount.toLocaleString('zh-TW')} 字`],
     ['系列', book.collectionId ? collections.find(item => item.id === book.collectionId)?.name ?? '資料待載入' : null],
