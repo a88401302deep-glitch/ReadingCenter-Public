@@ -29,6 +29,9 @@ for(const width of [320,1024]) test(`personal book details use content height an
  expect(Math.abs(label.y+label.height/2-badge.y-badge.height/2)).toBeLessThan(2)
  const link=panel.getByRole('link',{name:'開啟書籍來源：讀墨',exact:true})
  expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(44)
+ const heading=(await panel.locator('h3').boundingBox())!, icon=(await link.boundingBox())!
+ expect(Math.abs(heading.y+heading.height/2-icon.y-icon.height/2)).toBeLessThan(2)
+ expect(icon.x).toBeGreaterThanOrEqual(heading.x+heading.width)
  expect(await panel.evaluate(el=>el.scrollWidth-el.clientWidth)).toBeLessThanOrEqual(1)
  await panel.screenshot({path:test.info().outputPath(`personal-details-${width}.png`)})
  await page.getByRole('button',{name:'編輯書籍資料',exact:true}).click()
