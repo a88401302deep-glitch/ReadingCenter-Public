@@ -827,3 +827,10 @@ body.book-editor-open .modal-backdrop:has(.book-detail) { visibility:hidden; }
 .book-detail-personal-tags .book-row-tags { margin:0; flex-wrap:wrap; min-width:0; }
 .book-detail-personal-tags .tag, .book-detail-personal-meta .tag { max-width:100%; overflow-wrap:anywhere; white-space:normal; }
 .book-detail-personal .book-detail-personal-meta:empty { display:none; }
+
+.book-form-sources { display:grid; grid-template-columns:minmax(0,1fr); align-items:start; gap:.75rem; min-width:0; padding-top:.75rem; border-top:1px solid var(--line); }
+.book-form-sources > .book-form-heading { margin:0; padding:0; border:0; }
+@media (min-width:760px) {
+ .book-form-sources { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .book-form-sources > :is(h3,p) { grid-column:1 / -1; }
+}

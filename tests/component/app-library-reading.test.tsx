@@ -112,7 +112,7 @@ describe('library reading entries', () => {
     expect(within(writing).getByRole('button', { name: '短評' })).toBeTruthy()
     expect(information.querySelector('.book-detail-publication')).toBeNull()
     expect(within(information).queryByText('ISBN')).toBeNull()
-    expect(within(personal).getByRole('link', { name: '開啟書籍來源：example.com' })).toBeTruthy()
+    expect(within(personal).getByRole('link', { name: '開啟相關連結：example.com' })).toBeTruthy()
     expect(within(information).getByText('這是書籍備註')).toBeTruthy()
     await waitFor(() => expect(within(reading).queryByRole('status')).toBeNull())
     expect(await state.repositories!.books.getById(book.id)).toEqual(before)
