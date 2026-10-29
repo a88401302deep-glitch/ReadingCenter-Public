@@ -807,3 +807,6 @@ body.book-editor-open .modal-backdrop:has(.book-detail) { visibility:hidden; }
 .book-detail-links a { display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px; border:1px solid var(--line); border-radius:50%; background:var(--surface); color:var(--accent-deep); }
 .book-detail-links a:hover { background:var(--blossom); }
 .book-detail-links a:focus-visible { outline:2px solid var(--accent-deep); outline-offset:3px; }
+
+.book-form .multi-select select { min-width:0; max-width:100%; }
+.book-form .book-term-help { margin:0; color:var(--ink-soft); font-size:.875rem; line-height:1.6; }
