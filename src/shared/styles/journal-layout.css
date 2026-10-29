@@ -266,6 +266,18 @@ input::placeholder, textarea::placeholder { color:var(--ink-soft); opacity:1; }
 .button.button--edit[aria-pressed="true"] { background:var(--accent-deep); color:var(--on-primary); }
 .icon-button[aria-label^="編輯"] { min-width:44px; padding:.5rem; }
 .site-header .nav-item .entry-icon { width: 30px; height: 30px; }
+.cover-library .book-list--covers { grid-template-columns:repeat(6,minmax(0,1fr)); gap:1rem .5rem; }
+.shelf-rating { min-width:0; }
+.shelf-rating-stars { display:flex; width:100%; }
+.shelf-rating-stars > button { position:relative; display:grid; place-items:center; flex:1 1 0; min-width:0; min-height:44px; padding:0; border:0; background:transparent; font-size:clamp(14px,1.8vw,20px); line-height:1; cursor:pointer; }
+.rating-star-base { color:var(--ink-soft); opacity:.55; }
+.rating-star-glyph { position:relative; display:block; width:1em; height:1em; text-align:left; }
+.rating-star-fill { position:absolute; left:0; top:0; bottom:0; overflow:hidden; white-space:nowrap; color:var(--accent-deep); }
+.shelf-rating-stars > button:disabled { cursor:default; }
+.shelf-rating-error { display:block; color:var(--danger); font-size:.8125rem; }
+.book-list--list .shelf-rating { max-width:220px; }
+@media (max-width:699px) { .cover-library .book-list--covers { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (min-width:700px) { .cover-library .book-list--covers { grid-template-columns:repeat(6,minmax(0,1fr)); } }
 @media (max-width: 760px) {
   .site-header .nav-item .nav-label { display:none; }
   .site-header .nav-item { align-content:center; }
@@ -282,3 +294,5 @@ input::placeholder, textarea::placeholder { color:var(--ink-soft); opacity:1; }
   }
   .popover-panel > .record-popover { width: 100%; min-width: 0; }
 }
+
+@media (min-width:700px) { .cover-library .book-list--covers { grid-template-columns:repeat(6,minmax(0,1fr)); } }

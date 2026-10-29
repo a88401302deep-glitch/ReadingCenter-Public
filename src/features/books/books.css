@@ -733,3 +733,11 @@ body.book-editor-open .modal-backdrop:has(.book-detail) { visibility:hidden; }
  .book-detail .book-detail-introduction h3 { font-size:1.125rem; }
  .book-detail .reading-content-manager > .empty-line { margin:0; padding:.5rem 0; }
 }
+
+/* A book uses the main-page footprint while retaining the existing modal lifecycle. */
+.modal-backdrop.modal-backdrop--page { padding:.625rem; }
+.modal-panel.modal-panel--page:has(.book-detail) { width:min(1600px,calc(100vw - 4rem)); max-width:none; height:calc(100dvh - 1.25rem); max-height:none; }
+.modal-panel.modal-panel--page:has(.book-detail) > .modal-header { position:sticky; top:0; z-index:50; height:0; min-height:0; padding:0; border:0; background:transparent; pointer-events:none; }
+.modal-panel.modal-panel--page:has(.book-detail) > .modal-header .icon-button { position:absolute; top:.75rem; right:.75rem; width:44px; min-width:44px; height:44px; min-height:44px; border:1px solid var(--line); border-radius:50%; background:var(--surface); box-shadow:0 2px 8px color-mix(in srgb,var(--ink) 15%,transparent); pointer-events:auto; }
+.modal-panel.modal-panel--page:has(.book-detail) > .modal-body { padding:3.5rem 1rem 1rem; }
+@media (max-width:760px) { .modal-panel.modal-panel--page:has(.book-detail) { width:calc(100vw - 1.25rem); } }

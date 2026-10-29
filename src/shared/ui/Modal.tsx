@@ -6,6 +6,7 @@ import { IconButton } from './IconButton'
 export type ModalCloseReason = 'closeButton' | 'escape' | 'backdrop'
 
 interface ModalProps {
+  presentation?: 'dialog' | 'page'
   children: ReactNode
   hasUnsavedChanges?: boolean
   open: boolean
@@ -16,6 +17,7 @@ interface ModalProps {
 }
 
 export function Modal({
+  presentation = 'dialog',
   children,
   confirmDiscard,
   hasUnsavedChanges = false,
@@ -77,17 +79,17 @@ export function Modal({
   }
 
   return createPortal(
-    <div className="modal-backdrop" data-testid="modal-backdrop" onMouseDown={onBackdropClick}>
+    <div className={`modal-backdrop${presentation === 'page' ? ' modal-backdrop--page' : ''}`} data-testid="modal-backdrop" onMouseDown={onBackdropClick}>
       <div
         aria-labelledby={titleId}
         aria-modal="true"
-        className="modal-panel"
+        className={`modal-panel${presentation === 'page' ? ' modal-panel--page' : ''}`}
         ref={panelRef}
         role="dialog"
         tabIndex={-1}
       >
         <header className="modal-header">
-          <h2 id={titleId}>{title}</h2>
+          <h2 className={presentation === 'page' ? 'sr-only' : undefined} id={titleId}>{title}</h2>
           <IconButton aria-label="關閉" onClick={() => requestClose('closeButton')}>
             <Icon name="close" />
           </IconButton>

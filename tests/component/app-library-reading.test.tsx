@@ -23,6 +23,21 @@ beforeEach(async () => {
 })
 
 describe('library reading entries', () => {
+  it('rates a completed book directly in the shelf, retaining its ten-point scale and manual fields', async () => {
+    const repositories = state.repositories!
+    const book = await new BookService(repositories).create({ title: '書庫評分', preferredTitle: '人工書名', mediaTypeId: 'ebook', rating: { value: 7, scale: 10 }, cover: { path: '/manual.jpg', mimeType: 'image/jpeg' }, bookNote: '保留備註' })
+    await new ReadingCycleService(repositories).create(book.id, { status: 'completed' })
+    const cycles = await repositories.readingCycles.getAll()
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: '書庫' }))
+    const rating = await screen.findByRole('group', { name: '《人工書名》評分：3.5 星' })
+    fireEvent.click(within(rating).getByRole('button', { name: '評為 4 星' }))
+    await screen.findByRole('group', { name: '《人工書名》評分：4 星' })
+    expect(screen.queryByRole('dialog')).toBeNull()
+    const saved = await repositories.books.getById(book.id)
+    expect(saved).toEqual({ ...book, rating: { value: 8, scale: 10 }, revision: book.revision + 1, updatedAt: saved!.updatedAt })
+    expect(await repositories.readingCycles.getAll()).toEqual(cycles)
+  })
   it('shows only three management entries while records and reviews remain visible without changing data', async () => {
     const repositories = state.repositories!
     const book = await new BookService(repositories).create({ title: '安靜瀏覽', mediaTypeId: 'ebook', bookNote: '書籍備註直接可讀' })
@@ -75,15 +90,15 @@ describe('library reading entries', () => {
     const information = within(dialog).getByRole('region', { name: '書籍資料' })
     const reading = within(dialog).getByRole('region', { name: /^閱讀紀錄$/ })
     const writing = within(dialog).getByRole('region', { name: '閱讀心得' })
-    expect(within(information).getByText('圖書分類', { exact: true })).toBeTruthy()
+    expect(within(information).queryByText('圖書分類', { exact: true })).toBeNull()
     const personal = within(dialog).getByRole('region', { name: '我的分類與標籤' })
-    expect(within(personal).getByRole('heading', { name: '標籤' })).toBeTruthy()
+    expect(within(personal).queryByRole('heading', { name: '標籤' })).toBeNull()
     expect(within(information).queryByRole('button', { name: '短評' })).toBeNull()
     expect(within(reading).getByRole('region', { name: '單書閱讀統計' })).toBeTruthy()
     enterManagement('心得')
     expect(within(writing).getByRole('button', { name: '短評' })).toBeTruthy()
     expect(information.querySelector('.book-detail-publication')).toBeNull()
-    expect(within(information).getByText('ISBN').parentElement?.textContent).toContain('未提供')
+    expect(within(information).queryByText('ISBN')).toBeNull()
     expect(within(personal).getByRole('link', { name: 'https://example.com/source' })).toBeTruthy()
     expect(within(information).getByText('這是書籍備註')).toBeTruthy()
     await waitFor(() => expect(within(reading).queryByRole('status')).toBeNull())

@@ -1,7 +1,7 @@
 import { CREATOR_ROLE_LABELS, type Book, type BookCollection, type DictionaryEntry } from '../../domain'
 import { Icon } from '../../shared/ui/Icon'
 
-export function BookPublicationList({ book, dictionaries, collections, mediaTypeName, showMissingIcons = true }: { book: Book; dictionaries: DictionaryEntry[]; collections: BookCollection[]; mediaTypeName: string; showMissingIcons?: boolean }) {
+export function BookPublicationList({ book, dictionaries, collections, mediaTypeName, showMissingIcons = true, hideEmpty = false }: { book: Book; dictionaries: DictionaryEntry[]; collections: BookCollection[]; mediaTypeName: string; showMissingIcons?: boolean; hideEmpty?: boolean }) {
   const name = (id: string) => {
     const entry = dictionaries.find(item => item.id === id)
     if (!entry) return '資料待載入'
@@ -23,7 +23,7 @@ export function BookPublicationList({ book, dictionaries, collections, mediaType
     ['卷次／集數', book.sequence?.label],
   ]
   return <dl className="book-publication-list" aria-label="書籍資料列表">
-    {rows.map(([label, value], index) => <div className="book-publication-row" key={`${label}-${index}`}>
+    {rows.filter(([, value]) => !hideEmpty || Boolean(value?.trim())).map(([label, value], index) => <div className="book-publication-row" key={`${label}-${index}`}>
       <dt>{label}</dt><dd>{value?.trim() || (showMissingIcons ? <span className="book-field-pending" role="img" aria-label={`${label}待編輯`} title={`${label}待編輯`}><Icon name="editNote" /></span> : <span className="book-field-unknown">未提供</span>)}</dd>
     </div>)}
   </dl>
