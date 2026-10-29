@@ -53,7 +53,6 @@ for (const width of [360, 1440]) test(`quiet book browsing keeps three entries, 
   await expect(directEditor.getByRole('button', { name: '儲存', exact: true })).toBeInViewport()
   await directEditor.screenshot({ path: test.info().outputPath(`direct-editor-${width}.png`) })
   await directEditor.getByRole('button', { name: '離開書籍編輯', exact: true }).click()
-  await view.getByRole('button', { name: '完成書籍編輯', exact: true }).click()
   await enterManagement(page, '閱讀')
   await page.getByRole('button', { name: '更新未分次紀錄（0）', exact: true }).click()
   await page.getByRole('button', { name: '新增紀錄', exact: true }).click()

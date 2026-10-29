@@ -8,8 +8,6 @@ export async function enterManagement(page: Page, scope: '書籍' | '閱讀' | '
   await expect(trigger.or(done)).toBeVisible()
   if (await trigger.count()) {
     await trigger.click()
-    // Existing section-tool scenarios start after the directly opened editor.
-    if (scope === '書籍') await page.getByRole('button', { name: '離開書籍編輯', exact: true }).click()
   }
 }
 

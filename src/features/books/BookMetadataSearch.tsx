@@ -115,7 +115,7 @@ export function BookMetadataSearch({ title, author, disabled, currentValues, med
  }
  const content = <div className="metadata-flow">
   <p className="metadata-step">{activeId ? '2 · 核對這一本' : '1 · 搜尋並選一本'}</p>
-  <div hidden={Boolean(activeId)}>
+  <div className="metadata-query-stage" hidden={Boolean(activeId)}>
 
   {source === 'pubu' ? <label>Pubu 書頁網址<input type="url" value={bookUrl} maxLength={200} placeholder="https://www.pubu.com.tw/ebook/697279" disabled={disabled || busy} onChange={event => setBookUrl(event.target.value)} /></label> : <><label>{source === 'readmoo-text' ? '核對書名' : '查詢書名'}<input value={query} maxLength={300} disabled={disabled || busy} onChange={event => { queryEdited.current = true; setQuery(event.target.value) }} /></label>
   </>}

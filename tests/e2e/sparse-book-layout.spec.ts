@@ -28,6 +28,5 @@ for (const width of [360, 1024, 1366]) test(`sparse metadata stays compact besid
   await detail.getByRole('button', { name: '編輯書籍資料', exact: true }).click()
   await expect(page.getByLabel('出版書名', { exact: true })).toHaveValue('一段比較長的合成書名，用來檢查平板版面')
   await page.getByRole('button', { name: '離開書籍編輯', exact: true }).click()
-  await detail.getByRole('button', { name: '完成書籍編輯', exact: true }).click()
   await expect(detail.locator('.book-detail-sparse-hint')).toBeVisible()
 })

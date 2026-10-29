@@ -15,9 +15,11 @@ import type { BookDraft } from './book-service'
 
 export type BookEditScope = 'all' | 'bibliography' | 'personal' | 'rating'
 
-interface BookFormProps { inlineMetadataSearch?: boolean; scope?: BookEditScope; restoreView?: { scrollTop: number; openDetails: string[] }; saveNotice?: string; book?: Book; busy?: boolean; dictionaries?: DictionaryEntry[]; collections?: BookCollection[]; books?: Book[]; categoryRecommendations?: MultiSelectOption[]; tagRecommendations?: MultiSelectOption[]; error?: string | null; onCancel: () => void; onDirtyChange?: (dirty: boolean) => void; onSubmit: (draft: BookDraft) => Promise<void> }
+interface BookFormProps { expanded?: boolean; inlineMetadataSearch?: boolean; scope?: BookEditScope; restoreView?: { scrollTop: number; openDetails: string[] }; saveNotice?: string; book?: Book; busy?: boolean; dictionaries?: DictionaryEntry[]; collections?: BookCollection[]; books?: Book[]; categoryRecommendations?: MultiSelectOption[]; tagRecommendations?: MultiSelectOption[]; error?: string | null; onCancel: () => void; onDirtyChange?: (dirty: boolean) => void; onSubmit: (draft: BookDraft) => Promise<void> }
 
-export function BookForm({ inlineMetadataSearch = false, scope = 'all', restoreView, saveNotice, book, busy = false, dictionaries = [], collections = [], books = [], categoryRecommendations, tagRecommendations, error, onCancel, onDirtyChange, onSubmit }: BookFormProps) {
+export function BookForm({ expanded = false, inlineMetadataSearch = false, scope = 'all', restoreView, saveNotice, book, busy = false, dictionaries = [], collections = [], books = [], categoryRecommendations, tagRecommendations, error, onCancel, onDirtyChange, onSubmit }: BookFormProps) {
+  const ExtraFields = expanded ? 'section' : 'details'
+  const ExtraHeading = expanded ? 'h4' : 'summary'
   const { previewReadOnly = false } = useAuth()
   const bibliography = scope === 'all' || scope === 'bibliography'
   const personal = scope === 'all' || scope === 'personal'
@@ -139,7 +141,7 @@ export function BookForm({ inlineMetadataSearch = false, scope = 'all', restoreV
     } : draft)
     } finally { savePending.current = false; setSubmitting(false) }
   }
-  return <form ref={formRef} className="entity-form book-form" onSubmit={submit} onKeyDown={event => { if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); if (!busy && !submitting && !uploadingCover) onCancel() } }}>
+  return <form ref={formRef} className={`entity-form book-form${expanded ? ' book-form--expanded' : ''}`} onSubmit={submit} onKeyDown={event => { if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); if (!busy && !submitting && !uploadingCover) onCancel() } }}>
     <header className="book-editor-heading"><div><h2>{scope === 'rating' ? '編輯評分' : scope === 'personal' ? '編輯我的分類與標籤' : book ? '編輯書籍' : '新增書籍'}</h2></div><Button aria-label="離開書籍編輯" disabled={busy || submitting || uploadingCover} onClick={onCancel}>{saveNotice ? '完成' : '取消'}</Button></header>
     <fieldset ref={fieldsRef} className="book-form-fields" aria-label={scope === 'rating' ? '評分欄位' : scope === 'personal' ? '我的分類與標籤欄位' : '書籍資料欄位'} disabled={busy || submitting || uploadingCover}>
     {previewReadOnly && <p role="status">查詢預覽：可核對書籍資料與封面，暫不儲存或上傳。</p>}
@@ -172,12 +174,12 @@ export function BookForm({ inlineMetadataSearch = false, scope = 'all', restoreV
     <div className="book-field"><span className="field-requirement" aria-hidden="true">完整度必備</span><label><span className="field-caption">出版社</span><input maxLength={200} value={publisherName} onChange={event => setPublisherName(event.target.value)} /></label></div>
     <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">ISBN</span><input maxLength={40} value={isbn} onChange={event => setIsbn(event.target.value)} /></label></div>
     <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">出版日期或年份</span><input maxLength={80} value={publishedOn} onChange={event => setPublishedOn(event.target.value)} /></label></div>
-    <details className="book-form-extra"><summary>原文書名、譯者與繪者</summary>
+    <ExtraFields className="book-form-extra"><ExtraHeading>原文書名、譯者與繪者</ExtraHeading>
     <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">原文書名</span><input maxLength={500} value={originalTitle} onChange={event => setOriginalTitle(event.target.value)} /></label></div>
     <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">作者原名（每行一位）</span><textarea rows={2} maxLength={4000} value={authorOriginalNamesText} onChange={event => setAuthorOriginalNamesText(event.target.value)} /></label></div>
     <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">譯者（每行一位）</span><textarea rows={2} maxLength={4000} value={translatorNamesText} onChange={event => setTranslatorNamesText(event.target.value)} /></label></div>
     <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">繪者／插畫者（每行一位）</span><textarea rows={2} maxLength={4000} value={illustratorNamesText} onChange={event => setIllustratorNamesText(event.target.value)} /></label></div>
-    </details>
+    </ExtraFields>
     <h3 className="book-form-heading">作品與系列</h3>
     <div className="book-form-grid">
     <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">系列名稱</span><select value={collectionId} onChange={event => { setCollectionId(event.target.value); if (!event.target.value) { setSequenceLabel(''); setSequenceOrder('') } }}><option value="">未設定</option>{book?.collectionId && !collections.some(item => item.id === book.collectionId) && <option value={book.collectionId}>保留目前系列（資料未載入）</option>}{collections.filter(item => item.kind === 'series' || item.id === book?.collectionId).map(item => <option key={item.id} value={item.id}>{item.name} · {books.filter(member => member.collectionId === item.id).slice(0, 2).map(member => `${member.bookForm === 'manga' || member.mediaTypeId === 'manga' ? '漫畫' : member.bookForm === 'novel' ? '小說' : '書籍'}：${getBookDisplayTitle(member)}`).join('、') || '尚無書籍'}</option>)}<option value="__new">新增系列…</option></select></label></div>
@@ -218,7 +220,7 @@ export function BookForm({ inlineMetadataSearch = false, scope = 'all', restoreV
       <BookCoverPaste disabled={busy || uploadingCover} onSelect={file => { setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); setCoverError('') }} />
       <BookCoverSearch key={coverSearchOpen ? 'open' : 'closed'} title={title} author={authorNamesText.replaceAll('\n', ' ')} isbn={isbn || null} open={coverSearchOpen} onOpenChange={setCoverSearchOpen} disabled={busy || uploadingCover} onSelect={file => { setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); setCoverError('') }} />
       {(coverFile || coverPath) && <Button disabled={busy || uploadingCover} onClick={() => { setCoverFile(null); setCoverPreview(''); setCover(null); setCoverPath(''); setCoverError('') }}>移除封面</Button>}
-      <details><summary>封面路徑</summary><div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">封面檔案路徑</span><input placeholder="covers/example.jpg" disabled={busy || uploadingCover} value={coverPath} onChange={(event) => { setCoverPath(event.target.value); setCoverFile(null); setCoverPreview('') }} /></label></div></details>
+      <ExtraFields className="book-form-cover-path"><ExtraHeading>封面路徑</ExtraHeading><div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">封面檔案路徑</span><input placeholder="covers/example.jpg" disabled={busy || uploadingCover} value={coverPath} onChange={(event) => { setCoverPath(event.target.value); setCoverFile(null); setCoverPreview('') }} /></label></div></ExtraFields>
       {coverError && <FormMessage tone="error">{coverError}</FormMessage>}
     </div>
     </>}

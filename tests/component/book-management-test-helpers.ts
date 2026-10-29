@@ -6,7 +6,5 @@ export function enterManagement(scope: '書籍' | '閱讀' | '心得') {
   const trigger = screen.queryByRole('button', { name: label })
   if (trigger) {
     fireEvent.click(trigger)
-    // Section-specific tests use the tools after leaving the new full editor.
-    if (scope === '書籍') fireEvent.click(screen.getByRole('button', { name: '離開書籍編輯' }))
   }
 }
