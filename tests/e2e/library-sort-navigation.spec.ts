@@ -1,0 +1,46 @@
+import { expect, test } from './fixtures'
+
+for (const width of [360, 744, 1280]) test(`library search stays in navigation and combines sorting with filters at ${width}px`, async ({ page }) => {
+  await page.setViewportSize({ width, height: 780 })
+  await page.goto('/')
+  for (const title of ['排序 Book 10', '排序 Book 2', '排序 Book 1']) {
+    await page.getByRole('button', { name: '新增書籍', exact: true }).click()
+    await page.getByRole('button', { name: '輸入書名', exact: true }).click()
+    await page.getByLabel('出版書名', { exact: true }).fill(title)
+    await page.getByRole('button', { name: '儲存', exact: true }).click()
+  }
+  const header = page.locator('.site-header'), search = header.getByRole('searchbox', { name: '搜尋書庫' })
+  await expect(search).toBeVisible()
+  await expect(page.getByRole('searchbox', { name: '搜尋書庫' })).toHaveCount(1)
+  await page.locator('.page-shell').evaluate(el => { el.style.minHeight = '1800px' })
+  await page.evaluate(() => scrollTo(0, 360))
+  expect((await search.boundingBox())!.y).toBeGreaterThanOrEqual(0)
+  expect((await search.boundingBox())!.y).toBeLessThan(160)
+  const trigger = header.getByRole('button', { name: '書庫篩選' })
+  await trigger.click()
+  await page.getByLabel('書庫排序').selectOption('title')
+  await expect(page.locator('.book-row h3')).toHaveText(['排序 Book 1', '排序 Book 2', '排序 Book 10'])
+  await page.getByLabel('依評分篩選').selectOption('unratedCompleted')
+  await expect(page.locator('.book-row')).toHaveCount(0)
+  await page.getByLabel('依評分篩選').selectOption('')
+  await page.getByLabel('書庫排序').press('Escape')
+  await expect(trigger).toBeFocused()
+  await search.fill('Book 2')
+  await expect(page.locator('.book-row')).toHaveCount(1)
+  await page.getByRole('button', { name: '開啟《排序 Book 2》', exact: true }).click()
+  await page.getByRole('button', { name: '關閉', exact: true }).click()
+  await expect(search).toHaveValue('Book 2')
+  await trigger.click()
+  await expect(page.getByLabel('書庫排序')).toHaveValue('title')
+  await page.getByRole('button', { name: '清除條件' }).click()
+  await expect(search).toHaveValue('')
+  await expect(page.getByLabel('書庫排序')).toHaveValue('existing')
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1)
+  if (width <= 760) {
+    await expect(page.getByRole('button', { name: '新增書籍', exact: true })).toBeHidden()
+    const panel = (await page.getByRole('group', { name: '書庫篩選選項' }).boundingBox())!
+    const bottomLimit = await page.getByRole('navigation', { name: '主要導覽' }).evaluate(el => getComputedStyle(el).position === 'fixed' ? el.getBoundingClientRect().top : innerHeight)
+    expect(panel.y + panel.height).toBeLessThanOrEqual(bottomLimit)
+  }
+  await page.screenshot({ path: test.info().outputPath(`library-sort-${width}.png`), fullPage: false })
+})

@@ -791,3 +791,19 @@ body.book-editor-open .modal-backdrop:has(.book-detail) { visibility:hidden; }
  .book-form--expanded .metadata-query-stage:not([hidden]) { grid-template-columns:minmax(0,1fr); }
  .book-form--expanded .metadata-query-stage > .button { grid-column:1; grid-row:auto; justify-self:start; }
 }
+
+/* Keep mobile detail titles and their edit entry together. */
+@media (max-width:640px) {
+ .book-detail .book-card-heading,
+ .book-detail .book-detail-reading > .book-detail-panel-heading,
+ .book-detail .reading-content-manager > .section-heading { display:flex; flex-direction:row; align-items:center; justify-content:space-between; flex-wrap:wrap; min-height:64px; padding:.65rem .75rem; gap:.5rem; }
+ .book-detail .book-card-heading h3,
+ .book-detail .book-detail-reading > .book-detail-panel-heading h3,
+ .book-detail .reading-content-manager > .section-heading h3 { font-size:1rem; letter-spacing:0; gap:.35rem; }
+ .book-detail .book-detail-view .button.button--edit { font-size:.8125rem; min-height:44px; padding:.4rem .6rem; white-space:nowrap; }
+ .book-detail .reading-content-manager > .section-heading > .content-heading-actions { flex-basis:100%; }
+}
+.book-detail .book-detail-links { display:flex; flex-wrap:wrap; gap:.5rem; padding:0; list-style:none; }
+.book-detail-links a { display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px; border:1px solid var(--line); border-radius:50%; background:var(--surface); color:var(--accent-deep); }
+.book-detail-links a:hover { background:var(--blossom); }
+.book-detail-links a:focus-visible { outline:2px solid var(--accent-deep); outline-offset:3px; }

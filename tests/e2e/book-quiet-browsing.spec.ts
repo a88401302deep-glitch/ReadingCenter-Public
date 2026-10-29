@@ -35,7 +35,7 @@ for (const width of [360, 1440]) test(`quiet book browsing keeps three entries, 
     expect(style.background).not.toBe('rgba(0, 0, 0, 0)')
     expect(style.weight).toBe('700')
     expect(style.family).toContain('ui-rounded')
-    expect(style.height).toBeGreaterThanOrEqual(76)
+    expect(style.height).toBeGreaterThanOrEqual(width <= 640 ? 64 : 76)
   }
   if (width >= 1024) expect(Math.max(...titleStyles.map(s => s.height)) - Math.min(...titleStyles.map(s => s.height))).toBeLessThanOrEqual(1)
   await expect(view.getByRole('button')).toHaveCount(3)
