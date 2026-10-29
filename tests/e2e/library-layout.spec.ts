@@ -34,7 +34,7 @@ for (const width of [360, 1280]) {
   await expect(search).toHaveValue('封面書架')
   await page.getByRole('button', { name: '開啟《封面書架測試》', exact: true }).click()
   await expect(page.getByRole('dialog')).not.toContainText('資料待補：')
-  await expect(page.getByRole('dialog').getByText('ISBN', { exact: true }).locator('..')).toContainText('未提供')
+  await expect(page.getByRole('dialog').getByText('ISBN', { exact: true })).toHaveCount(0)
   await expect(page.getByRole('dialog').getByRole('img', { name: 'ISBN待編輯', exact: true })).toHaveCount(0)
   await enterManagement(page, '閱讀')
   await page.getByLabel('書籍閱讀狀態').selectOption('planned')

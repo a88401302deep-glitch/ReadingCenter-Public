@@ -48,7 +48,7 @@ for (const width of [320, 360, 768, 1024, 1280, 1440]) test(`single-book section
   const reading = dialog.locator('.book-detail-view > .cycle-manager')
   const left = await sidebar.boundingBox(), right = await reading.boundingBox()
   if (width >= 1024) {
-    expect((await dialog.boundingBox())!.width).toBeGreaterThanOrEqual(width === 1024 ? 970 : 1000)
+    expect((await dialog.boundingBox())!.width).toBeCloseTo(Math.min(1600, width - 64), 0)
     if (width >= 1280 || fine) {
       expect(right!.x).toBeGreaterThanOrEqual(left!.x + left!.width)
       expect(Math.abs(right!.y - left!.y)).toBeLessThanOrEqual(1)

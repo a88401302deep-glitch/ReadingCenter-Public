@@ -90,6 +90,16 @@ export function App() {
     } catch (reason) { setError(reason instanceof Error ? reason.message : '無法儲存書籍') }
     finally { setBusy(false) }
   }
+  const rateBook = async (book: Book, stars: number) => {
+    const scale = book.rating?.scale ?? 5
+    try {
+      await service.updateRating(book.id, { value: stars * scale / 5, scale }, book.revision)
+      await reload()
+    } catch (cause) {
+      await reload()
+      throw cause
+    }
+  }
   const requestDelete = async (book: Book) => { if (!mayLeaveEditor()) return; clearEditor(); setDeleting(book); setImpact(await service.deletionImpact(book.id)) }
   const openCreate = () => { if (!mayLeaveEditor()) return; clearEditor(); setManagementTask('add'); setSyncPreview(false); setActive('management') }
   const restoreLibraryPosition = useCallback(() => requestAnimationFrame(() => window.scrollTo({ top: detailScrollTop.current })), [])
@@ -150,12 +160,12 @@ export function App() {
       {active !== 'reading' && active !== 'library' && <div className="page-heading"><h1>{pageTitles[active]}</h1></div>}
       <button className="floating-create create-action" aria-label="新增書籍" title="新增書籍" type="button" onClick={openCreate}><EntryIcon name="add" /><span>新增書籍</span></button>
       {active === 'reading' && <ReadingDashboard progressService={progressService} onProgressChanged={() => setReadingRevision(value => value + 1)} onOpenBook={openDetail} revision={readingRevision + contentRevision + cloudSync.revision} service={overviewService} />}
-      {active === 'library' && <LibraryCatalog books={books} dictionaries={dictionaries} cycles={catalogCycles} records={catalogRecords} sourceDays={catalogSourceDays} readingLoaded={catalogReadingLoaded} loadError={loadError} onOpen={openDetail} />}
+      {active === 'library' && <LibraryCatalog onRate={rateBook} books={books} dictionaries={dictionaries} cycles={catalogCycles} records={catalogRecords} sourceDays={catalogSourceDays} readingLoaded={catalogReadingLoaded} loadError={loadError} onOpen={openDetail} />}
       {active === 'notes' && <ReadingNotes books={books} onChanged={() => setContentRevision(value => value + 1)} onOpenBook={openDetail} revision={contentRevision + cloudSync.revision} service={contentService} />}
       {active === 'management' && (syncPreview ? <SyncManager local={authEnabled ? cloudSync.local : null} message={cloudSync.message} syncing={cloudSync.syncing} onRetry={cloudSync.retry} onResolved={cloudSync.onResolved} onBack={() => setSyncPreview(false)} /> : <LibraryTools task={managementTask} onTask={setManagementTask} onManual={() => { setError(null); setBookFormDirty(false); setEditing(null) }} repositories={repositories} restoreLocal={cloudSync.local ?? undefined} onChanged={() => { setReadingRevision(value => value + 1); setContentRevision(value => value + 1) }} />)}
     </main>
     <Modal hasUnsavedChanges={bookFormDirty} open={editing === null} title={editing ? '編輯書籍' : '新增書籍'} onClose={() => { setBookFormDirty(false); setEditing(undefined) }}><BookForm books={books} book={editing ?? undefined} busy={busy} dictionaries={dictionaries} collections={collections} categoryRecommendations={recommendBookTerms(books, dictionaries, 'category')} tagRecommendations={recommendBookTerms(books, dictionaries, 'tag')} error={error} onCancel={() => { if (busy || bookFormDirty && !window.confirm('尚有未儲存的變更，確定要離開嗎？')) return; setBookFormDirty(false); setEditing(undefined) }} onDirtyChange={setBookFormDirty} onSubmit={save} /></Modal>
-    <Modal hasUnsavedChanges={bookFormDirty || busy || coverPending} confirmDiscard={mayLeaveEditor} open={detailBook !== null} title={detailBook ? `《${getBookDisplayTitle(detailBook)}》` : '單書頁'} onClose={closeDetail}>{detailBook && <BookDetail onCoverPendingChange={setCoverPending} onStatusChange={changeReadingStatus} onDirtyChange={setBookFormDirty} readingStatus={libraryBookReadings([detailBook], catalogCycles, catalogRecords, catalogSourceDays).get(detailBook.id)?.status} onDelete={book => { closeDetail(); void requestDelete(book) }} syncRevision={cloudSync.revision} book={detailBook} books={books} busy={busy || coverPending} contentService={contentService} cycleService={cycleService} dictionaries={dictionaries} collections={collections} error={error} onContentChanged={() => setContentRevision((value) => value + 1)} onReadingChanged={() => setReadingRevision((value) => value + 1)} onSave={saveDetail} overviewService={overviewService} readingRevision={readingRevision + cloudSync.revision} recordService={recordService} />}</Modal>
+    <Modal presentation="page" hasUnsavedChanges={bookFormDirty || busy || coverPending} confirmDiscard={mayLeaveEditor} open={detailBook !== null} title={detailBook ? `《${getBookDisplayTitle(detailBook)}》` : '單書頁'} onClose={closeDetail}>{detailBook && <BookDetail onCoverPendingChange={setCoverPending} onStatusChange={changeReadingStatus} onDirtyChange={setBookFormDirty} readingStatus={libraryBookReadings([detailBook], catalogCycles, catalogRecords, catalogSourceDays).get(detailBook.id)?.status} onDelete={book => { closeDetail(); void requestDelete(book) }} syncRevision={cloudSync.revision} book={detailBook} books={books} busy={busy || coverPending} contentService={contentService} cycleService={cycleService} dictionaries={dictionaries} collections={collections} error={error} onContentChanged={() => setContentRevision((value) => value + 1)} onReadingChanged={() => setReadingRevision((value) => value + 1)} onSave={saveDetail} overviewService={overviewService} readingRevision={readingRevision + cloudSync.revision} recordService={recordService} />}</Modal>
     <Modal open={deleting !== null} title="刪除書籍" onClose={() => { setDeleting(null); setImpact(null) }}><div className="delete-confirmation"><p>確定刪除《{deleting ? getBookDisplayTitle(deleting) : ''}》？此操作同時移除：</p><ul><li>{impact?.readingCycles ?? 0} 個閱讀週期</li><li>{impact?.readingRecords ?? 0} 筆閱讀紀錄</li><li>{impact?.readingContents ?? 0} 筆閱讀內容</li></ul>{error && <p className="form-message form-message--error" role="alert">{error}</p>}<div className="form-actions"><Button onClick={() => setDeleting(null)}>取消</Button><Button disabled={busy} variant="danger" onClick={() => void confirmDelete()}>確認刪除</Button></div></div></Modal>
   </div>
 }

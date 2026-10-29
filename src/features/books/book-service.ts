@@ -52,6 +52,19 @@ export class BookService {
     return this.repositories.transaction ? this.repositories.transaction(persist) : persist()
   }
 
+  async updateRating(id: EntityId, rating: BookRating, expectedRevision: number): Promise<Book> {
+    const persist = async () => {
+      const existing = await this.get(id)
+      if (!existing) throw new Error('找不到要評分的書籍')
+      if (existing.revision !== expectedRevision) throw new Error('書籍已有新版本，評分尚未儲存；請核對最新內容後再試')
+      const book = updateEntity(existing, { rating }, this.now())
+      assertValidBook(book)
+      await this.repositories.books.save(book)
+      return book
+    }
+    return this.repositories.transaction ? this.repositories.transaction(persist) : persist()
+  }
+
   async deletionImpact(bookId: EntityId): Promise<BookDeletionImpact> {
     const [cycles, records, contents] = await Promise.all([this.repositories.readingCycles.getAll(), this.repositories.readingRecords.getAll(), this.repositories.readingContents.getAll()])
     return { readingCycles: cycles.filter((x) => x.bookId === bookId).length, readingRecords: records.filter((x) => x.bookId === bookId).length, readingContents: contents.filter((x) => x.bookId === bookId).length }

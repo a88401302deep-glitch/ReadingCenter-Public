@@ -5,6 +5,15 @@ import { createInMemoryRepositories } from '../../src/data'
 import { BookService } from '../../src/features/books/book-service'
 import { BookPublicationList } from '../../src/features/library/BookPublicationList'
 
+it('hides empty publication fields while retaining filled data and pending dictionary references', async () => {
+  const book = await new BookService(createInMemoryRepositories()).create({ title: '已填資料', mediaTypeId: 'ebook', isbn: '9780140328721', categoryIds: ['pending-category'] })
+  const { container } = render(<BookPublicationList hideEmpty showMissingIcons={false} book={book} dictionaries={[]} collections={[]} mediaTypeName="電子書" />)
+  expect([...container.querySelectorAll('dt')].map(el => el.textContent)).toEqual(['ISBN', '書籍版本', '圖書分類'])
+  expect(screen.getByText('9780140328721')).toBeTruthy()
+  expect(screen.getByText('資料待載入')).toBeTruthy()
+  expect(screen.queryByText('未提供')).toBeNull()
+})
+
 it('shows all book fields with accessible pending icons without duplicating the title or inventing values', async () => {
   const book = await new BookService(createInMemoryRepositories()).create({ title: '僅有書名', mediaTypeId: 'ebook' })
   const { container } = render(<BookPublicationList book={book} dictionaries={[]} collections={[]} mediaTypeName="電子書" />)

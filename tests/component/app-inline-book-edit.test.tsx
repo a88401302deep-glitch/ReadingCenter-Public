@@ -157,7 +157,7 @@ describe('single-book editing', () => {
   })
 })
 
-it('shows four separate book panels without exposing or changing preserved import evidence', async () => {
+it('hides an empty personal panel without exposing or changing preserved import evidence', async () => {
  const service = new BookService(state.repositories!, () => 'four-panels')
  const book = await service.create({ title: '四區資訊', mediaTypeId: 'ebook', bookNote: '我寫的備註', isbn: '9780140328721' })
  const saved = { ...book, importSourceNotes: '不應顯示的匯入原始內容' }
@@ -166,7 +166,8 @@ it('shows four separate book panels without exposing or changing preserved impor
  fireEvent.click(screen.getByRole('button', { name: '書庫' }))
  fireEvent.click(await screen.findByRole('button', { name: /^開啟《/ }))
  const dialog = screen.getByRole('dialog')
- for (const name of ['書籍資料', '我的分類與標籤', '閱讀紀錄', '閱讀心得']) expect(within(dialog).getByRole('region', { name })).toBeTruthy()
+ for (const name of ['書籍資料', '閱讀紀錄', '閱讀心得']) expect(within(dialog).getByRole('region', { name })).toBeTruthy()
+ expect(within(dialog).queryByRole('region', { name: '我的分類與標籤' })).toBeNull()
  expect(within(dialog).getByText('9780140328721')).toBeTruthy()
  expect(within(dialog).getByText('我寫的備註')).toBeTruthy()
  expect(within(dialog).queryByText('不應顯示的匯入原始內容')).toBeNull()

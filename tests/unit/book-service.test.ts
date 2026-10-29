@@ -5,6 +5,18 @@ import { migrateBookToWork } from '../../src/domain/legacy-migration'
 import { BookService } from '../../src/features/books/book-service'
 
 describe('BookService', () => {
+  it('updates only the rating and rejects stale or invalid writes without changing reading data', async () => {
+    const repositories = createInMemoryRepositories(), service = new BookService(repositories)
+    const book = await service.create({ title: '原書名', preferredTitle: '我的書名', mediaTypeId: 'ebook', cover: { path: '/cover.jpg', mimeType: 'image/jpeg' }, bookNote: '人工備註', tagIds: ['manual-tag'], sourceIds: ['manual-source'], isbn: '9780140328721' })
+    const updated = await service.updateRating(book.id, { value: 8, scale: 10 }, book.revision)
+    expect(updated).toEqual({ ...book, rating: { value: 8, scale: 10 }, revision: book.revision + 1, updatedAt: updated.updatedAt })
+    await expect(service.updateRating(book.id, { value: 1, scale: 5 }, book.revision)).rejects.toThrow('新版本')
+    await expect(service.updateRating(book.id, { value: 0, scale: 5 }, updated.revision)).rejects.toThrow('rating')
+    expect(await service.get(book.id)).toEqual(updated)
+    expect(await repositories.readingRecords.getAll()).toEqual([])
+    expect(await repositories.readingCycles.getAll()).toEqual([])
+    expect(await repositories.readingContents.getAll()).toEqual([])
+  })
   it('persists source selections, preserves omitted sources and clears only on an explicit empty selection', async () => {
     const service = new BookService(createInMemoryRepositories())
     const book = await service.create({ reservedId: 'source-book', title: '來源保留', mediaTypeId: 'ebook', sourceIds: ['source-1'], cover: { path: '/cover.jpg', mimeType: 'image/jpeg' }, categoryIds: ['category-1'], tagIds: ['tag-1'], rating: { value: 4, scale: 5 }, bookNote: '人工備註' })

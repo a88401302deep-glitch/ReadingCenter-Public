@@ -6,8 +6,10 @@ import { dictionaryOptions, emptyLibraryFilters, filterLibrary } from './library
 import { libraryBookReadings, missingBookFields, readingStatusLabels, type LibraryReadingStatus } from './library-book-summary'
 import { libraryBookType, bookTypeLabels } from './library-book-summary'
 import { BookProgress } from '../../shared/ui/BookProgress'
+import { LibraryRating } from './LibraryRating'
 
 interface LibraryCatalogProps {
+  onRate?: (book: Book, stars: number) => Promise<void>
   books: Book[]
   dictionaries: DictionaryEntry[]
   cycles?: ReadingCycle[]
@@ -18,7 +20,7 @@ interface LibraryCatalogProps {
   onOpen: (book: Book) => void
 }
 
-export function LibraryCatalog({ books, dictionaries, cycles = [], records = [], sourceDays = [], readingLoaded = true, loadError, onOpen }: LibraryCatalogProps) {
+export function LibraryCatalog({ books, dictionaries, cycles = [], records = [], sourceDays = [], readingLoaded = true, loadError, onOpen, onRate }: LibraryCatalogProps) {
   const [page, setPage] = useState(1)
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [layout, setLayout] = useState<'covers' | 'list'>('covers')
@@ -78,8 +80,9 @@ export function LibraryCatalog({ books, dictionaries, cycles = [], records = [],
         {layout === 'covers' ? <>
           <button className="book-row-cover book-cover-open" type="button" aria-label={`開啟《${title}》`} aria-describedby={`${panelId}-status-${book.id}`} title={`${title}｜${readingStatusLabels[reading.status]}`} onClick={() => onOpen(book)}><BookCover src={book.cover?.path} title={title} /></button>
           <h3 className="sr-only">{title}</h3><span className="sr-only" id={`${panelId}-status-${book.id}`}>{readingStatusLabels[reading.status]}</span>
-          <BookProgress progress={reading.progress} quiet completed={reading.status === 'completed'} />
+          {reading.status !== 'completed' && <BookProgress progress={reading.progress} quiet />}
         </> : <button className="library-list-entry" type="button" aria-label={`開啟《${title}》`} aria-describedby={`${panelId}-author-${book.id}`} onClick={() => onOpen(book)}><span className="library-list-title">{title}</span><span className="library-list-authors" id={`${panelId}-author-${book.id}`}>{authors}</span></button>}
+        {reading.status === 'completed' && <LibraryRating book={book} onRate={onRate} />}
       </article>
     })}</div>}
     {results.length > 30 && pagination}
