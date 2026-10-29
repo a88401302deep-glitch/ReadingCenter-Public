@@ -135,7 +135,7 @@ export function BookDetail({ book, onDirtyChange, onCoverPendingChange, readingS
       <section className="book-detail-information book-detail-panel" aria-label="書籍資料">
         <div className="book-detail-panel-heading"><h3><Icon name="book" />書籍資訊</h3>{managingBook && <Button variant="edit" size="small" disabled={busy || coverDirty} onClick={event => openEditor(event.currentTarget, 'bibliography')}>編輯書籍</Button>}</div>
         {error && <p role="alert">{error}</p>}
-        <BookPublicationList hideEmpty={!managingBook} showMissingIcons={managingBook} book={currentBook} dictionaries={dictionaries} collections={collections} mediaTypeName={mediaTypeName} />
+        <BookPublicationList showSparseHint={!managingBook} hideEmpty={!managingBook} showMissingIcons={managingBook} book={currentBook} dictionaries={dictionaries} collections={collections} mediaTypeName={mediaTypeName} />
         <BookSeriesList book={currentBook} books={books} collections={collections} />
         {notes.bookNote && <div className="book-note"><h4>書籍備註</h4><p>{notes.bookNote}</p></div>}
       </section>
