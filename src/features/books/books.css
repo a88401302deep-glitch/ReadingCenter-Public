@@ -810,3 +810,6 @@ body.book-editor-open .modal-backdrop:has(.book-detail) { visibility:hidden; }
 
 .book-form .multi-select select { min-width:0; max-width:100%; }
 .book-form .book-term-help { margin:0; color:var(--ink-soft); font-size:.875rem; line-height:1.6; }
+
+.publisher-field { display:grid; align-content:start; gap:.5rem; }
+.publisher-field :is(input,select) { min-width:0; max-width:100%; }
