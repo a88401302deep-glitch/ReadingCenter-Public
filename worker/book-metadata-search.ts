@@ -112,7 +112,12 @@ export function parseGoogleVolumes(body: Record<string, unknown>): BookMetadataC
   // Unknown/encoding-placeholder authors are not names. Keep the book usable
   // without guessing a replacement or changing any previously saved authors.
   const authors = strings(info.authors).filter(name => !/^[?\uFFFD\s]+$/u.test(name.normalize('NFKC')))
-  return [{ id: 'gb:' + id, source: 'Google Books' as const, title, authors, publisher: text(info.publisher, 200), isbn, publishedOn: text(info.publishedDate, 80), sourceUrl: 'https://books.google.com/books?id=' + id, coverUrl: object(info.imageLinks).thumbnail ? '/api/v1/books/metadata/cover?google=' + id : null }]
+  const rawPublisher = text(info.publisher, 200)
+  // Google may combine the publishing group and its imprint. Only strip an
+  // explicit group prefix with one nonempty imprint; never infer from the title.
+  const imprint = rawPublisher.match(/^讀書共和國\s*[／╱/]\s*([^／╱/]+)$/u)?.[1].trim()
+  const publisher = imprint ? (imprint === '野人' ? '野人文化' : imprint) : rawPublisher
+  return [{ id: 'gb:' + id, source: 'Google Books' as const, title, authors, publisher, isbn, publishedOn: text(info.publishedDate, 80), sourceUrl: 'https://books.google.com/books?id=' + id, coverUrl: object(info.imageLinks).thumbnail ? '/api/v1/books/metadata/cover?google=' + id : null }]
  })
 }
 export async function searchGoogleBooks(title: string, author: string, googleKey: string, fetcher: typeof fetch = fetch, steps?: GoogleSearchStep[]): Promise<BookMetadataCandidate[]> {

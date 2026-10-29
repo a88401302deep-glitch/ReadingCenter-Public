@@ -130,7 +130,7 @@ export function BookDetail({ book, onDirtyChange, onCoverPendingChange, readingS
         {(currentBook.sourceIds.length > 0) && <div className="book-detail-source-tags"><h4>書籍來源</h4><div className="book-row-tags">{currentBook.sourceIds.length ? currentBook.sourceIds.map(id => <Tag key={id} kind="source">{names.get(id) ?? '未設定'}</Tag>) : <span>未設定</span>}</div></div>}
         {(currentBook.tagIds.length > 0) && <div><h4>標籤</h4><div className="book-row-tags">{currentBook.tagIds.length ? currentBook.tagIds.map(id => <Tag key={id} kind="tag">{names.get(id) ?? '未設定'}</Tag>) : <span>未設定</span>}</div></div>}
         {(currentBook.rating) && <div className="book-detail-panel-heading"><p>評分｜{currentBook.rating ? `${currentBook.rating.value}／${currentBook.rating.scale}` : '尚未評分'}</p></div>}
-        {sourceUrls.length > 0 && <ul className="book-detail-links">{sourceUrls.map(url => <li key={url}><a href={url} target="_blank" rel="noopener noreferrer">{url}</a></li>)}</ul>}
+        {sourceUrls.length > 0 && <ul className="book-detail-links">{sourceUrls.map(url => { let host = "書籍來源"; try { host = new URL(url).hostname.replace(/^www\./, "") } catch { /* Keep legacy data renderable. */ } const source = host === "books.google.com" ? "Google Books" : host === "bookrep.com.tw" ? "讀書共和國" : host === "readmoo.com" ? "讀墨" : host; return <li key={url}><a href={url} aria-label={`開啟書籍來源：${source}`} title={source} target="_blank" rel="noopener noreferrer"><Icon name="book" size={21} /></a></li> })}</ul>}
       </section>}
       </div>
       </section>

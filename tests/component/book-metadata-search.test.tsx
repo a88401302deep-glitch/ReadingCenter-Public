@@ -46,7 +46,7 @@ it('brings a recovered Chinese Google candidate from the handler into the unsave
  expect(screen.queryByRole('button', { name: '核對《佛經預言》' })).toBeNull()
  fireEvent.click(screen.getByRole('button', { name: '帶入下列表單' }))
  expect(screen.getByLabelText('作者（每行一位）')).toHaveProperty('value', '三木大雲')
- expect(screen.getByLabelText('出版社', { exact: true })).toHaveProperty('value', '讀書共和國╱大牌出版')
+ expect(screen.getByLabelText('出版社', { exact: true })).toHaveProperty('value', '大牌出版')
  expect(screen.getByLabelText('ISBN', { exact: true })).toHaveProperty('value', '9786267305126')
  expect(submit).not.toHaveBeenCalled()
  expect(uploadBookCover).not.toHaveBeenCalled()

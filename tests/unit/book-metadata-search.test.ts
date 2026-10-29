@@ -16,7 +16,7 @@ it('falls back only after explicit Google zero results and excludes unrelated bo
  const fetcher = vi.fn().mockResolvedValueOnce(Response.json({ totalItems: 0 })).mockResolvedValueOnce(Response.json(googleKyoto))
  const rows = await searchGoogleBooks('京都怪奇談', '', 'test-key', fetcher)
  expect(rows).toHaveLength(7)
- expect(rows[0]).toMatchObject({ title: '京都怪奇談', authors: ['三木大雲'], publisher: '讀書共和國╱大牌出版', isbn: '9786267305126' })
+ expect(rows[0]).toMatchObject({ title: '京都怪奇談', authors: ['三木大雲'], publisher: '大牌出版', isbn: '9786267305126' })
  expect(rows.some(row => row.title === '佛經預言')).toBe(false)
  expect(rows.some(row => row.title === '京都怪奇談3')).toBe(true)
  expect(rows.some(row => row.authors.length === 0)).toBe(true)
@@ -254,4 +254,12 @@ it('keeps partial empty responses distinct from a successful empty lookup withou
  expect(body).toMatchObject({ data: [], partial: true })
  expect(JSON.stringify(body)).not.toContain('private-test-key')
  expect(body.warning).toBeUndefined()
+})
+
+it('uses the explicit Google imprint instead of the group without guessing other publishers', () => {
+ for (const [raw, expected] of [['讀書共和國／野人', '野人文化'], ['讀書共和國╱野人文化', '野人文化'], ['讀書共和國 / 大牌出版', '大牌出版'], ['讀書共和國', '讀書共和國'], ['甲／乙', '甲／乙'], ['讀書共和國／甲／乙', '讀書共和國／甲／乙'], ['讀書共和國／', '讀書共和國／']]) {
+  const input = { items:[{ id:'publisher', volumeInfo:{ title:'合成書名', publisher:raw } }] }
+  expect(parseGoogleVolumes(input)[0].publisher).toBe(expected)
+  expect(input.items[0].volumeInfo.publisher).toBe(raw)
+ }
 })

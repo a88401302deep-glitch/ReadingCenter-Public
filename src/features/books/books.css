@@ -803,3 +803,7 @@ body.book-editor-open .modal-backdrop:has(.book-detail) { visibility:hidden; }
  .book-detail .book-detail-view .button.button--edit { font-size:.8125rem; min-height:44px; padding:.4rem .6rem; white-space:nowrap; }
  .book-detail .reading-content-manager > .section-heading > .content-heading-actions { flex-basis:100%; }
 }
+.book-detail .book-detail-links { display:flex; flex-wrap:wrap; gap:.5rem; padding:0; list-style:none; }
+.book-detail-links a { display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px; border:1px solid var(--line); border-radius:50%; background:var(--surface); color:var(--accent-deep); }
+.book-detail-links a:hover { background:var(--blossom); }
+.book-detail-links a:focus-visible { outline:2px solid var(--accent-deep); outline-offset:3px; }
