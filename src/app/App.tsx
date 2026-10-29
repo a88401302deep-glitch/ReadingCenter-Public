@@ -91,7 +91,7 @@ export function App() {
     finally { setBusy(false) }
   }
   const rateBook = async (book: Book, stars: number) => {
-    const scale = book.rating?.scale ?? 5
+    const scale = book.rating?.scale === 10 || !Number.isInteger(stars) ? 10 : 5
     try {
       await service.updateRating(book.id, { value: stars * scale / 5, scale }, book.revision)
       await reload()

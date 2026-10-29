@@ -5,15 +5,20 @@ import { createInMemoryRepositories } from '../../src/data'
 import { BookService } from '../../src/features/books/book-service'
 import { LibraryRating } from '../../src/features/library/LibraryRating'
 
-it('shows five dark stars for an unrated book and fractional existing ten-point scores', async () => {
+it('shows a single pending star, then a numeric half-star score and restores focus on dismissal', async () => {
   const book = await new BookService(createInMemoryRepositories()).create({ title: '星星測試', mediaTypeId: 'ebook' })
   const { container, rerender } = render(<LibraryRating book={book} onRate={vi.fn()} />)
-  expect(screen.getAllByRole('button')).toHaveLength(5)
-  expect(screen.getByRole('group').getAttribute('aria-label')).toContain('尚未評分')
-  expect([...container.querySelectorAll<HTMLElement>('.rating-star-fill')].map(el => el.style.width)).toEqual(['0%', '0%', '0%', '0%', '0%'])
+  const trigger = screen.getByRole('button', { name: '《星星測試》待評分' })
+  expect(container.querySelectorAll('svg')).toHaveLength(1)
+  expect(screen.queryByRole('button', { name: '評為 3.5 星' })).toBeNull()
+  trigger.focus(); fireEvent.click(trigger)
+  expect(screen.getByRole('group', { name: '選擇評分' }).querySelectorAll('button')).toHaveLength(10)
+  fireEvent.click(screen.getByRole('button', { name: '關閉' }))
+  expect(screen.queryByRole('dialog')).toBeNull()
+  expect(document.activeElement).toBe(trigger)
   rerender(<LibraryRating book={{ ...book, rating: { value: 7, scale: 10 } }} onRate={vi.fn()} />)
-  expect(screen.getByRole('group').getAttribute('aria-label')).toContain('3.5 星')
-  expect([...container.querySelectorAll<HTMLElement>('.rating-star-fill')].map(el => el.style.width)).toEqual(['100%', '100%', '100%', '50%', '0%'])
+  expect(screen.getByRole('button', { name: '《星星測試》3.5 星，修改評分' }).textContent).toBe('3.5')
+  expect(container.querySelectorAll('svg')).toHaveLength(1)
 })
 
 it('prevents duplicate saves, reports failure and permits retry without pretending it saved', async () => {
@@ -21,6 +26,7 @@ it('prevents duplicate saves, reports failure and permits retry without pretendi
   let reject!: (reason: Error) => void
   const onRate = vi.fn().mockImplementationOnce(() => new Promise<void>((_, fail) => { reject = fail })).mockResolvedValue(undefined)
   render(<LibraryRating book={book} onRate={onRate} />)
+  fireEvent.click(screen.getByRole('button', { name: '《評分重試》待評分' }))
   const four = screen.getByRole('button', { name: '評為 4 星' })
   fireEvent.click(four); fireEvent.click(four)
   expect(onRate).toHaveBeenCalledTimes(1)

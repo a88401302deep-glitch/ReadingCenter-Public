@@ -21,16 +21,13 @@ test('six covers across desktop and iPad, floating close and direct completed-bo
     const rows = await page.locator('.book-row').evaluateAll(elements => elements.map(el => el.getBoundingClientRect().top))
     expect(rows.filter(top => Math.abs(top - rows[0]) < 1)).toHaveLength(width >= 700 ? 6 : 2)
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
-    for (const rating of await page.locator('.shelf-rating-stars').all()) {
+    for (const rating of await page.locator('.shelf-rating-badge').all()) {
       const bounds = (await rating.boundingBox())!
-      const card = (await rating.locator('..').locator('..').boundingBox())!
-      expect(bounds.width).toBeLessThanOrEqual(133)
-      expect(Math.abs(bounds.x + bounds.width / 2 - card.x - card.width / 2)).toBeLessThan(1)
-      expect(bounds.x).toBeGreaterThanOrEqual(card.x)
-      expect(bounds.x + bounds.width).toBeLessThanOrEqual(card.x + card.width + 1)
-      await expect(rating.locator('svg')).toHaveCount(10)
+      const card = (await rating.locator('..').locator('..').locator('..').boundingBox())!
+      expect(bounds.width).toBeLessThanOrEqual(70)
+      expect(Math.abs(bounds.x + bounds.width - card.x - card.width)).toBeLessThan(1)
+      await expect(rating.locator('svg')).toHaveCount(1)
     }
-
   }
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.getByRole('button', { name: '開啟《六欄書架 1》', exact: true }).click()
@@ -46,12 +43,14 @@ test('six covers across desktop and iPad, floating close and direct completed-bo
   await page.getByLabel('書籍閱讀狀態').selectOption('completed')
   await close.click()
   const stars = page.getByRole('group', { name: '《六欄書架 1》評分：尚未評分', exact: true })
-  await expect(stars.getByRole('button')).toHaveCount(5)
-  await stars.getByRole('button', { name: '評為 4 星' }).click()
-  await expect(page.getByRole('group', { name: '《六欄書架 1》評分：4 星', exact: true })).toBeVisible()
+  await expect(stars.getByRole('button')).toHaveCount(1)
+  await stars.getByRole('button').click()
+  await expect(page.getByRole('dialog', { name: '《六欄書架 1》評分', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: '評為 3.5 星' }).click()
+  await expect(page.getByRole('group', { name: '《六欄書架 1》評分：3.5 星', exact: true })).toBeVisible()
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await page.reload()
   await page.getByRole('button', { name: '書庫', exact: true }).click()
-  await expect(page.getByRole('group', { name: '《六欄書架 1》評分：4 星', exact: true })).toBeVisible()
+  await expect(page.getByRole('group', { name: '《六欄書架 1》評分：3.5 星', exact: true })).toBeVisible()
   await page.screenshot({ path: test.info().outputPath('six-column-library.png'), fullPage: true })
 })
