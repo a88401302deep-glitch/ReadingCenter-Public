@@ -13,6 +13,8 @@ import { BookCoverPaste } from './BookCoverPaste'
 import { uploadBookCover, validateCoverFile } from './book-cover-upload'
 import type { BookDraft } from './book-service'
 import { bookTermOptions } from './book-term-catalog'
+import { PublisherField } from './PublisherField'
+import { BookCreditField } from './BookCreditField'
 
 export type BookEditScope = 'all' | 'bibliography' | 'personal' | 'rating'
 
@@ -173,14 +175,14 @@ export function BookForm({ expanded = false, inlineMetadataSearch = false, scope
     <MultiSelect kind="category" label="分類" chooseFromList options={bookTermOptions('category', dictionaries)} recommendations={categoryRecommendations} value={categoryIds} onChange={setCategoryIds} />
     <p className="book-term-help">分類是書的主題，可複選或留空；選單參考讀墨分類整理。</p>
     <h3 className="book-form-heading">出版資訊</h3>
-    <div className="book-field"><span className="field-requirement" aria-hidden="true">完整度必備</span><label><span className="field-caption">出版社</span><input maxLength={200} value={publisherName} onChange={event => setPublisherName(event.target.value)} /></label></div>
+    <PublisherField entries={dictionaries} value={publisherName} onChange={setPublisherName} />
     <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">ISBN</span><input maxLength={40} value={isbn} onChange={event => setIsbn(event.target.value)} /></label></div>
     <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">出版日期或年份</span><input maxLength={80} value={publishedOn} onChange={event => setPublishedOn(event.target.value)} /></label></div>
     <ExtraFields className="book-form-extra"><ExtraHeading>原文書名、譯者與繪者</ExtraHeading>
     <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">原文書名</span><input maxLength={500} value={originalTitle} onChange={event => setOriginalTitle(event.target.value)} /></label></div>
-    <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">作者原名（每行一位）</span><textarea rows={2} maxLength={4000} value={authorOriginalNamesText} onChange={event => setAuthorOriginalNamesText(event.target.value)} /></label></div>
-    <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">譯者（每行一位）</span><textarea rows={2} maxLength={4000} value={translatorNamesText} onChange={event => setTranslatorNamesText(event.target.value)} /></label></div>
-    <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">繪者／插畫者（每行一位）</span><textarea rows={2} maxLength={4000} value={illustratorNamesText} onChange={event => setIllustratorNamesText(event.target.value)} /></label></div>
+    <BookCreditField label="作者原名（每行一位）" value={authorOriginalNamesText} onChange={setAuthorOriginalNamesText} />
+    <BookCreditField label="譯者（每行一位）" value={translatorNamesText} onChange={setTranslatorNamesText} />
+    <BookCreditField label="繪者／插畫者（每行一位）" value={illustratorNamesText} onChange={setIllustratorNamesText} />
     </ExtraFields>
     <h3 className="book-form-heading">作品與系列</h3>
     <div className="book-form-grid">

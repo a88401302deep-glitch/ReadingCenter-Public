@@ -810,3 +810,20 @@ body.book-editor-open .modal-backdrop:has(.book-detail) { visibility:hidden; }
 
 .book-form .multi-select select { min-width:0; max-width:100%; }
 .book-form .book-term-help { margin:0; color:var(--ink-soft); font-size:.875rem; line-height:1.6; }
+
+.publisher-field { display:grid; align-content:start; gap:.5rem; }
+.publisher-field :is(input,select) { min-width:0; max-width:100%; }
+.book-form .book-form-extra { align-items:start; align-content:start; grid-auto-rows:max-content; }
+.book-form .book-form-extra > .book-field { align-self:start; }
+.book-form .book-form-extra textarea { min-height:44px; overflow-y:auto; }
+/* Personal details take only their content height; tags keep a wrapping row. */
+.book-detail .book-detail-personal { grid-template-columns:minmax(0,1fr); align-items:start; align-content:start; grid-auto-rows:max-content; gap:.65rem; }
+.book-detail-personal .book-detail-personal-meta { display:flex; align-items:center; flex-wrap:wrap; gap:.5rem 1rem; min-width:0; }
+.book-detail-personal-meta > p { flex:none; }
+.book-detail-personal-meta .book-detail-source-tags { display:flex; align-items:center; flex-wrap:wrap; gap:.35rem .5rem; }
+.book-detail-personal-meta .book-detail-source-tags .book-row-tags { margin:0; }
+.book-detail-personal .book-detail-links { flex:none; margin:0; grid-column:auto; }
+.book-detail-personal .book-detail-personal-tags { display:grid; grid-template-columns:auto minmax(0,1fr); align-items:start; gap:.5rem; }
+.book-detail-personal-tags .book-row-tags { margin:0; flex-wrap:wrap; min-width:0; }
+.book-detail-personal-tags .tag, .book-detail-personal-meta .tag { max-width:100%; overflow-wrap:anywhere; white-space:normal; }
+.book-detail-personal .book-detail-personal-meta:empty { display:none; }
