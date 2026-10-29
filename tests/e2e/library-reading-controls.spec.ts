@@ -9,12 +9,28 @@ test('six covers across desktop and iPad, floating close and direct completed-bo
     await page.getByLabel('出版書名', { exact: true }).fill(`六欄書架 ${i}`)
     await page.getByRole('button', { name: '儲存', exact: true }).click()
   }
+  for (const i of [1, 2]) {
+    await page.getByRole('button', { name: `開啟《六欄書架 ${i}》`, exact: true }).click()
+    await page.getByRole('button', { name: '編輯閱讀紀錄', exact: true }).click()
+    await page.getByLabel('書籍閱讀狀態').selectOption('completed')
+    await page.getByRole('button', { name: '關閉', exact: true }).click()
+  }
   for (const width of [1440, 1024, 744, 360]) {
     await page.setViewportSize({ width, height: 900 })
     await expect(page.locator('.book-row')).toHaveCount(7)
     const rows = await page.locator('.book-row').evaluateAll(elements => elements.map(el => el.getBoundingClientRect().top))
     expect(rows.filter(top => Math.abs(top - rows[0]) < 1)).toHaveLength(width >= 700 ? 6 : 2)
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
+    for (const rating of await page.locator('.shelf-rating-stars').all()) {
+      const bounds = (await rating.boundingBox())!
+      const card = (await rating.locator('..').locator('..').boundingBox())!
+      expect(bounds.width).toBeLessThanOrEqual(133)
+      expect(Math.abs(bounds.x + bounds.width / 2 - card.x - card.width / 2)).toBeLessThan(1)
+      expect(bounds.x).toBeGreaterThanOrEqual(card.x)
+      expect(bounds.x + bounds.width).toBeLessThanOrEqual(card.x + card.width + 1)
+      await expect(rating.locator('svg')).toHaveCount(10)
+    }
+
   }
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.getByRole('button', { name: '開啟《六欄書架 1》', exact: true }).click()
