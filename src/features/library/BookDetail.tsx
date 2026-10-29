@@ -126,11 +126,13 @@ export function BookDetail({ book, onDirtyChange, onCoverPendingChange, readingS
       </section>
       {(type || currentBook.sourceIds.length > 0 || currentBook.tagIds.length > 0 || currentBook.rating || sourceUrls.length > 0) && <section className="book-detail-personal book-detail-panel" aria-label="我的分類與標籤">
         <div className="book-detail-panel-heading"><h3><Icon name="library" />我的分類與標籤</h3></div>
+        <div className="book-detail-personal-meta">
         {(type) && <p>書籍類型｜{type ? bookTypeLabels[type] : currentBook.bookForm === 'other' ? '一般書籍' : '未設定'}</p>}
         {(currentBook.sourceIds.length > 0) && <div className="book-detail-source-tags"><h4>書籍來源</h4><div className="book-row-tags">{currentBook.sourceIds.length ? currentBook.sourceIds.map(id => <Tag key={id} kind="source">{names.get(id) ?? '未設定'}</Tag>) : <span>未設定</span>}</div></div>}
-        {(currentBook.tagIds.length > 0) && <div><h4>標籤</h4><div className="book-row-tags">{currentBook.tagIds.length ? currentBook.tagIds.map(id => <Tag key={id} kind="tag">{names.get(id) ?? '未設定'}</Tag>) : <span>未設定</span>}</div></div>}
-        {(currentBook.rating) && <div className="book-detail-panel-heading"><p>評分｜{currentBook.rating ? `${currentBook.rating.value}／${currentBook.rating.scale}` : '尚未評分'}</p></div>}
+        {(currentBook.rating) && <p>評分｜{`${currentBook.rating.value}／${currentBook.rating.scale}`}</p>}
         {sourceUrls.length > 0 && <ul className="book-detail-links">{sourceUrls.map(url => { let host = "書籍來源"; try { host = new URL(url).hostname.replace(/^www\./, "") } catch { /* Keep legacy data renderable. */ } const source = host === "books.google.com" ? "Google Books" : host === "bookrep.com.tw" ? "讀書共和國" : host === "readmoo.com" ? "讀墨" : host; return <li key={url}><a href={url} aria-label={`開啟書籍來源：${source}`} title={source} target="_blank" rel="noopener noreferrer"><Icon name="book" size={21} /></a></li> })}</ul>}
+        </div>
+        {(currentBook.tagIds.length > 0) && <div className="book-detail-personal-tags"><h4>標籤</h4><div className="book-row-tags">{currentBook.tagIds.map(id => <Tag key={id} kind="tag">{names.get(id) ?? '未設定'}</Tag>)}</div></div>}
       </section>}
       </div>
       </section>
