@@ -22,7 +22,7 @@ export function BookCover({ accent, alt = '', src, title }: BookCoverProps) {
     >
       <span className="text-cover-rule" aria-hidden="true" />
       <span className="text-cover-title">{title}</span>
-      <small aria-hidden="true">READING JOURNAL</small>
+      <small aria-hidden="true">閱讀書庫</small>
     </div>
   )
 }

@@ -102,7 +102,6 @@ describe('App reading entry regression', () => {
     fireEvent.click(screen.getByRole('button', { name: '書庫' }))
     fireEvent.click(await screen.findByRole('button', { name: /^開啟《/ }))
     enterManagement('書籍')
-    fireEvent.click(screen.getByRole('button', { name: '編輯評分' }))
     fireEvent.change(screen.getByLabelText('評分', { exact: true }), { target: { value: '4' } })
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
     fireEvent.keyDown(document.querySelector('.book-form')!, { key: 'Escape' })

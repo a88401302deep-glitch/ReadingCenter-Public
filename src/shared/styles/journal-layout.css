@@ -302,3 +302,10 @@ input::placeholder, textarea::placeholder { color:var(--ink-soft); opacity:1; }
 }
 
 @media (min-width:700px) { .cover-library .book-list--covers { grid-template-columns:repeat(6,minmax(0,1fr)); } }
+
+.header-reading-data { align-items:center; gap:.55rem; padding:.4rem .65rem; border:1px solid var(--line); border-radius:999px; background:var(--blossom); color:var(--accent-deep); }
+.header-reading-data > .icon { flex:none; }
+.header-reading-data .header-stat { display:flex; align-items:baseline; gap:.3rem; }
+.header-reading-data .header-stat + .header-stat { padding-left:.55rem; border-left:1px solid color-mix(in srgb,var(--accent-deep) 25%,transparent); }
+.header-reading-data strong { font-size:1rem; font-weight:650; letter-spacing:0; color:var(--accent-deep); }
+@media (max-width:400px) { .header-reading-data { gap:.35rem; padding:.35rem .5rem; font-size:.8125rem; } .header-reading-data > .icon { width:16px; } }
