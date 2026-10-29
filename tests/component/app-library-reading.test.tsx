@@ -23,6 +23,19 @@ beforeEach(async () => {
 })
 
 describe('library reading entries', () => {
+  it('saves a half-star choice for an unrated completed book using valid ten-point storage', async () => {
+    const repositories = state.repositories!
+    const book = await new BookService(repositories).create({ title: '半星評分', mediaTypeId: 'ebook' })
+    await new ReadingCycleService(repositories).create(book.id, { status: 'completed' })
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: '書庫' }))
+    fireEvent.click(await screen.findByRole('button', { name: '《半星評分》待評分' }))
+    fireEvent.click(screen.getByRole('button', { name: '評為 3.5 星' }))
+    await screen.findByRole('button', { name: '《半星評分》3.5 星，修改評分' })
+    expect((await repositories.books.getById(book.id))?.rating).toEqual({ value: 7, scale: 10 })
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
   it('rates a completed book directly in the shelf, retaining its ten-point scale and manual fields', async () => {
     const repositories = state.repositories!
     const book = await new BookService(repositories).create({ title: '書庫評分', preferredTitle: '人工書名', mediaTypeId: 'ebook', rating: { value: 7, scale: 10 }, cover: { path: '/manual.jpg', mimeType: 'image/jpeg' }, bookNote: '保留備註' })
@@ -31,7 +44,8 @@ describe('library reading entries', () => {
     render(<App />)
     fireEvent.click(screen.getByRole('button', { name: '書庫' }))
     const rating = await screen.findByRole('group', { name: '《人工書名》評分：3.5 星' })
-    fireEvent.click(within(rating).getByRole('button', { name: '評為 4 星' }))
+    fireEvent.click(within(rating).getByRole('button'))
+    fireEvent.click(screen.getByRole('button', { name: '評為 4 星' }))
     await screen.findByRole('group', { name: '《人工書名》評分：4 星' })
     expect(screen.queryByRole('dialog')).toBeNull()
     const saved = await repositories.books.getById(book.id)
