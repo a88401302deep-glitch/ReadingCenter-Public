@@ -696,3 +696,40 @@ body.book-editor-open .modal-backdrop:has(.book-detail) { visibility:hidden; }
 .book-detail .book-detail-reading > .book-detail-panel-heading h3 .icon,
 .book-detail .reading-content-manager > .section-heading h3 .icon { width:22px; height:22px; color:inherit; flex:none; }
 .book-detail .book-publication-row { background:color-mix(in srgb,var(--surface) 80%,transparent); }
+
+/* A laptop's available CSS width can be smaller than its display resolution. */
+@media (min-width:900px) and (pointer:fine) {
+ .modal-panel:has(.book-detail) { width:min(1180px,calc(100vw - 2rem)); }
+ .book-detail .book-detail-view { display:grid; grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); gap:1rem; align-items:start; }
+ .book-detail-book-card { grid-column:1; grid-row:1; grid-template-columns:clamp(144px,18vw,200px) minmax(0,1fr); gap:1rem; }
+ .book-detail .book-detail-cover-layout .book-detail-cover { width:100%; }
+ .book-detail .book-detail-sidebar { display:contents; }
+ .book-detail .book-detail-information { grid-column:2; grid-row:2; }
+ .book-detail .book-publication-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .book-detail .book-publication-row { grid-template-columns:minmax(0,1fr); gap:.2rem; align-content:start; }
+ .book-detail .book-detail-personal { grid-column:1 / -1; }
+ .book-detail .book-detail-view > .cycle-manager { grid-column:2; grid-row:1; grid-template-columns:minmax(0,1fr); margin-top:0; }
+}
+@media (min-width:900px) and (max-height:820px) and (pointer:fine) {
+ .modal-panel:has(.book-detail) > .modal-header { padding:.5rem .75rem; }
+ .modal-panel:has(.book-detail) > .modal-header h2 { font-size:.9375rem; }
+ .modal-panel:has(.book-detail) > .modal-header .icon-button { width:36px; height:36px; min-width:36px; }
+ .modal-panel:has(.book-detail) > .modal-body { padding:.75rem; }
+ .book-detail .book-detail-book-card,
+ .book-detail .book-detail-reading,
+ .book-detail .reading-content-manager { padding:.75rem; }
+ .book-detail .book-card-heading,
+ .book-detail .book-detail-reading > .book-detail-panel-heading,
+ .book-detail .reading-content-manager > .section-heading { min-height:60px; padding:.7rem .75rem; margin:-.75rem -.75rem 0; }
+ .book-detail .book-card-heading h3,
+ .book-detail .book-detail-reading > .book-detail-panel-heading h3,
+ .book-detail .reading-content-manager > .section-heading h3 { font-size:1rem; }
+ .book-detail .book-detail-view .button.button--edit { min-height:36px; padding:.35rem .65rem; font-size:.8125rem; }
+ .book-detail .book-publication-row { padding:.35rem .5rem; }
+ .book-detail .book-publication-list,
+ .book-detail .book-publication-row,
+ .book-detail .book-reading-summary,
+ .book-detail .reading-content-list p { font-size:.8125rem; line-height:1.55; }
+ .book-detail .book-detail-introduction h3 { font-size:1.125rem; }
+ .book-detail .reading-content-manager > .empty-line { margin:0; padding:.5rem 0; }
+}

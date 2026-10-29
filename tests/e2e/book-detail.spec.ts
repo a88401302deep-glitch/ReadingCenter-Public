@@ -21,12 +21,14 @@ for (const width of [320, 360, 768, 1024, 1280, 1440]) test(`single-book section
   const coverBounds = (await cover.boundingBox())!
   const layoutBounds = (await coverLayout.boundingBox())!
   const titleBounds = (await coverLayout.locator('.book-detail-introduction').boundingBox())!
+  const fine = await page.evaluate(() => matchMedia('(pointer:fine)').matches)
   if (width < 1024) {
     expect(coverBounds.width).toBeGreaterThanOrEqual(Math.min(320, layoutBounds.width) - 1)
     expect(Math.abs(coverBounds.x + coverBounds.width / 2 - layoutBounds.x - layoutBounds.width / 2)).toBeLessThan(1)
     expect(titleBounds.y).toBeGreaterThanOrEqual(coverBounds.y + coverBounds.height)
   } else {
-    expect(coverBounds.width).toBe(240)
+    if (fine) { expect(coverBounds.width).toBeGreaterThanOrEqual(144); expect(coverBounds.width).toBeLessThanOrEqual(201) }
+    else expect(coverBounds.width).toBe(240)
     const info = (await page.locator('.book-detail-information').boundingBox())!
     expect(info.x).toBeGreaterThan(coverBounds.x + coverBounds.width)
     expect(titleBounds.y).toBeGreaterThanOrEqual(coverBounds.y + coverBounds.height)
@@ -47,7 +49,7 @@ for (const width of [320, 360, 768, 1024, 1280, 1440]) test(`single-book section
   const left = await sidebar.boundingBox(), right = await reading.boundingBox()
   if (width >= 1024) {
     expect((await dialog.boundingBox())!.width).toBeGreaterThanOrEqual(width === 1024 ? 970 : 1000)
-    if (width >= 1280) {
+    if (width >= 1280 || fine) {
       expect(right!.x).toBeGreaterThanOrEqual(left!.x + left!.width)
       expect(Math.abs(right!.y - left!.y)).toBeLessThanOrEqual(1)
     } else expect(right!.y).toBeGreaterThanOrEqual(left!.y + left!.height)
