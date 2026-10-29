@@ -31,7 +31,8 @@ for (const width of [320, 360, 768, 1024, 1280, 1440]) test(`single-book section
     else expect(coverBounds.width).toBe(240)
     const info = (await page.locator('.book-detail-information').boundingBox())!
     expect(info.x).toBeGreaterThan(coverBounds.x + coverBounds.width)
-    expect(titleBounds.y).toBeGreaterThanOrEqual(coverBounds.y + coverBounds.height)
+    expect(titleBounds.x).toBeGreaterThan(coverBounds.x + coverBounds.width)
+    expect(Math.abs(titleBounds.y - coverBounds.y)).toBeLessThan(2)
   }
   await expect(page.locator('.book-detail-view details')).toHaveCount(0)
   await expect(page.locator('.book-detail-view').getByRole('button')).toHaveCount(3)
