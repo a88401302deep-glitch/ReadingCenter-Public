@@ -46,7 +46,6 @@ export function BookForm({ expanded = false, inlineMetadataSearch = false, scope
     formRef.current?.querySelector<HTMLButtonElement>('button[type="submit"]')?.focus({ preventScroll: true })
   }, [restoreView, busy])
   useEffect(() => { document.body.classList.add('book-editor-open'); return () => document.body.classList.remove('book-editor-open') }, [])
-  const mediaTypeChoices = dictionaries.filter(item => item.kind === 'mediaType')
   const notes = book ? getBookNotes(book) : { bookNote: '' }
   const [sourceUrlsText, setSourceUrlsText] = useState(book ? getBookSourceUrls(book).join('\n') : '')
   const initialAuthors = book?.authorIds.map(id => dictionaries.find(item => item.id === id)?.name).filter(Boolean).join('\n') ?? ''
@@ -71,7 +70,7 @@ export function BookForm({ expanded = false, inlineMetadataSearch = false, scope
   const [title, setTitle] = useState(book?.title ?? '')
   const [preferredTitle] = useState(book?.preferredTitle ?? '')
   const [languageTag] = useState(book?.languageTag ?? 'und')
-  const [mediaTypeId, setMediaTypeId] = useState(book?.mediaTypeId ?? 'ebook')
+  const mediaTypeId = book?.mediaTypeId ?? 'ebook'
   const [wordCountSourceUrl, setWordCountSourceUrl] = useState<string | null>(book?.wordCountSourceUrl ?? null)
   const [wordCount, setWordCount] = useState(book?.wordCount?.toString() ?? '')
   const [bookNote, setBookNote] = useState(notes.bookNote)
@@ -171,7 +170,6 @@ export function BookForm({ expanded = false, inlineMetadataSearch = false, scope
     <h3 className="book-form-heading book-form-heading--first">基本資料</h3>
     <div className="book-field"><span className="field-requirement" aria-hidden="true">必填</span><label><span className="field-caption">出版書名</span><input ref={titleInputRef} required aria-label="出版書名" value={title} onChange={(e) => setTitle(e.target.value)} /></label></div>
     <div className="book-field"><span className="field-requirement" aria-hidden="true">完整度必備</span><label><span className="field-caption">作者（每行一位）</span><textarea rows={2} maxLength={4000} value={authorNamesText} onChange={event => setAuthorNamesText(event.target.value)} /></label></div>
-    <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">書籍版本</span><select aria-label="書籍版本" value={mediaTypeId} onChange={(e) => setMediaTypeId(e.target.value)}>{!mediaTypeChoices.some(item => item.id === 'ebook') && <option value="ebook">電子書</option>}{mediaTypeChoices.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}{mediaTypeId !== 'ebook' && !mediaTypeChoices.some(item => item.id === mediaTypeId) && <option value={mediaTypeId}>原有格式（未分類）</option>}</select></label></div>
     <MultiSelect kind="category" label="分類" chooseFromList options={bookTermOptions('category', dictionaries)} recommendations={categoryRecommendations} value={categoryIds} onChange={setCategoryIds} />
     <p className="book-term-help">分類是書的主題，可複選或留空；選單參考讀墨分類整理。</p>
     <h3 className="book-form-heading">出版資訊</h3>

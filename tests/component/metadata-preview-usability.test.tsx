@@ -1,12 +1,12 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import { AuthContext, useAuth } from '../../src/features/auth/auth-context'
 import { AuthGate } from '../../src/features/auth/AuthGate'
 import { BookForm } from '../../src/features/books/BookForm'
 import { BookMetadataSearch } from '../../src/features/books/BookMetadataSearch'
 import { uploadBookCover } from '../../src/features/books/book-cover-upload'
-import { BookService } from '../../src/features/books/book-service'
+import { BookService, type BookDraft } from '../../src/features/books/book-service'
 import { createInMemoryRepositories } from '../../src/data/in-memory-repositories'
 vi.mock('../../src/features/books/book-cover-upload', async original => ({ ...await original<typeof import('../../src/features/books/book-cover-upload')>(), uploadBookCover: vi.fn() }))
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.clearAllMocks(); localStorage.clear() })
@@ -87,18 +87,21 @@ it('shows the ebook edition guard before applying and resets replacement when an
  fireEvent.click(screen.getByRole('button', { name: '核對《書》' }))
  expect(screen.getByLabelText('已核對版本，允許候選取代目前欄位')).toHaveProperty('checked', false)
 })
-it('offers named media formats and preserves an unknown legacy format without exposing its ID', async () => {
+it('hides media formats and preserves an unknown legacy format without exposing or rewriting its ID', async () => {
  const repo = createInMemoryRepositories()
- const book = await new BookService(repo).create({ title: '舊書', mediaTypeId: 'legacy:format:123456' })
- const submit = vi.fn(async () => undefined)
+ const service = new BookService(repo)
+ const book = await service.create({ title: '舊書', mediaTypeId: 'legacy:format:123456' })
+ const submit = vi.fn(async (draft: BookDraft) => { await service.update(book.id, draft, book.revision) })
  const media = { id: 'paper-format', kind: 'mediaType' as const, name: '紙本書', color: null, createdAt: '2026-10-18T00:00:00Z', updatedAt: '2026-10-18T00:00:00Z', revision: 1, schemaVersion: 1, provenance: { kind: 'manual' as const } }
  render(<BookForm book={book} dictionaries={[media]} onSubmit={submit} onCancel={vi.fn()} />)
- expect(screen.getByRole('combobox', { name: '書籍版本' })).toHaveProperty('value', 'legacy:format:123456')
- expect(screen.getByRole('option', { name: '原有格式（未分類）' })).toBeTruthy()
+ expect(screen.queryByRole('combobox', { name: '書籍版本' })).toBeNull()
+ expect(screen.queryByRole('option', { name: '原有格式（未分類）' })).toBeNull()
  expect(screen.queryByText('legacy:format:123456')).toBeNull()
- fireEvent.change(screen.getByLabelText('書籍版本'), { target: { value: 'paper-format' } })
+ fireEvent.change(screen.getByLabelText('出版書名'), { target: { value: '修改書名' } })
  fireEvent.click(screen.getByRole('button', { name: '儲存' }))
- expect(submit).toHaveBeenCalledWith(expect.objectContaining({ mediaTypeId: 'paper-format' }))
+ expect(submit).toHaveBeenCalledWith(expect.objectContaining({ mediaTypeId: 'legacy:format:123456' }))
+ await waitFor(async () => expect(await service.get(book.id)).toMatchObject({ title: '修改書名', mediaTypeId: 'legacy:format:123456' }))
+ expect(await repo.dictionaries.getAll()).toEqual([])
 })
 it('only offers and applies fields supported by the receiving form', async () => {
  const row = { id: 'ol:limited', source: 'Open Library', title: '候選', authors: ['候選作者'], publisher: '新出版社', isbn: '', publishedOn: '', translators: ['譯者甲'], sourceUrl: 'https://openlibrary.org/books/OL1M', coverUrl: null }
