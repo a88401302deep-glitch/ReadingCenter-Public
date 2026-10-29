@@ -65,7 +65,7 @@ export function LibraryCatalog({ toolbarHost, books, dictionaries, cycles = [], 
         <div className="library-type-chips" role="group" aria-label="依類型篩選">{[['', '全部類型'], ...Object.entries(bookTypeLabels)].map(([value, label]) => <button type="button" aria-pressed={bookType === value} key={value} onClick={() => { setBookType(value); setPage(1) }}>{label}</button>)}</div>
         <div className="library-filters">
           <label>排序<select aria-label="書庫排序" value={order} onChange={event => { setPage(1); setOrder(event.target.value as LibrarySort) }}>{Object.entries(librarySortLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-          <label>評分<select aria-label="依評分篩選" value={ratingFilter} onChange={event => { setPage(1); setRatingFilter(event.target.value) }}><option value="">全部</option><option value="rated">已評分</option><option value="unratedCompleted">已完讀待評分</option></select></label>
+          <label>評分篩選<select aria-label="依評分篩選" value={ratingFilter} onChange={event => { setPage(1); setRatingFilter(event.target.value) }}><option value="">全部</option><option value="rated">已評分</option><option value="unratedCompleted">已完讀待評分</option></select></label>
           <label>閱讀狀態<select aria-label="依閱讀狀態篩選" value={status} onChange={event => { setPage(1); setStatus(event.target.value as LibraryReadingStatus | '') }}><option value="">全部</option>{Object.entries(readingStatusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
           <label>資料完整度<select aria-label="依資料完整度篩選" value={completeness} onChange={event => { setPage(1); setCompleteness(event.target.value) }}><option value="">全部</option><option value="incomplete">資料待補</option><option value="complete">資料完整</option>{['書名', '作者', '出版社', '封面', '分類', '閱讀狀態', '類型'].map(field => <option key={field} value={field}>缺{field}</option>)}</select></label>
           <label>分類<select aria-label="依分類篩選" value={filters.categoryId} onChange={event => setFilter('categoryId', event.target.value)}><option value="">全部</option>{categories.map(entry => <option key={entry.id} value={entry.id}>{entry.name}</option>)}</select></label>
@@ -97,4 +97,3 @@ export function LibraryCatalog({ toolbarHost, books, dictionaries, cycles = [], 
     {results.length > 30 && pagination}
   </section>
 }
-
