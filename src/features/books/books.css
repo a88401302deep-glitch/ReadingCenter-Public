@@ -813,3 +813,6 @@ body.book-editor-open .modal-backdrop:has(.book-detail) { visibility:hidden; }
 
 .publisher-field { display:grid; align-content:start; gap:.5rem; }
 .publisher-field :is(input,select) { min-width:0; max-width:100%; }
+.book-form .book-form-extra { align-items:start; align-content:start; grid-auto-rows:max-content; }
+.book-form .book-form-extra > .book-field { align-self:start; }
+.book-form .book-form-extra textarea { min-height:44px; overflow-y:auto; }
