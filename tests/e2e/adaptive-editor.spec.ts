@@ -25,6 +25,7 @@ for (const width of [360, 1024]) test(`editor stays narrow and grows text fields
   const longTitle = '合輯與長書名自動換行測試'.repeat(10)
   await title.fill(longTitle)
   await authors.fill(names)
+  await editor.getByLabel('書籍備註', { exact: true }).fill('保留備註')
   expect((await title.boundingBox())!.height).toBeGreaterThan(60)
   expect((await authors.boundingBox())!.height).toBeGreaterThan(600)
   expect((await editor.getByRole('img', { name: '尚未設定封面', exact: true }).boundingBox())!.height).toBeLessThanOrEqual(90)
@@ -35,6 +36,14 @@ for (const width of [360, 1024]) test(`editor stays narrow and grows text fields
   await page.getByRole('button', { name: '編輯書籍資料', exact: true }).click()
   await expect(authors).toHaveValue(names)
   await expect(title).toHaveValue(longTitle)
+  const beforeNotes = (await editor.getByRole('region', { name: '備註區', exact: true }).boundingBox())!
+  const beforeCover = (await editor.getByRole('region', { name: '封面圖片', exact: true }).boundingBox())!
+  if (width >= 760) expect(beforeNotes.y - beforeCover.y - beforeCover.height).toBeLessThanOrEqual(12)
+  await page.setViewportSize({ width: width === 360 ? 1024 : 360, height: 900 })
+  await expect(editor.getByLabel('書籍備註', { exact: true })).toHaveValue('保留備註')
+  await expect(authors).toHaveValue(names)
+  await page.setViewportSize({ width, height: 900 })
+  await expect(editor.getByLabel('書籍備註', { exact: true })).toHaveCount(1)
   expect((await authors.boundingBox())!.height).toBeGreaterThan(600)
   await authors.fill('合輯作者1')
   await title.fill('短書名')
