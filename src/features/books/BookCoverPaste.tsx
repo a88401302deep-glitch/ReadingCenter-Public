@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ClipboardEvent } from 'react'
 import { Button } from '../../shared/ui/Button'
 import { validateCoverFile } from './book-cover-upload'
 
-export function BookCoverPaste({ disabled, onSelect }: { disabled: boolean; onSelect: (file: File) => void }) {
+export function BookCoverPaste({ disabled, onSelect, compact = false }: { compact?: boolean; disabled: boolean; onSelect: (file: File) => void }) {
   const [busy, setBusy] = useState(false), [error, setError] = useState('')
   const generation = useRef(0)
   useEffect(() => () => { generation.current++ }, [])
@@ -11,7 +11,7 @@ export function BookCoverPaste({ disabled, onSelect }: { disabled: boolean; onSe
     onSelect(file)
     setError('')
   }
-  function paste(event: ClipboardEvent<HTMLTextAreaElement>) {
+  function paste(event: ClipboardEvent<HTMLElement>) {
     event.preventDefault()
     if (disabled || busy) return
     try {
@@ -39,9 +39,9 @@ export function BookCoverPaste({ disabled, onSelect }: { disabled: boolean; onSe
       if (current === generation.current) setError(reason instanceof Error && reason.name !== 'NotAllowedError' ? reason.message : '未能讀取剪貼簿，請允許貼上，或在下方欄位貼上圖片。')
     } finally { if (current === generation.current) setBusy(false) }
   }
-  return <div className="book-cover-paste">
-    <Button disabled={disabled || busy} onClick={() => void readClipboard()}>{busy ? '讀取圖片中' : '貼上封面'}</Button>
-    <label>圖片貼上區<textarea rows={1} readOnly disabled={disabled || busy} placeholder="複製圖片後，在此貼上（電腦可按 Ctrl＋V）" onPaste={paste} /></label>
+  return <div className={`book-cover-paste${compact ? ' book-cover-paste--compact' : ''}`}>
+    <Button onPaste={compact ? paste : undefined} title={compact ? '也可在此按 Ctrl＋V 貼上圖片' : undefined} disabled={disabled || busy} onClick={() => void readClipboard()}>{busy ? '讀取圖片中' : '貼上封面'}</Button>
+    {(!compact || error) && <label>圖片貼上區<textarea rows={1} readOnly disabled={disabled || busy} placeholder="在此貼上圖片" onPaste={paste} /></label>}
     {error && <p role="alert">{error}</p>}
   </div>
 }
