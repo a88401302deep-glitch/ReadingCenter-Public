@@ -247,3 +247,38 @@ body.book-editor-open { overflow: hidden; }
   .book-form .book-form-grid { grid-template-columns: minmax(0, 1fr); gap: .65rem; }
   .book-form .book-editor-heading, .book-form .book-form-fields, .book-form .book-form-footer { padding-inline: .85rem; }
 }
+/* Name and cover are the first editing task; lookup and taxonomy follow. */
+.book-form .book-cover-editor--primary { grid-template-columns:minmax(0,1fr); gap:1rem; background:var(--surface); }
+.book-form .book-cover-editor--primary > :is(.book-identity-fields,.book-cover-controls,img,.book-cover-placeholder) { grid-column:1; grid-row:auto; min-width:0; }
+.book-identity-fields { display:grid; gap:.75rem; min-width:0; align-content:start; }
+.book-form .book-cover-editor--primary > img,
+.book-cover-placeholder { width:min(180px,100%); height:250px; justify-self:center; object-fit:contain; }
+.book-cover-placeholder { display:grid; place-items:center; padding:1rem; border:1px dashed var(--line); border-radius:12px; background:var(--surface-raised); color:var(--ink-soft); text-align:center; }
+.book-cover-controls { display:grid; align-items:start; gap:.65rem; }
+.book-cover-controls > p { margin:0; color:var(--ink-soft); font-size:.875rem; }
+.book-cover-controls > .button { justify-self:start; width:auto; }
+.book-cover-controls .book-cover-paste { display:grid; gap:.5rem; min-width:0; }
+.book-cover-controls .book-cover-paste > .button { justify-self:start; }
+.book-form-taxonomy { display:grid; gap:1rem; min-width:0; align-items:start; }
+.book-form-taxonomy > div { display:grid; gap:.5rem; min-width:0; align-content:start; }
+.book-form-taxonomy .book-term-help { margin:0; color:var(--ink-soft); font-size:.875rem; }
+.book-form-cover-path { min-width:0; grid-column:1 / -1; }
+@media (min-width:760px) {
+ .book-form .book-cover-editor--primary { grid-template-columns:180px minmax(0,1fr); gap:.75rem 1.25rem; }
+ .book-form .book-cover-editor--primary > .book-identity-fields { grid-column:2; grid-row:1; }
+ .book-form .book-cover-editor--primary > :is(img,.book-cover-placeholder) { grid-column:1; grid-row:1 / span 2; }
+ .book-form .book-cover-editor--primary > .book-cover-controls { grid-column:2; grid-row:2; }
+ .book-cover-controls { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .book-cover-controls > :is(p,.book-field,.book-cover-search,[role="alert"]) { grid-column:1 / -1; }
+ .book-cover-controls > .book-cover-paste { grid-column:1 / -1; grid-template-columns:auto minmax(0,1fr); align-items:end; }
+ .book-cover-controls .book-cover-paste > [role="alert"] { grid-column:1 / -1; }
+ .book-form-taxonomy { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (min-width:1000px) {
+ .book-cover-editor--primary .book-identity-fields { grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); align-items:start; }
+}
+@media (min-width:1000px) {
+ .book-form .book-cover-editor--primary { grid-template-columns:200px minmax(0,1fr); }
+ .book-form .book-cover-editor--primary > :is(img,.book-cover-placeholder) { width:200px; height:280px; }
+ .book-cover-controls > :is(.book-field,.book-cover-paste) { grid-column:auto; }
+}

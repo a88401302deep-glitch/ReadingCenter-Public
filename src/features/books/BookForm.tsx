@@ -148,6 +148,36 @@ export function BookForm({ expanded = false, inlineMetadataSearch = false, scope
     <fieldset ref={fieldsRef} className="book-form-fields" aria-label={scope === 'rating' ? '評分欄位' : scope === 'personal' ? '我的分類與標籤欄位' : '書籍資料欄位'} disabled={busy || submitting || uploadingCover}>
     {previewReadOnly && <p role="status">查詢預覽：可核對書籍資料與封面，暫不儲存或上傳。</p>}
     {bibliography && <>
+    <h3 className="book-form-heading book-form-heading--first">基本資料</h3>
+    {scope === 'all' && <>
+    <section className="book-cover-editor book-cover-editor--primary" aria-label="書名與封面">
+      <div className="book-identity-fields">
+    <div className="book-field"><span className="field-requirement" aria-hidden="true">必填</span><label><span className="field-caption">出版書名</span><input ref={titleInputRef} required aria-label="出版書名" value={title} onChange={(e) => setTitle(e.target.value)} /></label></div>
+    <div className="book-field"><span className="field-requirement" aria-hidden="true">完整度必備</span><label><span className="field-caption">作者（每行一位）</span><textarea rows={2} maxLength={4000} value={authorNamesText} onChange={event => setAuthorNamesText(event.target.value)} /></label></div>
+      </div>
+      {!(coverPreview || coverPath) && <div className="book-cover-placeholder" role="img" aria-label="尚未設定封面">尚未設定封面</div>}
+      {(coverPreview || coverPath) && <img key={coverPreview || coverPath} className="book-cover-editor-preview" src={coverPreview || coverPath} alt="封面預覽" onLoad={event => setCoverSize({ src: coverPreview || coverPath, width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight })} />}
+      <div className="book-cover-controls">
+      {coverSize?.src === (coverPreview || coverPath) && <p role="status">目前封面：{coverSize.width} × {coverSize.height} 像素{coverSize.width < 400 ? '（小圖，放大可能模糊）' : ''}{coverFile ? '，尚未儲存' : ''}</p>}
+      <Button disabled={busy || uploadingCover} onClick={() => setCoverSearchOpen(true)}>選擇封面／重新找封面</Button>
+      {(coverFile || coverPath) && <Button disabled={busy || uploadingCover} onClick={() => { setCoverFile(null); setCoverPreview(''); setCover(null); setCoverPath(''); setCoverError('') }}>移除封面</Button>}
+      {coverFile && previewReadOnly && <p role="status">封面已選入預覽，尚未上傳。</p>}
+      <div className="book-field"><span className="field-requirement" aria-hidden="true">完整度必備</span><label><span className="field-caption">選擇封面</span><input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy || uploadingCover} onChange={event => {
+        const file = event.target.files?.[0]; event.target.value = ''; if (!file) return
+        try { validateCoverFile(file); setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); setCoverError('') } catch (reason) { setCoverError(reason instanceof Error ? reason.message : '無效圖片') }
+      }} /></label></div>
+      <BookCoverPaste disabled={busy || uploadingCover} onSelect={file => { setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); setCoverError('') }} />
+      <BookCoverSearch key={coverSearchOpen ? 'open' : 'closed'} title={title} author={authorNamesText.replaceAll('\n', ' ')} isbn={isbn || null} open={coverSearchOpen} onOpenChange={setCoverSearchOpen} disabled={busy || uploadingCover} onSelect={file => { setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); setCoverError('') }} />
+
+
+      {coverError && <FormMessage tone="error">{coverError}</FormMessage>}
+      </div>
+    </section>
+    </>}
+
+    {scope !== 'all' && <section className="book-identity-fields">    <div className="book-field"><span className="field-requirement" aria-hidden="true">必填</span><label><span className="field-caption">出版書名</span><input ref={titleInputRef} required aria-label="出版書名" value={title} onChange={(e) => setTitle(e.target.value)} /></label></div>
+    <div className="book-field"><span className="field-requirement" aria-hidden="true">完整度必備</span><label><span className="field-caption">作者（每行一位）</span><textarea rows={2} maxLength={4000} value={authorNamesText} onChange={event => setAuthorNamesText(event.target.value)} /></label></div>
+</section>}
     <BookMetadataDialog inline={inlineMetadataSearch} disabled={busy || submitting || uploadingCover || metadataBusy}><BookMetadataSearch supportedFields={scope === 'bibliography' ? metadataFields.filter(field => field !== 'bookForm') : undefined} embeddedInDialog onBusyChange={setMetadataBusy} mediaTypeId={mediaTypeId} currentValues={{ bookForm: bookForm === 'other' ? '' : bookTypeLabels[bookForm], title, authors: namesFrom(authorNamesText).join('、'), publisher: publisherName, isbn, publishedOn, originalTitle, authorOriginalNames: namesFrom(authorOriginalNamesText).join('、'), translators: namesFrom(translatorNamesText).join('、'), illustrators: namesFrom(illustratorNamesText).join('、'), wordCount, seriesName: collectionId === '__new' ? newSeriesName : collectionId ? collections.find(item => item.id === collectionId)?.name || '已設定系列' : '', sequenceLabel }} title={title} author={authorNamesText.split('\n')[0]} disabled={busy || submitting || uploadingCover} onSelect={(candidate, replace, fields) => {
       if (candidate.bookForm && bookForm !== 'other' && candidate.bookForm !== bookForm && !replace) return
       const versionMatches = replace || !['讀書共和國', '台灣角川'].includes(candidate.source) || mediaTypeId !== 'ebook'
@@ -167,11 +197,10 @@ export function BookForm({ expanded = false, inlineMetadataSearch = false, scope
       if (fields.includes('sequenceLabel') && (replace || !sequenceLabel.trim()) && candidate.sequenceLabel) { setSequenceLabel(candidate.sequenceLabel); setSequenceOrder(''); applied = true }
       if (applied) setMetadataSourceUrl(candidate.sourceUrl)
     }} onCover={scope === 'all' ? file => { setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); setCoverError('') } : undefined} /></BookMetadataDialog>
-    <h3 className="book-form-heading book-form-heading--first">基本資料</h3>
-    <div className="book-field"><span className="field-requirement" aria-hidden="true">必填</span><label><span className="field-caption">出版書名</span><input ref={titleInputRef} required aria-label="出版書名" value={title} onChange={(e) => setTitle(e.target.value)} /></label></div>
-    <div className="book-field"><span className="field-requirement" aria-hidden="true">完整度必備</span><label><span className="field-caption">作者（每行一位）</span><textarea rows={2} maxLength={4000} value={authorNamesText} onChange={event => setAuthorNamesText(event.target.value)} /></label></div>
-    <MultiSelect kind="category" label="分類" chooseFromList options={bookTermOptions('category', dictionaries)} recommendations={categoryRecommendations} value={categoryIds} onChange={setCategoryIds} />
+    {scope === 'bibliography' && <section className="book-form-taxonomy">    <MultiSelect kind="category" label="分類" chooseFromList options={bookTermOptions('category', dictionaries)} recommendations={categoryRecommendations} value={categoryIds} onChange={setCategoryIds} />
     <p className="book-term-help">分類是書的主題，可複選或留空；選單參考讀墨分類整理。</p>
+</section>}
+
     <h3 className="book-form-heading">出版資訊</h3>
     <PublisherField entries={dictionaries} value={publisherName} onChange={setPublisherName} />
     <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">ISBN</span><input maxLength={40} value={isbn} onChange={event => setIsbn(event.target.value)} /></label></div>
@@ -198,8 +227,14 @@ export function BookForm({ expanded = false, inlineMetadataSearch = false, scope
     <h3 className="book-form-heading">我的分類與標籤</h3>
     <div className="book-field"><span className="field-requirement" aria-hidden="true">完整度必備</span><label><span className="field-caption">類型</span><select value={bookForm} onChange={event => setBookForm(event.target.value as NonNullable<Book['bookForm']>)}><option value="other">{scope === 'all' ? '未設定' : '一般書籍'}</option><option value="novel">小說</option><option value="manga">漫畫</option><option value="magazine">雜誌</option><option value="webNovel">網文</option></select></label></div>
     <p className="book-term-help">類型指作品形式：小說、漫畫、雜誌或網文；推理、奇幻等細分題材請選標籤。</p>
-    <MultiSelect kind="tag" label="標籤" chooseFromList options={bookTermOptions('tag', dictionaries)} recommendations={tagRecommendations} value={tagIds} onChange={setTagIds} />
+    <section className="book-form-taxonomy" aria-label="分類與標籤選單">
+    {scope === 'all' && <div>    <MultiSelect kind="category" label="分類" chooseFromList options={bookTermOptions('category', dictionaries)} recommendations={categoryRecommendations} value={categoryIds} onChange={setCategoryIds} />
+    <p className="book-term-help">分類是書的主題，可複選或留空；選單參考讀墨分類整理。</p>
+</div>}
+    <div>    <MultiSelect kind="tag" label="標籤" chooseFromList options={bookTermOptions('tag', dictionaries)} recommendations={tagRecommendations} value={tagIds} onChange={setTagIds} />
     <p className="book-term-help">標籤是細分題材，例如推理、異世界、成長；可複選或留空。常用項目依你的書庫使用次數排列。</p>
+</div>
+    </section>
     <section className="book-form-sources" aria-label="取得來源與連結">
     <h3 className="book-form-heading">取得來源與連結</h3>
     <p className="book-term-help">取得來源記錄從哪裡購買、借閱或獲贈；相關連結可放商品頁、出版社書頁或其他參考網頁，兩者可以分開填寫或留空。</p>
@@ -214,24 +249,7 @@ export function BookForm({ expanded = false, inlineMetadataSearch = false, scope
     <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">評分</span><select value={rating} onChange={(e) => setRating(e.target.value)}><option value="">未評分</option>{Array.from({ length: ratingScale }, (_, index) => <option key={index + 1} value={index + 1}>{index + 1} 分</option>)}</select></label></div>
     </div>
     </>}
-    {scope === 'all' && <>
-    <h3 className="book-form-heading">封面與資料查詢</h3>
-    <div className="book-cover-editor">
-      {(coverPreview || coverPath) && <img key={coverPreview || coverPath} className="book-cover-editor-preview" src={coverPreview || coverPath} alt="封面預覽" onLoad={event => setCoverSize({ src: coverPreview || coverPath, width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight })} />}
-      {coverSize?.src === (coverPreview || coverPath) && <p role="status">目前封面：{coverSize.width} × {coverSize.height} 像素{coverSize.width < 400 ? '（小圖，放大可能模糊）' : ''}{coverFile ? '，尚未儲存' : ''}</p>}
-      <Button disabled={busy || uploadingCover} onClick={() => setCoverSearchOpen(true)}>選擇封面／重新找封面</Button>
-      {coverFile && previewReadOnly && <p role="status">封面已選入預覽，尚未上傳。</p>}
-      <div className="book-field"><span className="field-requirement" aria-hidden="true">完整度必備</span><label><span className="field-caption">選擇封面</span><input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy || uploadingCover} onChange={event => {
-        const file = event.target.files?.[0]; event.target.value = ''; if (!file) return
-        try { validateCoverFile(file); setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); setCoverError('') } catch (reason) { setCoverError(reason instanceof Error ? reason.message : '無效圖片') }
-      }} /></label></div>
-      <BookCoverPaste disabled={busy || uploadingCover} onSelect={file => { setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); setCoverError('') }} />
-      <BookCoverSearch key={coverSearchOpen ? 'open' : 'closed'} title={title} author={authorNamesText.replaceAll('\n', ' ')} isbn={isbn || null} open={coverSearchOpen} onOpenChange={setCoverSearchOpen} disabled={busy || uploadingCover} onSelect={file => { setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); setCoverError('') }} />
-      {(coverFile || coverPath) && <Button disabled={busy || uploadingCover} onClick={() => { setCoverFile(null); setCoverPreview(''); setCover(null); setCoverPath(''); setCoverError('') }}>移除封面</Button>}
-      <ExtraFields className="book-form-cover-path"><ExtraHeading>封面路徑</ExtraHeading><div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">封面檔案路徑</span><input placeholder="covers/example.jpg" disabled={busy || uploadingCover} value={coverPath} onChange={(event) => { setCoverPath(event.target.value); setCoverFile(null); setCoverPreview('') }} /></label></div></ExtraFields>
-      {coverError && <FormMessage tone="error">{coverError}</FormMessage>}
-    </div>
-    </>}
+    {scope === 'all' && <ExtraFields className="book-form-cover-path"><ExtraHeading>封面路徑</ExtraHeading><div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">封面檔案路徑</span><input placeholder="covers/example.jpg" disabled={busy || uploadingCover} value={coverPath} onChange={(event) => { setCoverPath(event.target.value); setCoverFile(null); setCoverPreview('') }} /></label></div></ExtraFields>}
     </fieldset>
     <div className="book-form-footer">
     {error && <FormMessage tone="error">{error}</FormMessage>}
