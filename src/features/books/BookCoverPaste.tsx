@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type ClipboardEvent } from 'react'
 import { Button } from '../../shared/ui/Button'
+import { CoverIconButton } from './CoverIconButton'
 import { validateCoverFile } from './book-cover-upload'
 
-export function BookCoverPaste({ disabled, onSelect, compact = false }: { compact?: boolean; disabled: boolean; onSelect: (file: File) => void }) {
+export function BookCoverPaste({ disabled, onSelect, compact = false, iconOnly = false }: { compact?: boolean; iconOnly?: boolean; disabled: boolean; onSelect: (file: File) => void }) {
   const [busy, setBusy] = useState(false), [error, setError] = useState('')
   const generation = useRef(0)
   useEffect(() => () => { generation.current++ }, [])
@@ -40,7 +41,7 @@ export function BookCoverPaste({ disabled, onSelect, compact = false }: { compac
     } finally { if (current === generation.current) setBusy(false) }
   }
   return <div className={`book-cover-paste${compact ? ' book-cover-paste--compact' : ''}`}>
-    <Button aria-label={compact ? '貼上封面' : undefined} onPaste={compact ? paste : undefined} title={compact ? '也可在此按 Ctrl＋V 貼上圖片' : undefined} disabled={disabled || busy} onClick={() => void readClipboard()}>{busy ? '讀取中' : compact ? '貼上' : '貼上封面'}</Button>
+    {iconOnly ? <CoverIconButton label={busy ? '讀取中' : '貼上'} icon="clipboard" aria-label="貼上封面" aria-busy={busy} onPaste={paste} disabled={disabled || busy} onClick={() => void readClipboard()} /> : <Button aria-label={compact ? '貼上封面' : undefined} onPaste={compact ? paste : undefined} title={compact ? '也可在此按 Ctrl＋V 貼上圖片' : undefined} disabled={disabled || busy} onClick={() => void readClipboard()}>{busy ? '讀取中' : compact ? '貼上' : '貼上封面'}</Button>}
     {(!compact || error) && <label>圖片貼上區<textarea rows={1} readOnly disabled={disabled || busy} placeholder="在此貼上圖片" onPaste={paste} /></label>}
     {error && <p role="alert">{error}</p>}
   </div>

@@ -430,3 +430,20 @@ body.book-editor-open { overflow: hidden; }
 .book-form .book-data-heading > .book-form-heading { margin:0; padding:0; border:0; border-radius:0; background:none; }
 .book-form .book-data-heading .book-metadata-inline--compact { margin:0; }
 .book-form .book-data-heading .book-metadata-inline--compact:has([data-lookup-panel]) { flex-basis:100%; width:100%; background:var(--surface); }
+
+/* Cover dimensions and the four actions each have their own row. */
+.book-form .book-cover-editor--standalone > .book-cover-size { grid-column:1; grid-row:auto; margin:0; font-size:.75rem; line-height:1.5; color:var(--ink-soft); overflow-wrap:anywhere; }
+.book-form .book-cover-editor--standalone > .book-cover-controls { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:4px; margin-inline:-.35rem; }
+.book-cover-controls .book-cover-paste--compact { display:contents; }
+.book-cover-controls .book-cover-paste--compact > :is(label,p) { grid-column:1 / -1; min-width:0; }
+.book-form .book-cover-controls .cover-icon-button { position:relative; display:grid; place-items:center; width:100%; min-width:44px; min-height:44px; padding:0; border:1px solid var(--line); border-radius:14px; color:var(--accent-deep); background:color-mix(in srgb,var(--blossom) 16%,var(--surface)); box-shadow:0 2px 0 color-mix(in srgb,var(--blossom) 30%,transparent); }
+.cover-icon-button > span { display:flex; align-items:center; justify-content:center; }
+.cover-icon-button .icon { stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.cover-icon-button .cover-action-tooltip { position:absolute; z-index:5; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); padding:.25rem .45rem; border-radius:8px; background:var(--accent-deep); color:var(--surface); font-size:.75rem; font-weight:500; line-height:1.5; white-space:nowrap; pointer-events:none; visibility:hidden; opacity:0; }
+.cover-icon-button:is(:hover,:focus-visible) .cover-action-tooltip { visibility:visible; opacity:1; }
+.book-form .book-cover-controls .cover-icon-button:enabled:hover { background:color-mix(in srgb,var(--blossom) 38%,var(--surface)); }
+.book-form .book-cover-controls .cover-icon-button:focus-visible { outline:2px solid var(--accent-deep); outline-offset:2px; }
+@media (max-width:759px) {
+ .book-form .book-cover-editor--standalone > .book-cover-size { margin-inline:.65rem; }
+ .book-form .book-cover-editor--standalone > .book-cover-controls { margin-inline:.65rem; }
+}

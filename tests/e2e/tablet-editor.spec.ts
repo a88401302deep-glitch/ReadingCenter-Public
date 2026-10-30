@@ -1,4 +1,22 @@
 import { expect, test, stageSyntheticCover } from './fixtures'
+import type { Locator } from '@playwright/test'
+
+async function expectCoverActionRow(editor: Locator) {
+  const controls = editor.getByRole('group', { name: '圖片操作', exact: true })
+  const buttons = controls.getByRole('button')
+  await expect(buttons).toHaveCount(4)
+  const boxes = await buttons.evaluateAll(nodes => nodes.map(node => { const box = node.getBoundingClientRect(); return { x: box.x, y: box.y, width: box.width, height: box.height } }))
+  for (const [index, box] of boxes.entries()) {
+    expect(Math.abs(box.y - boxes[0].y)).toBeLessThanOrEqual(1)
+    expect(box.width).toBeGreaterThanOrEqual(44)
+    expect(box.height).toBeGreaterThanOrEqual(44)
+    if (index) expect(box.x).toBeGreaterThanOrEqual(boxes[index - 1].x + boxes[index - 1].width)
+  }
+  const size = editor.locator('.book-cover-size')
+  await expect(size).toContainText('600 × 840 像素')
+  const sizeBox = (await size.boundingBox())!
+  expect(sizeBox.y + sizeBox.height).toBeLessThanOrEqual(boxes[0].y)
+}
 
 test.use({ hasTouch: true, deviceScaleFactor: 2 })
 for (const width of [768, 1024, 1366]) test(`tablet has one complete, naturally sized book editor at ${width}px`, async ({ page }) => {
@@ -28,6 +46,22 @@ for (const width of [768, 1024, 1366]) test(`tablet has one complete, naturally 
   const coverGroup = editor.getByRole('region', { name: '封面圖片', exact: true })
   for (const label of ['出版書名', '作者（每行一位）', '出版社', 'ISBN', '出版日期或年份', '系列名稱', '譯者（每行一位）']) await expect(dataGroup.getByLabel(label, { exact: true })).toHaveCount(1)
   await expect(coverGroup.getByRole('textbox')).toHaveCount(0)
+  await expectCoverActionRow(editor)
+  const searchAction = coverGroup.getByRole('button', { name: '選擇封面／重新找封面', exact: true })
+  await searchAction.hover()
+  await expect(searchAction.getByRole('tooltip')).toBeVisible()
+  await page.mouse.move(0, 0)
+  for (const [name, label] of [['選擇封面／重新找封面', '搜尋'], ['上傳封面', '上傳'], ['貼上封面', '貼上'], ['移除封面', '移除']]) {
+    const action = coverGroup.getByRole('button', { name, exact: true })
+    await action.focus()
+    await page.keyboard.press('Tab')
+    await page.keyboard.press('Shift+Tab')
+    await expect(action).toBeFocused()
+    await expect(action.getByRole('tooltip')).toHaveText(label)
+    await expect(action.getByRole('tooltip')).toBeVisible()
+  }
+  await coverGroup.getByRole('button', { name: '移除封面', exact: true }).evaluate(el => (el as HTMLButtonElement).blur())
+  await expect(coverGroup.getByRole('tooltip')).toHaveCount(0)
   const titlePosition = (await editor.getByLabel('出版書名', { exact: true }).boundingBox())!
   const authorPosition = (await editor.getByLabel('作者（每行一位）', { exact: true }).boundingBox())!
   expect(authorPosition.x).toBeGreaterThanOrEqual(titlePosition.x + titlePosition.width)
@@ -100,6 +134,7 @@ test('phone cover fills the content width without cropping or a path field', asy
   await expect(cover).toHaveJSProperty('naturalWidth', 600)
   for (const width of [320, 360, 430]) {
     await page.setViewportSize({ width, height: 780 })
+    await expectCoverActionRow(editor)
     const box = (await cover.boundingBox())!, parent = (await editor.getByRole('region', { name: '封面圖片' }).boundingBox())!
     const contentWidth = await editor.getByRole('region', { name: '封面圖片' }).evaluate(el => el.clientWidth)
     expect(Math.abs(box.width - contentWidth)).toBeLessThanOrEqual(1)

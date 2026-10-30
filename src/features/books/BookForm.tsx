@@ -17,6 +17,7 @@ import type { BookDraft } from './book-service'
 import { bookTermOptions } from './book-term-catalog'
 import { PublisherField } from './PublisherField'
 import { BookCreditField } from './BookCreditField'
+import { CoverIconButton } from './CoverIconButton'
 
 const editorColumnsQuery = '(min-width: 760px)'
 function subscribeEditorColumns(notify: () => void) {
@@ -178,23 +179,20 @@ export function BookForm({ expanded = false, inlineMetadataSearch = false, scope
 
       {!(coverPreview || coverPath) && <div className="book-cover-placeholder" role="img" aria-label="尚未設定封面">尚未設定封面</div>}
       {(coverPreview || coverPath) && <img key={coverPreview || coverPath} className="book-cover-editor-preview" src={coverPreview || coverPath} alt="封面預覽" onLoad={event => setCoverSize({ src: coverPreview || coverPath, width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight })} />}
+      {coverSize?.src === (coverPreview || coverPath) && <p className="book-cover-size" role="status">{coverSize.width} × {coverSize.height} 像素{coverSize.width < 400 ? '（小圖，放大可能模糊）' : ''}{coverFile ? '，尚未儲存' : ''}</p>}
       <div className="book-cover-controls" role="group" aria-label="圖片操作">
-      {coverSize?.src === (coverPreview || coverPath) && <p role="status">{coverSize.width} × {coverSize.height} 像素{coverSize.width < 400 ? '（小圖，放大可能模糊）' : ''}{coverFile ? '，尚未儲存' : ''}</p>}
-      <Button aria-label="選擇封面／重新找封面" disabled={busy || uploadingCover} onClick={() => setCoverSearchOpen(true)}>搜尋</Button>
+      <CoverIconButton label="搜尋" icon="search" aria-label="選擇封面／重新找封面" disabled={busy || uploadingCover} onClick={() => setCoverSearchOpen(true)} />
 
-      {coverFile && previewReadOnly && <p role="status">封面已選入預覽，尚未上傳。</p>}
-      <Button aria-label="上傳封面" disabled={busy || uploadingCover} onClick={() => coverInputRef.current?.click()}>上傳</Button>
+      <CoverIconButton label="上傳" icon="upload" aria-label="上傳封面" disabled={busy || uploadingCover} onClick={() => coverInputRef.current?.click()} />
+      <BookCoverPaste compact iconOnly disabled={busy || uploadingCover} onSelect={file => { setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); setCoverError('') }} />
+      <CoverIconButton label="移除" icon="trash" aria-label="移除封面" disabled={busy || uploadingCover || !(coverFile || coverPath)} onClick={() => { setCoverFile(null); setCoverPreview(''); setCover(null); setCoverPath(''); setCoverError('') }} />
+      </div>
       <label className="sr-only">選擇封面<input ref={coverInputRef} tabIndex={-1} type="file" accept="image/jpeg,image/png,image/webp" disabled={busy || uploadingCover} onChange={event => {
         const file = event.target.files?.[0]; event.target.value = ''; if (!file) return
         try { validateCoverFile(file); setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); setCoverError('') } catch (reason) { setCoverError(reason instanceof Error ? reason.message : '無效圖片') }
       }} /></label>
-      <BookCoverPaste compact disabled={busy || uploadingCover} onSelect={file => { setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); setCoverError('') }} />
-      {(coverFile || coverPath) && <Button aria-label="移除封面" disabled={busy || uploadingCover} onClick={() => { setCoverFile(null); setCoverPreview(''); setCover(null); setCoverPath(''); setCoverError('') }}>移除</Button>}
-
-
-
+      {coverFile && previewReadOnly && <p role="status">封面已選入預覽，尚未上傳。</p>}
       {coverError && <FormMessage tone="error">{coverError}</FormMessage>}
-      </div>
       <BookCoverSearch key={coverSearchOpen ? 'open' : 'closed'} title={title} author={authorNamesText.replaceAll('\n', ' ')} isbn={isbn || null} open={coverSearchOpen} onOpenChange={setCoverSearchOpen} disabled={busy || uploadingCover} onSelect={file => { setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); setCoverError('') }} />
     </section>
   const noteEditor = <section className="book-form-note" aria-label="備註區">
