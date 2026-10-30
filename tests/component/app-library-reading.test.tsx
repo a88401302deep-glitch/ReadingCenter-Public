@@ -71,6 +71,8 @@ describe('library reading entries', () => {
     expect(view.querySelector('details')).toBeNull()
       fireEvent.click(within(view).getByRole('button', { name: '編輯書籍資料' }))
       const directEditor = screen.getByRole('dialog', { name: '編輯書籍' })
+      expect(within(directEditor).queryByLabelText('查詢書名')).toBeNull()
+      fireEvent.click(within(directEditor).getByRole('button', { name: '補資料', exact: true }))
       expect(within(directEditor).getByLabelText('查詢書名')).toBeTruthy()
       expect(within(directEditor).getByLabelText('出版書名')).toHaveProperty('value', '安靜瀏覽')
       fireEvent.click(within(directEditor).getByRole('button', { name: '離開書籍編輯' }))

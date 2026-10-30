@@ -73,7 +73,6 @@ test('mobile book fields scroll without losing the save and cancel actions', asy
   }
   await assertActionsInView()
   await dialog.getByLabel('出版書名', { exact: true }).fill('固定儲存列測試')
-  await dialog.getByText('原文書名、譯者與繪者', { exact: true }).click()
   await dialog.getByLabel('譯者（每行一位）').fill('測試譯者')
   await dialog.getByLabel('書籍備註').fill('長表單末端的備註')
   const scrollArea = await fields.evaluate(node => {
