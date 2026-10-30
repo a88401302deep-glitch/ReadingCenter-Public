@@ -9,6 +9,9 @@ for (const width of [768, 1024, 1366]) test(`tablet has one complete, naturally 
   await page.getByRole('button', { name: '輸入書名', exact: true }).click()
   await expect(page.getByRole('img', { name: '尚未設定封面', exact: true })).toBeInViewport()
   await page.getByLabel('出版書名', { exact: true }).fill('平板完整表單 English Title')
+  await page.getByLabel('選擇分類', { exact: true }).selectOption({ label: '文學小說' })
+  await page.getByLabel('選擇標籤', { exact: true }).selectOption({ label: '推理' })
+  await page.getByLabel('選擇標籤', { exact: true }).selectOption({ label: '懸疑' })
   await stageSyntheticCover(page, '/api/v1/covers/covers/synthetic-editor-cover.jpg')
   await page.getByRole('button', { name: '儲存', exact: true }).click()
   const stats = page.locator('.header-reading-data')
@@ -20,6 +23,7 @@ for (const width of [768, 1024, 1366]) test(`tablet has one complete, naturally 
   await page.getByRole('button', { name: '編輯書籍資料', exact: true }).click()
   const editor = page.locator('.book-form--expanded'), fields = editor.getByRole('group', { name: '書籍資料欄位' })
   await expect(page.getByRole('dialog', { name: '編輯書籍', exact: true })).toBeVisible()
+  await expect(editor.getByRole('button', { name: '離開書籍編輯', exact: true })).toBeInViewport()
   const titlePosition = (await editor.getByLabel('出版書名', { exact: true }).boundingBox())!
   const authorPosition = (await editor.getByLabel('作者（每行一位）', { exact: true }).boundingBox())!
   expect(authorPosition.x).toBeGreaterThanOrEqual(titlePosition.x + titlePosition.width)
@@ -47,6 +51,7 @@ for (const width of [768, 1024, 1366]) test(`tablet has one complete, naturally 
   const categoryBox = (await selectors.getByLabel('搜尋分類', { exact: true }).boundingBox())!
   const tagBox = (await selectors.getByLabel('搜尋標籤', { exact: true }).boundingBox())!
   expect(tagBox.x).toBeGreaterThan(categoryBox.x)
+  await selectors.screenshot({ path: test.info().outputPath(`tablet-choices-${width}.png`) })
   await expect(editor.locator('details.book-form-extra')).toHaveCount(0)
   await expect(editor.getByLabel('封面檔案路徑')).toHaveCount(0)
   for (const label of ['出版書名', 'ISBN', '譯者（每行一位）', '搜尋標籤']) await expect(editor.getByLabel(label, { exact: true })).toBeVisible()
@@ -89,7 +94,8 @@ test('phone cover fills the content width without cropping or a path field', asy
   for (const width of [320, 360, 430]) {
     await page.setViewportSize({ width, height: 780 })
     const box = (await cover.boundingBox())!, parent = (await editor.getByRole('region', { name: '書名與封面' }).boundingBox())!
-    expect(Math.abs(box.width - parent.width)).toBeLessThanOrEqual(1)
+    const contentWidth = await editor.getByRole('region', { name: '書名與封面' }).evaluate(el => el.clientWidth)
+    expect(Math.abs(box.width - contentWidth)).toBeLessThanOrEqual(1)
     expect(Math.abs(box.x - parent.x)).toBeLessThanOrEqual(1)
     expect(Math.abs(box.height / box.width - 840 / 600)).toBeLessThan(.02)
     const layout = await fields.evaluate(el => ({ overflow: el.scrollWidth - el.clientWidth, elements: Array.from(el.querySelectorAll('*')).filter(child => child.getBoundingClientRect().right > el.getBoundingClientRect().right + 1).map(child => ({ tag: child.tagName, cls: child.className, text: child.textContent?.slice(0, 45), right: child.getBoundingClientRect().right })) }))
