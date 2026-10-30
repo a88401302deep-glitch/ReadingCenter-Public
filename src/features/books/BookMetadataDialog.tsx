@@ -2,26 +2,30 @@ import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { Button } from '../../shared/ui/Button'
 import { Icon } from '../../shared/ui/Icon'
 
-export function BookMetadataDialog({ children, disabled = false, inline = false }: { children: ReactNode; disabled?: boolean; inline?: boolean }) {
+export function BookMetadataDialog({ children, disabled = false, inline = false, compact = false }: { children: ReactNode; disabled?: boolean; inline?: boolean; compact?: boolean }) {
  const [open, setOpen] = useState(false)
  const dialog = useRef<HTMLDialogElement>(null)
  const trigger = useRef<HTMLButtonElement>(null)
  const titleId = useId()
  useEffect(() => {
-  if (!open) return
+  if (!open || inline) return
   const panel = dialog.current
-  const fields = trigger.current?.closest<HTMLElement>('.book-form-fields')
+  const button = trigger.current
+  const fields = button?.closest<HTMLElement>('.book-form-fields')
   const top = fields?.scrollTop ?? 0
   panel?.showModal()
   panel?.querySelector<HTMLButtonElement>('button')?.focus({ preventScroll: true })
   return () => {
    panel?.close()
-   trigger.current?.focus({ preventScroll: true })
+   button?.focus({ preventScroll: true })
    if (fields) fields.scrollTop = top
   }
- }, [open])
+ }, [open, inline])
  const close = () => { if (!disabled) setOpen(false) }
- if (inline) return <section className="book-metadata-inline" aria-label="搜尋並補全書籍資料"><h3>搜尋並補全書籍資料</h3>{children}</section>
+ if (inline) return <section className={`book-metadata-inline${compact ? ' book-metadata-inline--compact' : ''}`} aria-label="搜尋並補全書籍資料">
+  {compact ? <button ref={trigger} className="button button--secondary button--medium" type="button" aria-expanded={open} aria-controls={titleId + '-lookup'} disabled={disabled} onClick={() => setOpen(!open)}>{open ? '關閉查詢' : '補資料'}</button> : <h3>搜尋並補全書籍資料</h3>}
+  {compact ? open && <div id={titleId + '-lookup'} data-lookup-panel>{children}</div> : children}
+ </section>
  return <>
   <button ref={trigger} className="button button--secondary button--medium" type="button" disabled={disabled} onClick={() => setOpen(true)}>搜尋並補全書籍資料</button>
   <dialog ref={dialog} className="book-metadata-dialog" aria-labelledby={titleId}

@@ -28,7 +28,7 @@ export function BookForm({ expanded = false, inlineMetadataSearch = false, scope
   const bibliography = scope === 'all' || scope === 'bibliography'
   const personal = scope === 'all' || scope === 'personal'
   const coverInputRef = useRef<HTMLInputElement>(null)
-  const titleInputRef = useRef<HTMLInputElement>(null)
+  const titleInputRef = useRef<HTMLTextAreaElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
   const fieldsRef = useRef<HTMLFieldSetElement>(null)
   const savePending = useRef(false)
@@ -145,7 +145,7 @@ export function BookForm({ expanded = false, inlineMetadataSearch = false, scope
     } : draft)
     } finally { savePending.current = false; setSubmitting(false) }
   }
-  const metadataLookup = <BookMetadataDialog inline={inlineMetadataSearch} disabled={busy || submitting || uploadingCover || metadataBusy}><BookMetadataSearch supportedFields={scope === 'bibliography' ? metadataFields.filter(field => field !== 'bookForm') : undefined} embeddedInDialog onBusyChange={setMetadataBusy} mediaTypeId={mediaTypeId} currentValues={{ bookForm: bookForm === 'other' ? '' : bookTypeLabels[bookForm], title, authors: namesFrom(authorNamesText).join('、'), publisher: publisherName, isbn, publishedOn, originalTitle, authorOriginalNames: namesFrom(authorOriginalNamesText).join('、'), translators: namesFrom(translatorNamesText).join('、'), illustrators: namesFrom(illustratorNamesText).join('、'), wordCount, seriesName: collectionId === '__new' ? newSeriesName : collectionId ? collections.find(item => item.id === collectionId)?.name || '已設定系列' : '', sequenceLabel }} title={title} author={authorNamesText.split('\n')[0]} disabled={busy || submitting || uploadingCover} onSelect={(candidate, replace, fields) => {
+  const metadataLookup = <BookMetadataDialog compact inline={inlineMetadataSearch} disabled={busy || submitting || uploadingCover || metadataBusy}><BookMetadataSearch supportedFields={scope === 'bibliography' ? metadataFields.filter(field => field !== 'bookForm') : undefined} embeddedInDialog onBusyChange={setMetadataBusy} mediaTypeId={mediaTypeId} currentValues={{ bookForm: bookForm === 'other' ? '' : bookTypeLabels[bookForm], title, authors: namesFrom(authorNamesText).join('、'), publisher: publisherName, isbn, publishedOn, originalTitle, authorOriginalNames: namesFrom(authorOriginalNamesText).join('、'), translators: namesFrom(translatorNamesText).join('、'), illustrators: namesFrom(illustratorNamesText).join('、'), wordCount, seriesName: collectionId === '__new' ? newSeriesName : collectionId ? collections.find(item => item.id === collectionId)?.name || '已設定系列' : '', sequenceLabel }} title={title} author={authorNamesText.split('\n')[0]} disabled={busy || submitting || uploadingCover} onSelect={(candidate, replace, fields) => {
       if (candidate.bookForm && bookForm !== 'other' && candidate.bookForm !== bookForm && !replace) return
       const versionMatches = replace || !['讀書共和國', '台灣角川'].includes(candidate.source) || mediaTypeId !== 'ebook'
       let applied = false
@@ -171,24 +171,26 @@ export function BookForm({ expanded = false, inlineMetadataSearch = false, scope
     {bibliography && <>
     {scope === 'all' && <>
     <section className="book-cover-editor book-cover-editor--primary" aria-label="書名與封面">
-      <h3 className="book-form-heading">書籍資料與封面</h3>
+      <h3 className="book-form-heading">書籍資料</h3>
       <div className="book-identity-fields">
-    <div className="book-field"><span className="field-requirement" aria-hidden="true">必填</span><label><span className="field-caption">出版書名</span><input ref={titleInputRef} required aria-label="出版書名" value={title} onChange={(e) => setTitle(e.target.value)} /></label></div>
-    <BookCreditField label="作者（每行一位）" value={authorNamesText} onChange={setAuthorNamesText} />
+    <BookCreditField label="出版書名" required inputRef={titleInputRef} value={title} onChange={setTitle} />
+    <BookCreditField label="作者（每行一位）" maxLength={20099} value={authorNamesText} onChange={setAuthorNamesText} />
       </div>
       {!(coverPreview || coverPath) && <div className="book-cover-placeholder" role="img" aria-label="尚未設定封面">尚未設定封面</div>}
       {(coverPreview || coverPath) && <img key={coverPreview || coverPath} className="book-cover-editor-preview" src={coverPreview || coverPath} alt="封面預覽" onLoad={event => setCoverSize({ src: coverPreview || coverPath, width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight })} />}
-      <div className="book-cover-controls">
-      {coverSize?.src === (coverPreview || coverPath) && <p role="status">目前封面：{coverSize.width} × {coverSize.height} 像素{coverSize.width < 400 ? '（小圖，放大可能模糊）' : ''}{coverFile ? '，尚未儲存' : ''}</p>}
-      <Button disabled={busy || uploadingCover} onClick={() => setCoverSearchOpen(true)}>選擇封面／重新找封面</Button>
-      {(coverFile || coverPath) && <Button disabled={busy || uploadingCover} onClick={() => { setCoverFile(null); setCoverPreview(''); setCover(null); setCoverPath(''); setCoverError('') }}>移除封面</Button>}
+      <div className="book-cover-controls" role="group" aria-label="圖片操作">
+      <span className="cover-tools-label">封面</span>
+      {coverSize?.src === (coverPreview || coverPath) && <p role="status">{coverSize.width} × {coverSize.height} 像素{coverSize.width < 400 ? '（小圖，放大可能模糊）' : ''}{coverFile ? '，尚未儲存' : ''}</p>}
+      <Button aria-label="選擇封面／重新找封面" disabled={busy || uploadingCover} onClick={() => setCoverSearchOpen(true)}>搜尋</Button>
+
       {coverFile && previewReadOnly && <p role="status">封面已選入預覽，尚未上傳。</p>}
-      <Button disabled={busy || uploadingCover} onClick={() => coverInputRef.current?.click()}>上傳封面</Button>
+      <Button aria-label="上傳封面" disabled={busy || uploadingCover} onClick={() => coverInputRef.current?.click()}>上傳</Button>
       <label className="sr-only">選擇封面<input ref={coverInputRef} tabIndex={-1} type="file" accept="image/jpeg,image/png,image/webp" disabled={busy || uploadingCover} onChange={event => {
         const file = event.target.files?.[0]; event.target.value = ''; if (!file) return
         try { validateCoverFile(file); setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); setCoverError('') } catch (reason) { setCoverError(reason instanceof Error ? reason.message : '無效圖片') }
       }} /></label>
       <BookCoverPaste compact disabled={busy || uploadingCover} onSelect={file => { setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); setCoverError('') }} />
+      {(coverFile || coverPath) && <Button aria-label="移除封面" disabled={busy || uploadingCover} onClick={() => { setCoverFile(null); setCoverPreview(''); setCover(null); setCoverPath(''); setCoverError('') }}>移除</Button>}
 
 
 
@@ -199,8 +201,8 @@ export function BookForm({ expanded = false, inlineMetadataSearch = false, scope
     </section>
     </>}
 
-    {scope !== 'all' && <section className="book-identity-fields">    <div className="book-field"><span className="field-requirement" aria-hidden="true">必填</span><label><span className="field-caption">出版書名</span><input ref={titleInputRef} required aria-label="出版書名" value={title} onChange={(e) => setTitle(e.target.value)} /></label></div>
-    <BookCreditField label="作者（每行一位）" value={authorNamesText} onChange={setAuthorNamesText} />
+    {scope !== 'all' && <section className="book-identity-fields">    <BookCreditField label="出版書名" required inputRef={titleInputRef} value={title} onChange={setTitle} />
+    <BookCreditField label="作者（每行一位）" maxLength={20099} value={authorNamesText} onChange={setAuthorNamesText} />
 </section>}
     {scope !== 'all' && metadataLookup}
     {scope === 'bibliography' && <section className="book-form-taxonomy">    <MultiSelect kind="category" label="分類" chooseFromList options={bookTermOptions('category', dictionaries)} recommendations={categoryRecommendations} value={categoryIds} onChange={setCategoryIds} />

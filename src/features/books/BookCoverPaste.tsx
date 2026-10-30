@@ -40,7 +40,7 @@ export function BookCoverPaste({ disabled, onSelect, compact = false }: { compac
     } finally { if (current === generation.current) setBusy(false) }
   }
   return <div className={`book-cover-paste${compact ? ' book-cover-paste--compact' : ''}`}>
-    <Button onPaste={compact ? paste : undefined} title={compact ? '也可在此按 Ctrl＋V 貼上圖片' : undefined} disabled={disabled || busy} onClick={() => void readClipboard()}>{busy ? '讀取圖片中' : '貼上封面'}</Button>
+    <Button aria-label={compact ? '貼上封面' : undefined} onPaste={compact ? paste : undefined} title={compact ? '也可在此按 Ctrl＋V 貼上圖片' : undefined} disabled={disabled || busy} onClick={() => void readClipboard()}>{busy ? '讀取中' : compact ? '貼上' : '貼上封面'}</Button>
     {(!compact || error) && <label>圖片貼上區<textarea rows={1} readOnly disabled={disabled || busy} placeholder="在此貼上圖片" onPaste={paste} /></label>}
     {error && <p role="alert">{error}</p>}
   </div>

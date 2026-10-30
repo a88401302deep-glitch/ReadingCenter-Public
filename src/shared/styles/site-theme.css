@@ -372,3 +372,30 @@ body.book-editor-open { overflow: hidden; }
 }
 .book-form .metadata-query-stage > .button { background:var(--accent-deep); border-color:var(--accent-deep); color:var(--on-primary); font-weight:600; }
 @media (max-width:640px) { .book-form .metadata-query-stage > .button { justify-self:stretch; width:100%; } }
+/* Dense by default; text areas grow only when actual content needs more lines. */
+.book-detail-editor-dialog:has(.book-form--expanded) { width:min(720px,calc(100vw - 24px)); }
+.book-form .book-form-fields { gap:.55rem; }
+.book-form .book-form-guidance { display:none; }
+.book-form :is(.book-form-heading,.book-form-extra > h4) { padding-block:.45rem; font-size:.9375rem; }
+.book-form .book-cover-editor--primary > .book-form-heading { padding-block:.45rem; }
+.book-form .book-cover-controls > p { flex-basis:auto; font-size:.75rem; }
+.book-form .cover-tools-label { font-size:.8125rem; font-weight:600; color:var(--ink-soft); }
+.book-form .book-cover-controls .button { padding:.3rem .6rem; }
+.book-form .book-field:has([required]) .field-caption::after { content:' *'; color:var(--accent-deep); }
+.book-form .publisher-field { grid-template-columns:minmax(0,1fr) 44px; gap:.4rem; }
+.book-form .publisher-picker-trigger { position:relative; width:44px; height:44px; }
+.book-form .publisher-picker-trigger select { width:44px; height:44px; appearance:none; color:transparent; padding:0; }
+.book-form .publisher-picker-trigger option { color:var(--ink); }
+.book-form .publisher-picker-trigger > .icon { position:absolute; inset:14px; pointer-events:none; color:var(--ink-soft); }
+@media (min-width:760px) {
+ .book-form .book-cover-editor--primary { grid-template-columns:180px minmax(0,1fr); gap:.5rem .65rem; }
+ .book-form .book-cover-editor--primary > .book-identity-fields { grid-template-columns:minmax(0,1.35fr) minmax(0,1fr); gap:.5rem; }
+ .book-form .book-form-publication { grid-template-columns:minmax(0,1.2fr) minmax(0,.9fr) minmax(0,.7fr); }
+ .book-form .book-form-publication > .publisher-field { grid-column:auto; }
+}
+.book-form .publisher-picker-trigger { overflow:hidden; border-radius:12px; }
+.book-form .publisher-picker-trigger:focus-within { outline:2px solid var(--focus); outline-offset:3px; }
+.book-form .book-metadata-inline--compact { padding:0; border:0; }
+.book-form .book-metadata-inline--compact:has([data-lookup-panel]) { display:grid; gap:.5rem; padding:.5rem; border:1px dashed var(--line); }
+@media (min-width:760px) { .book-form .book-cover-placeholder { height:80px; aspect-ratio:auto; } }
+.book-form .book-cover-editor--primary > .book-cover-placeholder { height:80px; align-self:start; aspect-ratio:auto; }

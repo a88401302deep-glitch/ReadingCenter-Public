@@ -6,7 +6,7 @@ export async function planBookMetadata(repositories: ReadingCenterRepositories, 
  const isbn = draft.isbn === undefined ? book?.isbn ?? null : draft.isbn.replace(/[\s-]/g, '') || null
  if (draft.isbn !== undefined && isbn && !/^(?:\d{13}|\d{9}[\dXx])$/.test(isbn)) throw new Error('ISBN 應為 10 或 13 碼；不確定請留白')
  for (const names of [draft.translatorNames, draft.illustratorNames]) if (names && (names.length > 20 || names.some(name => !name.trim() || name.length > 200))) throw new Error('譯者或繪者資料無效')
- if (draft.authorNames && (draft.authorNames.length > 20 || draft.authorNames.some(name => !name.trim() || name.length > 200))) throw new Error('作者資料無效')
+ if (draft.authorNames && (draft.authorNames.length > 100 || draft.authorNames.some(name => !name.trim() || name.length > 200))) throw new Error('作者資料無效')
  if ((draft.publisherName?.length ?? 0) > 200 || (draft.publishedOn?.length ?? 0) > 80) throw new Error('出版資料過長')
  if (draft.metadataSourceUrl && !isMetadataSourceUrl(draft.metadataSourceUrl)) throw new Error('書籍資料來源無效')
  const dictionaries = draft.authorNames !== undefined || draft.publisherName !== undefined || draft.translatorNames !== undefined || draft.illustratorNames !== undefined ? await repositories.dictionaries.getAll() : []

@@ -1,22 +1,20 @@
-import { useCallback, useLayoutEffect, useRef } from 'react'
+import { useLayoutEffect, useRef, type RefObject } from 'react'
 
-interface Props { label: string; value: string; onChange: (value: string) => void }
-export function BookCreditField({ label, value, onChange }: Props) {
- const ref = useRef<HTMLTextAreaElement>(null)
- const fit = useCallback(() => {
-  const input = ref.current
-  if (!input) return
-  input.style.height = 'auto'
-  input.style.height = `${Math.max(44, Math.min(input.scrollHeight + 2, 192))}px`
- }, [])
+interface Props { label: string; value: string; onChange: (value: string) => void; required?: boolean; maxLength?: number; inputRef?: RefObject<HTMLTextAreaElement | null> }
+function fitTextArea(input: HTMLTextAreaElement | null) {
+ if (!input) return
+ input.style.height = 'auto'
+ input.style.height = `${Math.max(44, input.scrollHeight + 2)}px`
+}
+export function BookCreditField({ label, value, onChange, required = false, maxLength = 4000, inputRef }: Props) {
+ const ownRef = useRef<HTMLTextAreaElement>(null)
+ const ref = inputRef ?? ownRef
  useLayoutEffect(() => {
-  fit()
-  // The native editor dialog becomes visible after child layout effects.
-  // Refit when it opens or the available width changes.
+  fitTextArea(ref.current)
   if (typeof ResizeObserver === 'undefined') return
-  const observer = new ResizeObserver(fit)
+  const observer = new ResizeObserver(() => fitTextArea(ref.current))
   if (ref.current?.parentElement) observer.observe(ref.current.parentElement)
   return () => observer.disconnect()
- }, [fit, value])
- return <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">{label}</span><textarea ref={ref} rows={1} maxLength={4000} value={value} onFocus={fit} onChange={event => onChange(event.target.value)} /></label></div>
+ }, [ref, value])
+ return <div className="book-field"><span className="field-requirement" aria-hidden="true">{required ? '必填' : '選填'}</span><label><span className="field-caption">{label.replace('（每行一位）', '')}</span><textarea ref={ref} aria-label={label} required={required} title={required ? undefined : label} rows={1} maxLength={required ? undefined : maxLength} value={value} onFocus={event => fitTextArea(event.currentTarget)} onChange={event => onChange(event.target.value)} /></label></div>
 }
