@@ -198,10 +198,14 @@ export function BookForm({ expanded = false, inlineMetadataSearch = false, scope
     <h3 className="book-form-heading">我的分類與標籤</h3>
     <div className="book-field"><span className="field-requirement" aria-hidden="true">完整度必備</span><label><span className="field-caption">類型</span><select value={bookForm} onChange={event => setBookForm(event.target.value as NonNullable<Book['bookForm']>)}><option value="other">{scope === 'all' ? '未設定' : '一般書籍'}</option><option value="novel">小說</option><option value="manga">漫畫</option><option value="magazine">雜誌</option><option value="webNovel">網文</option></select></label></div>
     <p className="book-term-help">類型指作品形式：小說、漫畫、雜誌或網文；推理、奇幻等細分題材請選標籤。</p>
-    <MultiSelect kind="source" label="書籍來源" options={[...options('source'), ...sourceIds.filter(id => !dictionaries.some(item => item.id === id && item.kind === 'source')).map(id => ({ id, label: '原有來源' }))]} value={sourceIds} onChange={setSourceIds} />
     <MultiSelect kind="tag" label="標籤" chooseFromList options={bookTermOptions('tag', dictionaries)} recommendations={tagRecommendations} value={tagIds} onChange={setTagIds} />
     <p className="book-term-help">標籤是細分題材，例如推理、異世界、成長；可複選或留空。常用項目依你的書庫使用次數排列。</p>
-    <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">書籍網址（每行一個）</span><textarea rows={2} value={sourceUrlsText} onChange={(e) => setSourceUrlsText(e.target.value)} /></label></div>
+    <section className="book-form-sources" aria-label="取得來源與連結">
+    <h3 className="book-form-heading">取得來源與連結</h3>
+    <p className="book-term-help">取得來源記錄從哪裡購買、借閱或獲贈；相關連結可放商品頁、出版社書頁或其他參考網頁，兩者可以分開填寫或留空。</p>
+    <MultiSelect kind="source" label="取得來源" options={[...options('source'), ...sourceIds.filter(id => !dictionaries.some(item => item.id === id && item.kind === 'source')).map(id => ({ id, label: '原有來源' }))]} value={sourceIds} onChange={setSourceIds} />
+    <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">相關連結（每行一個）</span><textarea rows={2} value={sourceUrlsText} onChange={(e) => setSourceUrlsText(e.target.value)} /></label></div>
+    </section>
     </>}
     {(scope === 'all' || scope === 'rating') && <>
     <h3 className="book-form-heading">評分</h3>

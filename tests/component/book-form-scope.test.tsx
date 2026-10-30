@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { expect, it, vi } from 'vitest'
 import { createInMemoryRepositories } from '../../src/data'
 import { createMetadata, type DictionaryEntry } from '../../src/domain'
@@ -25,9 +25,13 @@ it('edits personal classification and sources without exposing or changing bibli
   expect(screen.getByRole('heading', { name: '編輯我的分類與標籤' })).toBeTruthy()
   for (const name of ['出版書名', '出版社', 'ISBN', '書籍版本', '書籍備註', '書籍字數', '選擇封面', '評分']) expect(screen.queryByLabelText(name)).toBeNull()
   expect(screen.queryByRole('button', { name: '搜尋並補全書籍資料' })).toBeNull()
+  const sources = screen.getByRole('region', { name: '取得來源與連結' })
+  expect(within(sources).getByLabelText('搜尋取得來源')).toBeTruthy()
+  expect(within(sources).getByLabelText('相關連結（每行一個）')).toBeTruthy()
+  expect(within(sources).queryByLabelText('搜尋標籤')).toBeNull()
   expect(dirty).toHaveBeenLastCalledWith(false)
   fireEvent.click(screen.getByRole('button', { name: '移除原有圖書館' }))
-  fireEvent.change(screen.getByLabelText('搜尋書籍來源'), { target: { value: '電子書' } })
+  fireEvent.change(screen.getByLabelText('搜尋取得來源'), { target: { value: '電子書' } })
   fireEvent.click(screen.getByRole('option', { name: '電子書平台' }))
   fireEvent.change(screen.getByLabelText('類型'), { target: { value: 'manga' } })
   fireEvent.click(screen.getByRole('button', { name: '儲存' }))
@@ -42,7 +46,7 @@ it('edits bibliography without exposing personal controls or overwriting their v
   const save = vi.fn(async (draft: BookDraft) => { await service.update(book.id, draft, book.revision) })
   render(<BookForm scope="bibliography" book={book} dictionaries={dictionaries} onCancel={vi.fn()} onSubmit={save} />)
   expect(screen.getByRole('button', { name: '搜尋並補全書籍資料' })).toBeTruthy()
-  for (const name of ['類型', '搜尋書籍來源', '搜尋標籤', '書籍網址（每行一個）', '選擇封面', '評分']) expect(screen.queryByLabelText(name)).toBeNull()
+  for (const name of ['類型', '搜尋取得來源', '搜尋標籤', '相關連結（每行一個）', '選擇封面', '評分']) expect(screen.queryByLabelText(name)).toBeNull()
   fireEvent.change(screen.getByLabelText('出版書名'), { target: { value: '修正書名' } })
   fireEvent.click(screen.getByRole('button', { name: '儲存' }))
   await waitFor(async () => expect(await service.get(book.id)).toEqual({ ...book, title: '修正書名', revision: book.revision + 1, updatedAt: expect.any(String) }))
