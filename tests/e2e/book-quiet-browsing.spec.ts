@@ -48,6 +48,8 @@ for (const width of [360, 1440]) test(`quiet book browsing keeps three entries, 
   expect(await manageBook.evaluate(node => getComputedStyle(node).backgroundColor)).not.toBe('rgba(0, 0, 0, 0)')
   await manageBook.click()
   const directEditor = page.getByRole('dialog', { name: '編輯書籍', exact: true })
+  await expect(directEditor.getByLabel('查詢書名', { exact: true })).toHaveCount(0)
+  await directEditor.getByRole('button', { name: '補資料', exact: true }).click()
   await expect(directEditor.getByLabel('查詢書名', { exact: true })).toBeVisible()
   await expect(directEditor.getByLabel('出版書名', { exact: true })).toBeEditable()
   await expect(directEditor.getByRole('button', { name: '儲存', exact: true })).toBeInViewport()

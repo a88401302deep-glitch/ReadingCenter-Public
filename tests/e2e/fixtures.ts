@@ -30,3 +30,14 @@ export const test = base.extend({
 })
 
 export { expect }
+
+/** A local upload response supplies an existing synthetic SVG; no deployed API is used. */
+export async function stageSyntheticCover(page: Page, path: string) {
+  await page.route('**/api/v1/covers/manual', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: { cover: { path, mimeType: 'image/jpeg', width: 600, height: 840 } } }) }))
+  const png = await page.evaluate(() => {
+    const canvas = document.createElement('canvas'); canvas.width = 600; canvas.height = 840
+    const ctx = canvas.getContext('2d')!; ctx.fillStyle = '#eac1cb'; ctx.fillRect(0, 0, 600, 840)
+    return canvas.toDataURL('image/png').split(',')[1]
+  })
+  await page.getByLabel('選擇封面', { exact: true }).setInputFiles({ name: 'synthetic.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') })
+}

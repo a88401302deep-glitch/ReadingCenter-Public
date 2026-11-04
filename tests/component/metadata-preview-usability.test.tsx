@@ -133,7 +133,6 @@ it('applies a confirmed Kadokawa novel form and illustrator without importing pa
  fireEvent.click(await screen.findByRole('button', { name: '核對《異世界漫步 (1) ～艾雷吉亞王國篇～》' }))
  fireEvent.click(screen.getByRole('button', { name: '帶入下列表單' }))
  expect(screen.getByLabelText('作者（每行一位）')).toHaveProperty('value', 'あるくひと')
- fireEvent.click(screen.getByText('原文書名、譯者與繪者'))
  expect(screen.getByLabelText('繪者／插畫者（每行一位）')).toHaveProperty('value', 'ゆーにっと')
  expect(screen.getByLabelText('ISBN')).toHaveProperty('value', '')
  fireEvent.click(screen.getByRole('button', { name: '儲存' }))

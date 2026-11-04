@@ -1,4 +1,4 @@
-import { expect, test, enterManagement } from './fixtures'
+import { expect, test, enterManagement, stageSyntheticCover } from './fixtures'
 
 test('a dated reading cycle appears without creating daily activities', async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 780 })
@@ -31,19 +31,17 @@ test('a dated reading cycle appears without creating daily activities', async ({
 
 for (const width of [360, 1280]) test(`recent cover opens a centered lightbox over the page at ${width}px`, async ({ page }) => {
   await page.setViewportSize({ width, height: 780 })
-  await page.route('**/test-preview-cover.svg', route => route.fulfill({ contentType: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="700" height="1000"><rect width="700" height="1000" fill="#EAC1CB"/><text x="100" y="200" font-size="60">Cover</text></svg>' }))
+  await page.route('**/test-preview-cover.jpg', route => route.fulfill({ contentType: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="700" height="1000"><rect width="700" height="1000" fill="#EAC1CB"/><text x="100" y="200" font-size="60">Cover</text></svg>' }))
   await page.goto('/')
   const title = '手機最近閱讀' + '長書名測試'.repeat(8)
   await page.getByRole('button', { name: '新增書籍' }).click()
   await page.getByRole('button', { name: '輸入書名', exact: true }).click()
   await page.getByLabel('出版書名', { exact: true }).fill(title)
-  // Seed the synthetic cover in the full creation form; bibliography editing no longer edits covers.
-  await page.getByText('封面路徑', { exact: true }).click()
-  await page.getByLabel('封面檔案路徑').fill('/test-preview-cover.svg')
+  await stageSyntheticCover(page, '/api/v1/covers/covers/test-preview-cover.jpg')
   await page.getByRole('button', { name: '儲存', exact: true }).click()
   await expect(page.locator('.book-form')).toHaveCount(0)
   await page.locator('.book-cover-open').first().click()
-  await expect(page.getByRole('region', { name: '書籍封面' }).getByRole('img')).toHaveAttribute('src', '/test-preview-cover.svg')
+  await expect(page.getByRole('region', { name: '書籍封面' }).getByRole('img')).toHaveAttribute('src', '/api/v1/covers/covers/test-preview-cover.jpg')
   await enterManagement(page, '閱讀')
   await page.getByRole('button', { name: '更新未分次紀錄（0）' }).click()
   await page.getByRole('button', { name: '新增紀錄', exact: true }).click()

@@ -59,7 +59,7 @@ test('mobile metadata search separates choosing a book, reviewing changes and ap
  await page.locator('.book-cover-open').first().click()
   await enterManagement(page, '書籍')
  const editor = page.locator('.book-form')
- await editor.getByText('搜尋並補全書籍資料', { exact: true }).click()
+ await editor.getByRole('button', { name: '補資料', exact: true }).click()
  await editor.getByRole('button', { name: '查詢書籍資料' }).click()
  await expect(editor.getByRole('button', { name: '核對《候選書名》' })).toBeVisible()
  await expect(editor.getByRole('button', { name: '帶入下列表單' })).toHaveCount(0)

@@ -1,11 +1,14 @@
 interface IconProps {
-  name: 'arrowRight' | 'book' | 'chevronDown' | 'close' | 'logOut' | 'plus' | 'search' | 'library' | 'settings' | 'grid' | 'list' | 'filter' | 'journalExit' | 'journalTools' | 'editNote' | 'deleteNote'
+  name: 'arrowRight' | 'book' | 'chevronDown' | 'close' | 'logOut' | 'plus' | 'search' | 'upload' | 'clipboard' | 'trash' | 'library' | 'settings' | 'grid' | 'list' | 'filter' | 'journalExit' | 'journalTools' | 'editNote' | 'deleteNote'
   className?: string
   size?: number
 }
 
 export function Icon({ name, size = 18, className = '' }: IconProps) {
   const paths = {
+    upload: <><path d="M12 15V3m-4 4 4-4 4 4M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5" /></>,
+    clipboard: <><rect x="8" y="3" width="8" height="4" rx="2" /><path d="M8 5H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M8 12h8m-8 4h6" /></>,
+    trash: <><path d="M4 6h16M9 6V3h6v3M6 6l1 14h10l1-14M10 10v6m4-6v6" /></>,
     editNote: <><path d="m5 16.8 10.9-12 3.6 3.1-11 12-4.1.6.6-3.7ZM13.8 7.1l3.6 3.1M5 16.8l3.5 3.1" /><path d="m4.4 21 7-.2" /></>,
     deleteNote: <><path d="m4.7 7.1 14.6-.2M9 4.3l5.7.1.8 2.6M6.4 7.2l.8 12.5 9.7.1.7-12.6M10 10.5l.3 6.4M14 10.4l-.1 6.5" /></>,
     journalExit: <><path d="M10.3 3.9 4.7 5.1l-.2 14 5.8 1.1.2-16.3ZM10.6 5l6.2.2.1 4.1M16.8 15.3l-.1 3.4-6.2.2M13.2 12.1l7.2-.2m-2.7-2.7 3 2.6-2.7 3" /><path d="m7.9 12.1.1.1" /><path d="m3 3 .8.5M2.1 6l.8-.1" /></>,
