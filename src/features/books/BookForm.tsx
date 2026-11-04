@@ -201,7 +201,7 @@ export function BookForm({ expanded = false, inlineMetadataSearch = false, scope
     </section>
   const bookDataEditor = <section className="book-form-bookdata" aria-label="書籍資料編輯">
     <div className="book-data-heading book-data-wide"><h3 className="book-form-heading">書籍資料</h3>{metadataLookup}</div>
-    <BookCreditField label="出版書名" required inputRef={titleInputRef} value={title} onChange={setTitle} />
+    <BookCreditField label="出版書名" required singleLine inputRef={titleInputRef} value={title} onChange={setTitle} />
     <BookCreditField label="作者（每行一位）" maxLength={20099} value={authorNamesText} onChange={setAuthorNamesText} />
     <PublisherField entries={dictionaries} value={publisherName} onChange={setPublisherName} />
     <div className="book-field"><span className="field-requirement" aria-hidden="true">選填</span><label><span className="field-caption">ISBN</span><input maxLength={40} value={isbn} onChange={event => setIsbn(event.target.value)} /></label></div>

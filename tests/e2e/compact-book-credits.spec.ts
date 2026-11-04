@@ -8,8 +8,8 @@ for(const width of [360,1024]) test(`credit fields fit their contents and preser
  await page.getByRole('button',{name:'儲存',exact:true}).click()
  await page.getByRole('button',{name:'開啟《姓名欄位合成資料》',exact:true}).click()
  await page.getByRole('button',{name:'編輯書籍資料',exact:true}).click()
- const editor=page.locator('.book-form--expanded'), extra=editor.locator('.book-form-extra')
- await extra.scrollIntoViewIfNeeded()
+ const editor=page.locator('.book-form--expanded'), extra=editor.getByRole('region',{name:'書籍資料編輯',exact:true})
+ await extra.getByLabel('原文書名',{exact:true}).scrollIntoViewIfNeeded()
  for(const label of ['原文書名','作者原名（每行一位）','譯者（每行一位）','繪者／插畫者（每行一位）']) {
   const box=(await editor.getByLabel(label,{exact:true}).boundingBox())!
   expect(box.height).toBeGreaterThanOrEqual(44)

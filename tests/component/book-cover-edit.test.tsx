@@ -43,6 +43,7 @@ it('keeps the existing cover and avoids saving on upload failure, then allows a 
  await screen.findByText('上傳失敗'); expect(save).not.toHaveBeenCalled(); expect(screen.queryByLabelText('封面檔案路徑')).toBeNull(); expect(book.cover?.path).toBe('/old.webp')
  fireEvent.click(screen.getByRole('button', { name: '儲存' }))
  await waitFor(() => expect(save).toHaveBeenCalledTimes(1))
+ expect(save).toHaveBeenLastCalledWith(expect.objectContaining({ cover: expect.objectContaining({ path: '/new.jpg' }) }))
 })
 it('preserves existing non-JPEG metadata and allows removal without uploading', async () => {
  const book = await fixture(), save = vi.fn()
